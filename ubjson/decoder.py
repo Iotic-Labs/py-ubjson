@@ -1,3 +1,6 @@
+# Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.
+# All rights reserved. See LICENSE document for details.
+
 """Non-resursive UBJSON decoder. It does NOT support No-Op ('N') values"""
 
 from io import BytesIO
@@ -17,12 +20,14 @@ __typesNoData = frozenset((TYPE_NULL, TYPE_BOOL_FALSE, TYPE_BOOL_TRUE))
 
 
 class DecoderException(ValueError):
+    """Raised when decoding of a UBJSON stream fails."""
 
     def __init__(self, fp, message):
         super(DecoderException, self).__init__('%s (at byte %d)' % (message, fp.tell()))
 
 
-def __decodeHighPrec(fp, marker):
+# pylint:disable=unused-argument
+def __decodeHighPrec(fp, marker):  # noqa (unused arg)
     length = __decodeInt(fp, fp.read(1))
     if length > 0:
         raw = fp.read(length)
@@ -43,7 +48,8 @@ __intMapping = {TYPE_UINT8: (1, '>B'),
                 TYPE_INT64: (8, '>q')}
 
 
-def __decodeInt(fp, marker):
+# pylint:disable=unused-argument
+def __decodeInt(fp, marker):  # noqa (unused arg)
     try:
         length, fmt = __intMapping[marker]
     except KeyError as e:
@@ -244,8 +250,9 @@ def load(fp, no_bytes=False):
 
     Args:
         fp: read([size])-able object
-        no_bytes (bool): If set, typed UBJSON arrays (uint8) will not be converted to a bytes instance and instead
-                         treated like any other array (i.e. result in a list).
+        no_bytes (bool): If set, typed UBJSON arrays (uint8) will not be
+                         converted to a bytes instance and instead treated like
+                         any other array (i.e. result in a list).
 
     Returns:
         Decoded object
@@ -293,6 +300,7 @@ def load(fp, no_bytes=False):
 
 
 def loadb(chars, no_bytes=False):
-    """Decodes and returns UBJSON from the given bytes or bytesarray object. See load() for available arguments."""
+    """Decodes and returns UBJSON from the given bytes or bytesarray object. See
+       load() for available arguments."""
     with BytesIO(chars) as fp:
         return load(fp, no_bytes=no_bytes)

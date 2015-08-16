@@ -1,7 +1,11 @@
+# Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.
+# All rights reserved. See LICENSE document for details.
+
 from unittest import TestCase
 from pprint import pformat
 from decimal import Decimal
 from struct import pack
+from collections import OrderedDict
 
 from ubjson.compat import PY2
 from ubjson import dumpb as ubjdumpb, loadb as ubjloadb, EncoderException, DecoderException
@@ -16,7 +20,7 @@ class TestEncodeDecode(TestCase):
     def __formatInOut(obj, encoded):
         return '\nInput:\n%s\nOutput (%d):\n%s' % (pformat(obj), len(encoded), encoded)
 
-    if PY2:
+    if PY2:  # pragma: no cover
         def typeCheck(self, actual, expected):
             self.assertEqual(actual, expected)
     else:
@@ -83,7 +87,7 @@ class TestEncodeDecode(TestCase):
         for suffix in (b'\x81', b'\x01', b'\x01' + b'\xfe'):
             with self.assertRaises(DecoderException):
                 ubjloadb(TYPE_STRING + TYPE_INT8 + suffix)
-        for string in ('some ascii', '\u00a9 with extended\u2122', 'long string' * 100):
+        for string in ('some ascii', u'\u00a9 with extended\u2122', 'long string' * 100):
             self.checkEncDec(string, 4, lengthGreaterOrEqual=True)
 
     def test_int(self):
@@ -228,6 +232,12 @@ class TestEncodeDecode(TestCase):
         for opts in ({'container_count': False}, {'container_count': True}):
             self.checkEncDec(obj, **opts)
 
+        # dictionary key sorting
+        obj1 = OrderedDict.fromkeys('abc')
+        obj2 = OrderedDict.fromkeys('cba')
+        self.assertNotEqual(ubjdumpb(obj1), ubjdumpb(obj2))
+        self.assertEqual(ubjdumpb(obj1, sort_keys=True), ubjdumpb(obj2, sort_keys=True))
+
     def test_circular(self):
         sequence = [1, 2, 3]
         sequence.append(sequence)
@@ -254,5 +264,6 @@ class TestEncodeDecode(TestCase):
                     ubjloadb(pack(fmt, i))
                 except DecoderException:
                     pass
-                except Exception as e:  # pylint: disable=broad-except
+                # pylint: disable=broad-except
+                except Exception as e:  # pragma: no cover
                     self.fail('Unexpected failure: %s' % e)

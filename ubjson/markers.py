@@ -1,3 +1,6 @@
+# Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.
+# All rights reserved. See LICENSE document for details.
+
 """UBJSON marker defitions"""
 
 # Value types

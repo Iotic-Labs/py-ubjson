@@ -1,4 +1,5 @@
-"""Python v2.7 (NOT 2.6) compatibility"""
+# Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.
+# All rights reserved. See LICENSE document for details.
 
 # Original six.py copyright notice, on which snippets herein are based:
 #
@@ -22,21 +23,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from sys import version_info
+"""Python v2.7 (NOT 2.6) compatibility"""
+
+from sys import stderr, stdout, stdin, version_info
 
 PY2 = version_info[0] == 2
 
 if PY2:
     # pylint:disable=undefined-variable
     integer_types = (int, long)  # noqa
+    string_types = (str, unicode)  # noqa
     # pylint: disable=unused-import
     from collections import Mapping, Sequence  # noqa
+
+    stdin_raw = stdin
+    stdout_raw = stdout
+    stderr_raw = stderr
+
 else:
 
     integer_types = int
-    # pylint: disable=unused-import
+    string_types = str
+    # pylint: disable=unused-import,no-name-in-module,import-error
     from collections.abc import Mapping, Sequence  # noqa
 
+    stdin_raw = stdin.buffer  # pylint: disable=no-member
+    stdout_raw = stdout.buffer  # pylint: disable=no-member
+    stderr_raw = stderr.buffer  # pylint: disable=no-member
 
 if version_info[:2] == (3, 2):
     # pylint: disable=exec-used

@@ -3,7 +3,7 @@
 This is a non-recursive Python v3.x (and 2.7+) [Universal Binary JSON](http://ubjson.org) encoder/decoder based on the [[draft-12|UBJSON-Specification]] specification.
 
 # Usage
-It is meant to be usable like Python's built-in JSON module, e.g.:
+It's meant to behave very much like Python's built-in [JSON module](https://docs.python.org/3/library/json.html), e.g.:
 ```python
 import ubjson
 
@@ -19,11 +19,24 @@ help(ubjson.dump)
 help(ubjson.load)
 ```
 
+# Command-line utility
+This converts between JSON and UBJSON formats:
+```bash
+python3 -mubjson
+USAGE: ubjson (fromjson|tojson) (INFILE|-) [OUTFILE]
+```
+
 # Tests
+
+## Static
+This library has been checked using [flake8](https://pypi.python.org/pypi/flake8) and [pylint](http://www.pylint.org), using a modified configuration - see _pylint.rc_ and _flake8.cfg_.
+
+## Unit
 ```bash
 # can also be run with Python v2
 python3 -munittest discover ubjson
 ```
+Note: These have been run using [coverage](https://pypi.python.org/pypi/coverage).
 
 # Limitations
 - The **No-Op** type is not supported. (This should arguably be a protocol-level rather than serialisation-level option.)
