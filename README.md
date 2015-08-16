@@ -1,6 +1,6 @@
 # Overview
 
-This is a non-recursive Python v3.x [Universal Binary JSON](http://ubjson.org) encoder/decoder based on the [[draft-12|UBJSON-Specification]] specification.
+This is a non-recursive Python v3.x (and 2.7+) [Universal Binary JSON](http://ubjson.org) encoder/decoder based on the [[draft-12|UBJSON-Specification]] specification.
 
 # Usage
 It is meant to be usable like Python's built-in JSON module, e.g.:
@@ -19,9 +19,15 @@ help(ubjson.dump)
 help(ubjson.load)
 ```
 
+# Tests
+```bash
+# can also be run with Python v2
+python3 -munittest discover ubjson
+```
+
 # Limitations
-- The **No-Op** type is not supported. (Arguably this should be a protocol-level rather than serialisation-level option.
-- Strongly-typed containers are only supported by the decoder (apart from **bytes**/**bytearray**).
+- The **No-Op** type is not supported. (This should arguably be a protocol-level rather than serialisation-level option.)
+- Strongly-typed containers are only supported by the decoder (apart from for **bytes**/**bytearray**).
 - Encoder/decoder extensions are not supported at this time.
 
 # Why?

@@ -5,6 +5,7 @@ from collections import deque
 from struct import unpack, error as StructError
 from decimal import Decimal, DecimalException
 
+from .compat import raise_from
 from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
                       TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
                       OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
@@ -18,12 +19,10 @@ __typesNoData = frozenset((TYPE_NULL, TYPE_BOOL_FALSE, TYPE_BOOL_TRUE))
 class DecoderException(ValueError):
 
     def __init__(self, fp, message):
-        super().__init__('%s (at byte %d)' % (message, fp.tell()))
+        super(DecoderException, self).__init__('%s (at byte %d)' % (message, fp.tell()))
 
 
 def __decodeHighPrec(fp, marker):
-    assert marker == TYPE_HIGH_PREC
-
     length = __decodeInt(fp, fp.read(1))
     if length > 0:
         raw = fp.read(length)
@@ -32,9 +31,9 @@ def __decodeHighPrec(fp, marker):
         try:
             return Decimal(raw.decode('utf-8'))
         except UnicodeError as e:
-            raise DecoderException(fp, 'Failed to decode decimal string') from e
+            raise_from(DecoderException(fp, 'Failed to decode decimal string'), e)
         except DecimalException as e:
-            raise DecoderException(fp, 'Failed to decode decimal') from e
+            raise_from(DecoderException(fp, 'Failed to decode decimal'), e)
 
 
 __intMapping = {TYPE_UINT8: (1, '>B'),
@@ -51,12 +50,12 @@ def __decodeInt(fp, marker):
         # Theoretically this could also be TYPE_HIGH_PREC but the the only time __decodeInt is used (other than for
         # plain integers) is when dealing with strings, which shouldn't be able to fit something larger than 64-bit. Why
         # not an assert? Strings require length so the marker might not for an integer if input invalid.
-        raise DecoderException(fp, 'Integer marker expected') from e
+        raise_from(DecoderException(fp, 'Integer marker expected'), e)
     else:
         try:
             return unpack(fmt, fp.read(length))[0]
         except StructError as e:
-            raise DecoderException(fp, 'Failed to unpack integer') from e
+            raise_from(DecoderException(fp, 'Failed to unpack integer'), e)
 
 
 def __decodeFloat(fp, marker):
@@ -64,30 +63,26 @@ def __decodeFloat(fp, marker):
         try:
             return unpack('>f', fp.read(4))[0]
         except StructError as e:
-            raise DecoderException(fp, 'Failed to unpack float32') from e
+            raise_from(DecoderException(fp, 'Failed to unpack float32'), e)
     # TYPE_FLOAT64
     else:
         try:
             return unpack('>d', fp.read(8))[0]
         except StructError as e:
-            raise DecoderException(fp, 'Failed to unpack float64') from e
+            raise_from(DecoderException(fp, 'Failed to unpack float64'), e)
 
 
 def __decodeChar(fp, marker):
-    assert marker == TYPE_CHAR
-
     raw = fp.read(1)
     if not raw:
         raise DecoderException(fp, 'Char missing')
     try:
         return raw.decode('utf-8')
     except UnicodeError as e:
-        raise DecoderException(fp, 'Failed to decode char') from e
+        raise_from(DecoderException(fp, 'Failed to decode char'), e)
 
 
 def __decodeString(fp, marker):
-    assert marker == TYPE_STRING
-
     length = __decodeInt(fp, fp.read(1))
     if length < 0:
         raise DecoderException(fp, 'String length negative')
@@ -97,7 +92,7 @@ def __decodeString(fp, marker):
     try:
         return raw.decode('utf-8')
     except UnicodeError as e:
-        raise DecoderException(fp, 'Failed to decode string') from e
+        raise_from(DecoderException(fp, 'Failed to decode string'), e)
 
 
 # same as string, except there is no 'S' marker
@@ -111,10 +106,10 @@ def __decodeObjectKey(fp, marker):
     try:
         return raw.decode('utf-8')
     except UnicodeError as e:
-        raise DecoderException(fp, 'Failed to decode object key') from e
+        raise_from(DecoderException(fp, 'Failed to decode object key'), e)
 
 
-def __getContainerParams(fp, inMapping, noBytes):
+def __getContainerParams(fp, inMapping, noBytes):  # pylint: disable=too-many-branches
     container = {} if inMapping else []
     nextByte = fp.read(1)
     if nextByte == CONTAINER_TYPE:
@@ -180,8 +175,6 @@ __methodMap = {TYPE_NULL: (lambda _, __: None),
 def __decodeContainer(fp, marker, inMapping, noBytes):  # noqa (complexity)
     """marker - start of container marker (for sanity checking only)
        container - what to add elements to"""
-    assert marker in __containerTypeStarts
-
     marker, counting, count, type_, container = __getContainerParams(fp, inMapping, noBytes)
     # stack for keeping track of child-containers
     stack = deque()

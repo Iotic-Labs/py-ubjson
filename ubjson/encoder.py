@@ -1,11 +1,11 @@
 """Non-resursive UBJSON encoder"""
 
 from collections import deque
-from collections.abc import Sequence, Mapping
 from struct import pack
 from decimal import Decimal
 from io import BytesIO
 
+from .compat import Mapping, Sequence, integer_types
 from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
                       TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
                       OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
@@ -292,7 +292,7 @@ def dump(obj, fp, container_count=False):  # noqa (complexity)
     elif obj is False:
         fp.write(TYPE_BOOL_FALSE)
 
-    elif isinstance(obj, int):
+    elif isinstance(obj, integer_types):
         __encodeInt(fp, obj)
 
     elif isinstance(obj, float):

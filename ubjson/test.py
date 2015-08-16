@@ -3,6 +3,7 @@ from pprint import pformat
 from decimal import Decimal
 from struct import pack
 
+from ubjson.compat import PY2
 from ubjson import dumpb as ubjdumpb, loadb as ubjloadb, EncoderException, DecoderException
 from ubjson.markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
                             TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
@@ -14,6 +15,13 @@ class TestEncodeDecode(TestCase):
     @staticmethod
     def __formatInOut(obj, encoded):
         return '\nInput:\n%s\nOutput (%d):\n%s' % (pformat(obj), len(encoded), encoded)
+
+    if PY2:
+        def typeCheck(self, actual, expected):
+            self.assertEqual(actual, expected)
+    else:
+        def typeCheck(self, actual, expected):
+            self.assertEqual(actual, ord(expected))
 
     def checkEncDec(self, obj,
                     # total length of encoded object
@@ -29,7 +37,7 @@ class TestEncodeDecode(TestCase):
         """Black-box test to check whether the provided object is the same once encoded and subsequently decoded."""
         encoded = ubjdumpb(obj, **kwargs)
         if expectedType is not None:
-            self.assertEqual(encoded[0], ord(expectedType))
+            self.typeCheck(encoded[0], expectedType)
         if length is not None:
             assertFunc = self.assertGreaterEqual if lengthGreaterOrEqual else self.assertEqual
             assertFunc(len(encoded), length, self.__formatInOut(obj, encoded))
@@ -159,7 +167,7 @@ class TestEncodeDecode(TestCase):
             ubjloadb(ARRAY_START + CONTAINER_TYPE + TYPE_UINT8 + CONTAINER_COUNT + TYPE_UINT8 + b'\x02' + b'\x01')
         self.checkEncDec(b'')
         self.checkEncDec(b'\x01' * 1)
-        self.assertEqual(ubjloadb(ubjdumpb(b'\x04' * 4), no_bytes=True), [4] * 4)
+        self.assertEqual(ubjloadb(ubjdumpb(b'\x04' * 4), no_bytes=True), ('\x04' if PY2 else [4]) * 4)
 
     def test_container_fixed(self):
         rawStart = ARRAY_START + CONTAINER_TYPE + TYPE_INT8 + CONTAINER_COUNT + TYPE_UINT8
@@ -246,5 +254,5 @@ class TestEncodeDecode(TestCase):
                     ubjloadb(pack(fmt, i))
                 except DecoderException:
                     pass
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
                     self.fail('Unexpected failure: %s' % e)
