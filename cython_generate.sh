@@ -8,7 +8,7 @@ for ext in ubjson/*.py; do
     # exclude module main so still works when using compiled extensions
     if [ "$ext" != "ubjson/__main__.py" ]; then
         echo "Generating code for ${ext}"
-        python3 -mcython -a -3 -f --fast-fail -Werror -Wextra -o ${ext}.3.c ${ext}
-        python3 -mcython -a -2 -f --fast-fail -Werror -Wextra -o ${ext}.2.c ${ext}
+        python3 -mcython -a -3 -f --fast-fail -Werror -Wextra -o ${ext}3.c ${ext}
+        python3 -mcython -a -2 -f --fast-fail -Werror -Wextra -o ${ext}2.c ${ext}
     fi
 done

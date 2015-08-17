@@ -222,8 +222,8 @@ static CYTHON_INLINE float __PYX_NAN() {
   #define __Pyx_PyNumber_Divide(x,y)         PyNumber_TrueDivide(x,y)
   #define __Pyx_PyNumber_InPlaceDivide(x,y)  PyNumber_InPlaceTrueDivide(x,y)
 #else
-  #define __Pyx_PyNumber_Divide(x,y)         PyNumber_TrueDivide(x,y)
-  #define __Pyx_PyNumber_InPlaceDivide(x,y)  PyNumber_InPlaceTrueDivide(x,y)
+  #define __Pyx_PyNumber_Divide(x,y)         PyNumber_Divide(x,y)
+  #define __Pyx_PyNumber_InPlaceDivide(x,y)  PyNumber_InPlaceDivide(x,y)
 #endif
 
 #ifndef __PYX_EXTERN_C
@@ -570,7 +570,7 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 int __pyx_module_is_main_ubjson____init__ = 0;
 
 /* Implementation of 'ubjson.__init__' */
-static char __pyx_k_0_2[] = "0.2";
+static char __pyx_k_0_3[] = "0.3";
 static char __pyx_k_all[] = "__all__";
 static char __pyx_k_dump[] = "dump";
 static char __pyx_k_load[] = "load";
@@ -586,23 +586,17 @@ static char __pyx_k_version[] = "__version__";
 static char __pyx_k_DecoderException[] = "DecoderException";
 static char __pyx_k_EncoderException[] = "EncoderException";
 static char __pyx_k_UBJSON_draft_12_implementation_w[] = "UBJSON (draft 12) implementation without No-Op support\n\nExample usage:\n\n# To encode\nencoded = ubjson.dumpb({'a': 1})\n\n# To decode\ndecoded = ubjson.loadb(encoded)\n\nTo use a file-like object as input/output, use dump() & load() methods instead.\n";
-static PyObject *__pyx_kp_u_0_2;
+static PyObject *__pyx_kp_s_0_3;
 static PyObject *__pyx_n_s_DecoderException;
-static PyObject *__pyx_n_u_DecoderException;
 static PyObject *__pyx_n_s_EncoderException;
-static PyObject *__pyx_n_u_EncoderException;
 static PyObject *__pyx_n_s_all;
 static PyObject *__pyx_n_s_decoder;
 static PyObject *__pyx_n_s_dump;
-static PyObject *__pyx_n_u_dump;
 static PyObject *__pyx_n_s_dumpb;
-static PyObject *__pyx_n_u_dumpb;
 static PyObject *__pyx_n_s_encoder;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_load;
-static PyObject *__pyx_n_u_load;
 static PyObject *__pyx_n_s_loadb;
-static PyObject *__pyx_n_u_loadb;
 static PyObject *__pyx_n_s_main;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_u_ubjson;
@@ -632,23 +626,17 @@ static struct PyModuleDef __pyx_moduledef = {
 #endif
 
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
-  {&__pyx_kp_u_0_2, __pyx_k_0_2, sizeof(__pyx_k_0_2), 0, 1, 0, 0},
+  {&__pyx_kp_s_0_3, __pyx_k_0_3, sizeof(__pyx_k_0_3), 0, 0, 1, 0},
   {&__pyx_n_s_DecoderException, __pyx_k_DecoderException, sizeof(__pyx_k_DecoderException), 0, 0, 1, 1},
-  {&__pyx_n_u_DecoderException, __pyx_k_DecoderException, sizeof(__pyx_k_DecoderException), 0, 1, 0, 1},
   {&__pyx_n_s_EncoderException, __pyx_k_EncoderException, sizeof(__pyx_k_EncoderException), 0, 0, 1, 1},
-  {&__pyx_n_u_EncoderException, __pyx_k_EncoderException, sizeof(__pyx_k_EncoderException), 0, 1, 0, 1},
   {&__pyx_n_s_all, __pyx_k_all, sizeof(__pyx_k_all), 0, 0, 1, 1},
   {&__pyx_n_s_decoder, __pyx_k_decoder, sizeof(__pyx_k_decoder), 0, 0, 1, 1},
   {&__pyx_n_s_dump, __pyx_k_dump, sizeof(__pyx_k_dump), 0, 0, 1, 1},
-  {&__pyx_n_u_dump, __pyx_k_dump, sizeof(__pyx_k_dump), 0, 1, 0, 1},
   {&__pyx_n_s_dumpb, __pyx_k_dumpb, sizeof(__pyx_k_dumpb), 0, 0, 1, 1},
-  {&__pyx_n_u_dumpb, __pyx_k_dumpb, sizeof(__pyx_k_dumpb), 0, 1, 0, 1},
   {&__pyx_n_s_encoder, __pyx_k_encoder, sizeof(__pyx_k_encoder), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_load, __pyx_k_load, sizeof(__pyx_k_load), 0, 0, 1, 1},
-  {&__pyx_n_u_load, __pyx_k_load, sizeof(__pyx_k_load), 0, 1, 0, 1},
   {&__pyx_n_s_loadb, __pyx_k_loadb, sizeof(__pyx_k_loadb), 0, 0, 1, 1},
-  {&__pyx_n_u_loadb, __pyx_k_loadb, sizeof(__pyx_k_loadb), 0, 1, 0, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
   {&__pyx_n_u_ubjson, __pyx_k_ubjson, sizeof(__pyx_k_ubjson), 0, 1, 0, 1},
@@ -664,13 +652,13 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
   /* "ubjson/__init__.py":20
- * __version__ = '0.2'
+ * __version__ = '0.3'
  * 
  * __all__ = ('dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')             # <<<<<<<<<<<<<<
  * 
  * # pylint: disable=unused-import
  */
-  __pyx_tuple_ = PyTuple_Pack(6, __pyx_n_u_dump, __pyx_n_u_dumpb, __pyx_n_u_EncoderException, __pyx_n_u_load, __pyx_n_u_loadb, __pyx_n_u_DecoderException); if (unlikely(!__pyx_tuple_)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 20; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple_ = PyTuple_Pack(6, __pyx_n_s_dump, __pyx_n_s_dumpb, __pyx_n_s_EncoderException, __pyx_n_s_load, __pyx_n_s_loadb, __pyx_n_s_DecoderException); if (unlikely(!__pyx_tuple_)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 20; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
   __Pyx_RefNannyFinishContext();
@@ -786,14 +774,14 @@ PyMODINIT_FUNC PyInit_ubjson(void)
   /* "ubjson/__init__.py":18
  * """
  * 
- * __version__ = '0.2'             # <<<<<<<<<<<<<<
+ * __version__ = '0.3'             # <<<<<<<<<<<<<<
  * 
  * __all__ = ('dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_kp_u_0_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_kp_s_0_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "ubjson/__init__.py":20
- * __version__ = '0.2'
+ * __version__ = '0.3'
  * 
  * __all__ = ('dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')             # <<<<<<<<<<<<<<
  * 

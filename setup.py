@@ -35,7 +35,7 @@ class build_ext_warn_on_fail(build_ext):
                           " shows how the compilation failed." % ext.name)
 
 
-extension = '.py.3.c' if sys.version_info[0] >= 3 else  '.py.2.c'
+extension = '.py3.c' if sys.version_info[0] >= 3 else  '.py2.c'
 
 setup(name='ubjson',
       version=version,
