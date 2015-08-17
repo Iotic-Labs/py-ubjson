@@ -1,5 +1,6 @@
 # Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.
-# All rights reserved. See LICENSE document for details.
+# All rights reserved.
+# Licensed under 2-clause BSD license - see LICENSE file for details.
 
 # Original six.py copyright notice, on which snippets herein are based:
 #
@@ -27,7 +28,7 @@
 
 from sys import stderr, stdout, stdin, version_info
 
-PY2 = version_info[0] == 2
+PY2 = (version_info[0] == 2)
 
 if PY2:
     # pylint:disable=undefined-variable
@@ -42,8 +43,8 @@ if PY2:
 
 else:
 
-    integer_types = int
-    string_types = str
+    integer_types = (int,)
+    string_types = (str,)
     # pylint: disable=unused-import,no-name-in-module,import-error
     from collections.abc import Mapping, Sequence  # noqa
 

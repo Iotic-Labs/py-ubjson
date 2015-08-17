@@ -1,5 +1,6 @@
 # Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.
-# All rights reserved. See LICENSE document for details.
+# All rights reserved.
+# Licensed under 2-clause BSD license - see LICENSE file for details.
 
 """Non-resursive UBJSON decoder. It does NOT support No-Op ('N') values"""
 
@@ -9,9 +10,13 @@ from struct import unpack, error as StructError
 from decimal import Decimal, DecimalException
 
 from .compat import raise_from
-from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
-                      TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
-                      OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
+try:
+    from .markers import (TYPE_NONE, TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16,
+                          TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
+                          OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
+    # decoder.pxd defines these when C extension is enabled
+except ImportError:  # pragma: no cover
+    pass
 
 __containerTypeStarts = frozenset((ARRAY_START, OBJECT_START))
 __types = frozenset((TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
@@ -125,7 +130,7 @@ def __getContainerParams(fp, inMapping, noBytes):  # pylint: disable=too-many-br
         type_ = nextByte
         nextByte = fp.read(1)
     else:
-        type_ = None
+        type_ = TYPE_NONE
     if nextByte == CONTAINER_COUNT:
         count = __decodeInt(fp, fp.read(1))
         counting = True
@@ -151,11 +156,11 @@ def __getContainerParams(fp, inMapping, noBytes):  # pylint: disable=too-many-br
             count = 0
         else:
             # Reading ahead is just to capture type, which will not exist if type is fixed
-            nextByte = fp.read(1) if (inMapping or type_ is None) else type_
+            nextByte = fp.read(1) if (inMapping or type_ == TYPE_NONE) else type_
 
-    elif type_ is None:
+    elif type_ == TYPE_NONE:
         # set to one to indicate that not finished yet
-        count = None
+        count = 1
         counting = False
     else:
         raise DecoderException(fp, 'Container type without count')
@@ -178,14 +183,14 @@ __methodMap = {TYPE_NULL: (lambda _, __: None),
 
 
 # pylint: disable=too-many-branches
-def __decodeContainer(fp, marker, inMapping, noBytes):  # noqa (complexity)
+def __decodeContainer(fp, inMapping, noBytes):  # noqa (complexity)
     """marker - start of container marker (for sanity checking only)
        container - what to add elements to"""
     marker, counting, count, type_, container = __getContainerParams(fp, inMapping, noBytes)
     # stack for keeping track of child-containers
     stack = deque()
     # key for current object
-    key = None
+    key = value = None
 
     while True:
         # return to parsing parent container if end reached
@@ -201,13 +206,13 @@ def __decodeContainer(fp, marker, inMapping, noBytes):  # noqa (complexity)
             else:
                 # without count, must read next character (since current one is container-end)
                 if not counting:
-                    marker = fp.read(1) if (inMapping or type_ is None) else type_
+                    marker = fp.read(1) if (inMapping or type_ == TYPE_NONE) else type_
                 inMapping, counting, type_ = oldInMapping, oldCounting, oldType_
         else:
             # decode key for object
             if inMapping:
                 key = __decodeObjectKey(fp, marker)
-                marker = fp.read(1) if type_ is None else type_
+                marker = fp.read(1) if type_ == TYPE_NONE else type_
 
             # decode value
             try:
@@ -215,7 +220,7 @@ def __decodeContainer(fp, marker, inMapping, noBytes):  # noqa (complexity)
             except KeyError:
                 handled = False
             else:
-                marker = fp.read(1) if (inMapping or type_ is None) else type_
+                marker = fp.read(1) if (inMapping or type_ == TYPE_NONE) else type_
                 handled = True
 
             # handle outside above except (on KeyError) so do not have unfriendly "exception within except" backtrace
@@ -292,9 +297,9 @@ def load(fp, no_bytes=False):
     except KeyError:
         pass
     if marker == ARRAY_START:
-        return __decodeContainer(fp, marker, False, no_bytes)
+        return __decodeContainer(fp, False, no_bytes)
     elif marker == OBJECT_START:
-        return __decodeContainer(fp, marker, True, no_bytes)
+        return __decodeContainer(fp, True, no_bytes)
     else:
         raise DecoderException(fp, 'Invalid marker')
 

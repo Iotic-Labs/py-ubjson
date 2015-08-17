@@ -1,17 +1,46 @@
 # Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.
-# All rights reserved. See LICENSE document for details.
+# All rights reserved.
+# Licensed under 2-clause BSD license - see LICENSE file for details.
 
+from sys import version_info
+from io import BytesIO
 from unittest import TestCase
 from pprint import pformat
 from decimal import Decimal
 from struct import pack
 from collections import OrderedDict
 
-from ubjson.compat import PY2
-from ubjson import dumpb as ubjdumpb, loadb as ubjloadb, EncoderException, DecoderException
-from ubjson.markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
-                            TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
-                            OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
+from ubjson import dump as ubjdump, dumpb as ubjdumpb, loadb as ubjloadb, EncoderException, DecoderException
+
+# Not imported from ubjson.markers since cannot access them directly if compiled with cython
+
+# Value types
+TYPE_NONE = b'\x00'
+TYPE_NULL = b'Z'
+TYPE_BOOL_TRUE = b'T'
+TYPE_BOOL_FALSE = b'F'
+TYPE_INT8 = b'i'
+TYPE_UINT8 = b'U'
+TYPE_INT16 = b'I'
+TYPE_INT32 = b'l'
+TYPE_INT64 = b'L'
+TYPE_FLOAT32 = b'd'
+TYPE_FLOAT64 = b'D'
+TYPE_HIGH_PREC = b'H'
+TYPE_CHAR = b'C'
+TYPE_STRING = b'S'
+
+# Container delimiters
+OBJECT_START = b'{'
+OBJECT_END = b'}'
+ARRAY_START = b'['
+ARRAY_END = b']'
+
+# Optional container parameters
+CONTAINER_TYPE = b'$'
+CONTAINER_COUNT = b'#'
+
+PY2 = version_info[0] < 3
 
 
 class TestEncodeDecode(TestCase):
@@ -264,6 +293,11 @@ class TestEncodeDecode(TestCase):
                     ubjloadb(pack(fmt, i))
                 except DecoderException:
                     pass
-                # pylint: disable=broad-except
-                except Exception as e:  # pragma: no cover
+                except Exception as e:  # pragma: no cover  pylint: disable=broad-except
                     self.fail('Unexpected failure: %s' % e)
+
+    def test_fp(self):
+        obj = {"a": 123, "b": 456}
+        output = BytesIO()
+        ubjdump({"a": 123, "b": 456}, output)
+        self.assertEqual(ubjloadb(output.getvalue()), obj)

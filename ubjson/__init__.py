@@ -1,5 +1,6 @@
 # Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.
-# All rights reserved. See LICENSE document for details.
+# All rights reserved.
+# Licensed under 2-clause BSD license - see LICENSE file for details.
 
 """UBJSON (draft 12) implementation without No-Op support
 
@@ -14,7 +15,7 @@ decoded = ubjson.loadb(encoded)
 To use a file-like object as input/output, use dump() & load() methods instead.
 """
 
-__version__ = 0.1
+__version__ = '0.3'
 
 __all__ = ('dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
 

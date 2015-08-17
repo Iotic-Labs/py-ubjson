@@ -1,5 +1,6 @@
 # Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.
-# All rights reserved. See LICENSE document for details.
+# All rights reserved.
+# Licensed under 2-clause BSD license - see LICENSE file for details.
 
 """Converts between json & ubjson"""
 
