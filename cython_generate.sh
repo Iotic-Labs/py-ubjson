@@ -4,7 +4,8 @@
 # any .py or .pxd
 
 rm -f ubjson/*.c
-for ext in ubjson/*.py; do
+for ext in compat decoder encoder markers; do
+    ext="ubjson/${ext}.py"
     # exclude module main so still works when using compiled extensions
     if [ "$ext" != "ubjson/__main__.py" ]; then
         echo "Generating code for ${ext}"

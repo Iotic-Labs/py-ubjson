@@ -46,4 +46,18 @@ setup(name='ubjson',
       license='BSD 2-clause',
       packages=['ubjson'],
       ext_modules = [Extension(name[:-len(extension)], [name]) for name in iglob('ubjson/*' + extension)],
-      cmdclass={"build_ext": build_ext_warn_on_fail})
+      cmdclass={"build_ext": build_ext_warn_on_fail},
+      classifiers=(
+          'Development Status :: 4 - Beta',
+          'Intended Audience :: Developers',
+          'License :: OSI Approved :: BSD License',
+          'Programming Language :: C',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.2',
+          'Programming Language :: Python :: 3.3',
+          'Programming Language :: Python :: 3.4',
+          'Topic :: Software Development :: Libraries'
+          'Topic :: Software Development :: Libraries :: Python Modules',
+          )
+     )

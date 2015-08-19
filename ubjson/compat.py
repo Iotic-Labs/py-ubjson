@@ -28,25 +28,37 @@
 
 from sys import stderr, stdout, stdin, version_info
 
+try:
+    # pylint:disable=no-name-in-module,unused-import
+    from collections.abc import Mapping, Sequence
+except ImportError:
+    from collections import Mapping, Sequence  # noqa
+
 PY2 = (version_info[0] == 2)
 
 if PY2:
     # pylint:disable=undefined-variable
     integer_types = (int, long)  # noqa
-    string_types = (str, unicode)  # noqa
-    # pylint: disable=unused-import
-    from collections import Mapping, Sequence  # noqa
+    unicode_type = unicode  # noqa
+    text_types = (str, unicode)  # noqa
+    bytes_types = (str,)
+
+    def u(item):
+        return unicode(item)  # noqa
 
     stdin_raw = stdin
     stdout_raw = stdout
     stderr_raw = stderr
 
 else:
-
     integer_types = (int,)
-    string_types = (str,)
+    unicode_type = str
+    text_types = (str,)
+    bytes_types = (bytes, bytearray)
     # pylint: disable=unused-import,no-name-in-module,import-error
-    from collections.abc import Mapping, Sequence  # noqa
+
+    def u(item):
+        return str(item)
 
     stdin_raw = stdin.buffer  # pylint: disable=no-member
     stdout_raw = stdout.buffer  # pylint: disable=no-member

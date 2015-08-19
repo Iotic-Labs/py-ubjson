@@ -12,9 +12,6 @@ from .markers cimport (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TY
                        OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
 
 
-cdef tuple __byteTypes = (bytes, bytearray)
-
-
 cdef void __encodeHighPrec(fp, item)
 
 

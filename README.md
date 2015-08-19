@@ -1,6 +1,6 @@
 # Overview
 
-This is a non-recursive Python v3.x (and 2.7+) [Universal Binary JSON](http://ubjson.org) encoder/decoder based on the [draft-12](UBJSON-Specification.md) specification.
+This is a non-recursive Python v3.2+ (and 2.7+) [Universal Binary JSON](http://ubjson.org) encoder/decoder based on the [draft-12](UBJSON-Specification.md) specification.
 
 
 # Installing / packaging
@@ -25,10 +25,12 @@ It's meant to behave very much like Python's built-in [JSON module](https://docs
 ```python
 import ubjson
 
-encoded = ubjson.dumpb({'a': 1})
+encoded = ubjson.dumpb({u'a': 1})
 
 decoded = ubjson.loadb(encoded)
 ```
+**Note**: Note: Only unicode strings in Python 2 will be encoded as strings, plain *str* will be encoded as a byte array.
+
 
 # Documentation
 ```python
@@ -61,7 +63,7 @@ Note: This requires [coverage](https://pypi.python.org/pypi/coverage).
 - The **No-Op** type is not supported. (This should arguably be a protocol-level rather than serialisation-level option.)
 - Strongly-typed containers are only supported by the decoder (apart from for **bytes**/**bytearray**).
 - Encoder/decoder extensions are not supported at this time.
-- cython optimizations could be improved
+- cython optimizations could be improved.
 
 
 # Why?

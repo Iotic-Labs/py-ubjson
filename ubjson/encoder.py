@@ -9,8 +9,7 @@ from struct import pack
 from decimal import Decimal
 from io import BytesIO
 
-from .compat import Mapping, Sequence, integer_types, string_types
-# TODO - check using cython
+from .compat import Mapping, Sequence, integer_types, unicode_type, text_types, bytes_types
 try:
     from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
                           TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
@@ -18,8 +17,6 @@ try:
     # encoder.pxd defines these when C extension is enabled
 except ImportError:  # pragma: no cover
     pass
-
-__byteTypes = (bytes, bytearray)
 
 
 class EncoderException(TypeError):
@@ -110,7 +107,7 @@ def __encodeString(fp, item):
 
 # similar to encodeString, except 'S' marker is not added
 def __encodeObjectKey(fp, key):
-    encodedVal = key.encode('utf-8')
+    encodedVal = key.encode('utf-8') if isinstance(key, unicode_type) else key
     length = len(encodedVal)
     if length <= 255:
         fp.write(TYPE_UINT8)
@@ -165,7 +162,8 @@ def __encodeContainer(fp, obj, inMapping, seenContainers, containerCount, sortKe
                     # for circular reference checking
                     del seenContainers[containerId]
                     continue
-            if isinstance(key, string_types):
+            # allow both str & unicode for Python 2
+            if isinstance(key, text_types):
                 __encodeObjectKey(fp, key)
             else:
                 raise EncoderException('Mapping keys can only be strings')
@@ -187,7 +185,7 @@ def __encodeContainer(fp, obj, inMapping, seenContainers, containerCount, sortKe
                     continue
 
         # encode value
-        if isinstance(item, string_types):
+        if isinstance(item, unicode_type):
             __encodeString(fp, item)
 
         elif item is None:
@@ -199,7 +197,7 @@ def __encodeContainer(fp, obj, inMapping, seenContainers, containerCount, sortKe
         elif item is False:
             fp.write(TYPE_BOOL_FALSE)
 
-        elif isinstance(item, int):
+        elif isinstance(item, integer_types):
             __encodeInt(fp, item)
 
         elif isinstance(item, float):
@@ -208,7 +206,7 @@ def __encodeContainer(fp, obj, inMapping, seenContainers, containerCount, sortKe
         elif isinstance(item, Decimal):
             __encodeDecimal(fp, item)
 
-        elif isinstance(item, __byteTypes):
+        elif isinstance(item, bytes_types):
             __encodeBytes(fp, item)
 
         # order important since mappings could also be sequences
@@ -243,11 +241,11 @@ def __encodeContainer(fp, obj, inMapping, seenContainers, containerCount, sortKe
             inMapping = False
 
         else:
-            raise EncoderException(fp, 'Cannot encode item of type %s' % type(item))
+            raise EncoderException('Cannot encode item of type %s' % type(item))
 
 
 def __dump(obj, fp, container_count, sort_keys):  # noqa (complexity)
-    if isinstance(obj, string_types):
+    if isinstance(obj, unicode_type):
         __encodeString(fp, obj)
 
     elif obj is None:
@@ -268,7 +266,7 @@ def __dump(obj, fp, container_count, sort_keys):  # noqa (complexity)
     elif isinstance(obj, Decimal):
         __encodeDecimal(fp, obj)
 
-    elif isinstance(obj, __byteTypes):
+    elif isinstance(obj, bytes_types):
         __encodeBytes(fp, obj)
 
     # order important since mappings could also be sequences
@@ -292,7 +290,7 @@ def __dump(obj, fp, container_count, sort_keys):  # noqa (complexity)
             fp.write(ARRAY_END)
 
     else:
-        raise EncoderException(fp, 'Cannot encode item of type %s' % type(obj))
+        raise EncoderException('Cannot encode item of type %s' % type(obj))
 
 
 def dump(obj, fp, container_count=False, sort_keys=False):
@@ -313,32 +311,45 @@ def dump(obj, fp, container_count=False, sort_keys=False):
         EncoderException: If an encoding failure occured.
 
     The following Python types and interfaces (ABCs) are supported (as are any
-    subclasses). Note that items are resolved in the order of this table, e.g.
-    if the item implements both Mapping and Sequence interfaces, it will be
-    encoded as a mapping. Also note that None and bool do not use an instance
-    check.
+    subclasses):
 
-        +-------------------+---------------------------------------------------+
-        | Python            | UBJSON                                            |
-        +===================+===================================================+
-        | str               | string                                            |
-        +-------------------+---------------------------------------------------+
-        | None              | null                                              |
-        +-------------------+---------------------------------------------------+
-        | bool              | true, false                                       |
-        +-------------------+---------------------------------------------------+
-        | int               | uint8, int8, int16, int32, int64, high_precision  |
-        +-------------------+---------------------------------------------------+
-        | float             | float32, float64, high_precision                  |
-        +-------------------+---------------------------------------------------+
-        | Decimal           | high_precision                                    |
-        +-------------------+---------------------------------------------------+
-        | bytes, bytearray  | array (type, uint8)                               |
-        +-------------------+---------------------------------------------------+
-        | abc.Mapping       | object                                            |
-        +-------------------+---------------------------------------------------+
-        | abc.Sequence      | array                                             |
-        +-------------------+---------------------------------------------------+
+    +------------------------------+-----------------------------------+
+    | Python                       | UBJSON                            |
+    +==============================+===================================+
+    | (3) str                      | string                            |
+    | (2) unicode                  |                                   |
+    +------------------------------+-----------------------------------+
+    | None                         | null                              |
+    +------------------------------+-----------------------------------+
+    | bool                         | true, false                       |
+    +------------------------------+-----------------------------------+
+    | (3) int                      | uint8, int8, int16, int32, int64, |
+    | (2) int, long                | high_precision                    |
+    +------------------------------+-----------------------------------+
+    | float                        | float32, float64, high_precision  |
+    +------------------------------+-----------------------------------+
+    | Decimal                      | high_precision                    |
+    +------------------------------+-----------------------------------+
+    | (3) bytes, bytearray         | array (type, uint8)               |
+    | (2) str                      | array (type, uint8)               |
+    +------------------------------+-----------------------------------+
+    | (3) collections.abc.Mapping  | object                            |
+    | (2) collections.Mapping      |                                   |
+    +------------------------------+-----------------------------------+
+    | (3) collections.abc.Sequence | array                             |
+    | (2) collections.Sequence     |                                   |
+    +------------------------------+-----------------------------------+
+
+    Notes:
+    - Items are resolved in the order of this table, e.g. if the item implements
+      both Mapping and Sequence interfaces, it will be encoded as a mapping.
+    - None and bool do not use an isinstance check
+    - Numbers in brackets denote Python version.
+    - Only unicode strings in Python 2 one are encoded as strings, i.e. for
+      compatibility with e.g. Python 3 one MUST NOT use str (as that will be
+      interpreted as a byte array).
+    - Mapping keys have to be strings: str for Python3 and unicode or str in
+      Python 2.
     """
     __dump(obj, fp, container_count=container_count, sort_keys=sort_keys)
 

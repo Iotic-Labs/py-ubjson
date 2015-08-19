@@ -10,6 +10,7 @@ from decimal import Decimal
 from struct import pack
 from collections import OrderedDict
 
+from ubjson.compat import u
 from ubjson import dump as ubjdump, dumpb as ubjdumpb, loadb as ubjloadb, EncoderException, DecoderException
 
 # Not imported from ubjson.markers since cannot access them directly if compiled with cython
@@ -101,22 +102,23 @@ class TestEncodeDecode(TestCase):
         self.checkEncDec(None, 1)
 
     def test_char(self):
-        self.assertEqual(ubjdumpb('a'), TYPE_CHAR + 'a'.encode('utf-8'))
+        self.assertEqual(ubjdumpb(u('a')), TYPE_CHAR + 'a'.encode('utf-8'))
         # no char, char invalid utf-8
         for suffix in (b'', b'\xfe'):
             with self.assertRaises(DecoderException):
                 ubjloadb(TYPE_CHAR + suffix)
-        for char in ('a', '\0', '~'):
+        for char in (u('a'), u('\0'), u('~')):
             self.checkEncDec(char, 2)
 
     def test_string(self):
-        self.assertEqual(ubjdumpb('ab'), TYPE_STRING + TYPE_UINT8 + b'\x02' + 'ab'.encode('utf-8'))
-        self.checkEncDec('', 3)
+        self.assertEqual(ubjdumpb(u('ab')), TYPE_STRING + TYPE_UINT8 + b'\x02' + 'ab'.encode('utf-8'))
+        self.checkEncDec(u(''), 3)
         # invalid string size, string too short, string invalid utf-8
         for suffix in (b'\x81', b'\x01', b'\x01' + b'\xfe'):
             with self.assertRaises(DecoderException):
                 ubjloadb(TYPE_STRING + TYPE_INT8 + suffix)
-        for string in ('some ascii', u'\u00a9 with extended\u2122', 'long string' * 100):
+        # Note: In Python 2 plain str type is encoded as byte array
+        for string in ('some ascii', u('\u00a9 with extended\u2122'), u('long string') * 100):
             self.checkEncDec(string, 4, lengthGreaterOrEqual=True)
 
     def test_int(self):
@@ -199,8 +201,8 @@ class TestEncodeDecode(TestCase):
         with self.assertRaises(DecoderException):
             ubjloadb(ARRAY_START + CONTAINER_TYPE + TYPE_UINT8 + CONTAINER_COUNT + TYPE_UINT8 + b'\x02' + b'\x01')
         self.checkEncDec(b'')
-        self.checkEncDec(b'\x01' * 1)
-        self.assertEqual(ubjloadb(ubjdumpb(b'\x04' * 4), no_bytes=True), ('\x04' if PY2 else [4]) * 4)
+        self.checkEncDec(b'\x01' * 4)
+        self.assertEqual(ubjloadb(ubjdumpb(b'\x04' * 4), no_bytes=True), [4] * 4)
 
     def test_container_fixed(self):
         rawStart = ARRAY_START + CONTAINER_TYPE + TYPE_INT8 + CONTAINER_COUNT + TYPE_UINT8
@@ -248,10 +250,13 @@ class TestEncodeDecode(TestCase):
         self.checkEncDec({'longkey2' * 4096: 1})
 
         obj = {'int': 123,
+               'longint': 9223372036854775807,
                'float': 1.25,
                'hp': Decimal('10e15'),
                'char': 'a',
                'str': 'here is a string',
+               'unicode': u('\u00a9 with extended\u2122'),
+               u('\u00a9 with extended\u2122'): 'unicode-key',
                'null': None,
                'true': True,
                'false': False,
