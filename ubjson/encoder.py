@@ -302,9 +302,9 @@ def dump(obj, fp, container_count=False, sort_keys=False):
       both Mapping and Sequence interfaces, it will be encoded as a mapping.
     - None and bool do not use an isinstance check
     - Numbers in brackets denote Python version.
-    - Only unicode strings in Python 2 one are encoded as strings, i.e. for
-      compatibility with e.g. Python 3 one MUST NOT use str (as that will be
-      interpreted as a byte array).
+    - Only unicode strings in Python 2 are encoded as strings, i.e. for
+      compatibility with e.g. Python 3 one MUST NOT use str in Python 2 (as that
+      will be interpreted as a byte array).
     - Mapping keys have to be strings: str for Python3 and unicode or str in
       Python 2.
     """
