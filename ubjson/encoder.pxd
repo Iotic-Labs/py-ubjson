@@ -12,34 +12,37 @@ from .markers cimport (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TY
                        OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
 
 
-cdef void __encodeHighPrec(fp, item)
+cdef void __encodeHighPrec(fpWrite, item)
 
 
-cdef void __encodeDecimal(fp, item)
+cdef void __encodeDecimal(fpWrite, item)
 
 
-cdef void __encodeInt(fp, item)
+cdef void __encodeInt(fpWrite, item)
 
 
-cdef void __encodeFloat(fp, item)
+cdef void __encodeFloat(fpWrite, item)
 
 
-cdef void __encodeString(fp, item)
+cdef void __encodeString(fpWrite, item)
 
 
-cdef void __encodeObjectKey(fp, key)
+cdef void __encodeObjectKey(fpWrite, key)
 
 
-cdef void __encodeBytes(fp, item)
+cdef void __encodeBytes(fpWrite, item)
+
+
+cdef bint __encodeValue(fpWrite, item)
 
 
 @cython.locals(inMapping=cython.bint, seenContainers=dict, containerCount=cython.bint, sortKeys=cython.bint,
                containerId=cython.ulonglong)
-cdef int __encodeContainer(fp, obj, inMapping, seenContainers, containerCount, sortKeys) except -1
+cdef int __encodeContainer(fpWrite, obj, inMapping, seenContainers, containerCount, sortKeys) except -1
 
 
 @cython.locals(container_count=cython.bint, sort_keys=cython.bint)
-cdef int __dump(obj, fp, container_count, sort_keys) except -1
+cdef int __dump(obj, fpWrite, container_count, sort_keys) except -1
 
 
 @cython.locals(container_count=cython.bint, sort_keys=cython.bint)

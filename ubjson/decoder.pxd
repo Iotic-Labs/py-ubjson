@@ -27,35 +27,35 @@ cdef dict __intMapping = {TYPE_UINT8: (1, '>B'),
 
 
 @cython.locals(marker=bytes, length=int, raw=bytes)
-cdef object __decodeHighPrec(fp, marker)
+cdef object __decodeHighPrec(fpRead, marker)
 
 
 @cython.locals(marker=bytes, length=int, fmt=str)
-cdef object __decodeInt(fp, marker)
+cdef object __decodeInt(fpRead, marker)
 
 
 @cython.locals(marker=bytes)
-cdef object __decodeFloat(fp, marker)
+cdef object __decodeFloat(fpRead, marker)
 
 
 @cython.locals(marker=bytes, raw=bytes)
-cdef unicode __decodeChar(fp, marker)
+cdef unicode __decodeChar(fpRead, marker)
 
 
 @cython.locals(marker=bytes, length=int, raw=bytes)
-cdef unicode __decodeString(fp, marker)
+cdef unicode __decodeString(fpRead, marker)
 
 
 @cython.locals(marker=bytes, length=int, raw=bytes)
-cdef unicode __decodeObjectKey(fp, marker)
+cdef unicode __decodeObjectKey(fpRead, marker)
 
 
 @cython.locals(inMapping=cython.bint, noBytes=cython.bint, nextByte=bytes, type_=bytes, count=int)
-cdef object __getContainerParams(fp, inMapping, noBytes)
+cdef object __getContainerParams(fpRead, inMapping, noBytes)
 
 
 @cython.locals(inMapping=cython.bint, noBytes=cython.bint, marker=bytes, counting=cython.bint, count=int, type_=bytes)
-cdef object __decodeContainer(fp, inMapping, noBytes)
+cdef object __decodeContainer(fpRead, inMapping, noBytes)
 
 
 @cython.locals(no_bytes=cython.bint, marker=bytes)

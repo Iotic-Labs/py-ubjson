@@ -27,23 +27,26 @@ __typesNoData = frozenset((TYPE_NULL, TYPE_BOOL_FALSE, TYPE_BOOL_TRUE))
 class DecoderException(ValueError):
     """Raised when decoding of a UBJSON stream fails."""
 
-    def __init__(self, fp, message):
-        super(DecoderException, self).__init__('%s (at byte %d)' % (message, fp.tell()))
+    def __init__(self, message, fp=None):
+        if fp is None:
+            super(DecoderException, self).__init__(str(message))
+        else:
+            super(DecoderException, self).__init__('%s (at byte %d)' % (message, fp.tell()))
 
 
 # pylint:disable=unused-argument
-def __decodeHighPrec(fp, marker):  # noqa (unused arg)
-    length = __decodeInt(fp, fp.read(1))
+def __decodeHighPrec(fpRead, marker):  # noqa (unused arg)
+    length = __decodeInt(fpRead, fpRead(1))
     if length > 0:
-        raw = fp.read(length)
+        raw = fpRead(length)
         if len(raw) < length:
-            raise DecoderException(fp, 'High prec. too short')
+            raise DecoderException('High prec. too short')
         try:
             return Decimal(raw.decode('utf-8'))
         except UnicodeError as e:
-            raise_from(DecoderException(fp, 'Failed to decode decimal string'), e)
+            raise_from(DecoderException('Failed to decode decimal string'), e)
         except DecimalException as e:
-            raise_from(DecoderException(fp, 'Failed to decode decimal'), e)
+            raise_from(DecoderException('Failed to decode decimal'), e)
 
 
 __intMapping = {TYPE_UINT8: (1, '>B'),
@@ -54,116 +57,116 @@ __intMapping = {TYPE_UINT8: (1, '>B'),
 
 
 # pylint:disable=unused-argument
-def __decodeInt(fp, marker):  # noqa (unused arg)
+def __decodeInt(fpRead, marker):  # noqa (unused arg)
     try:
         length, fmt = __intMapping[marker]
     except KeyError as e:
         # Theoretically this could also be TYPE_HIGH_PREC but the the only time __decodeInt is used (other than for
         # plain integers) is when dealing with strings, which shouldn't be able to fit something larger than 64-bit. Why
         # not an assert? Strings require length so the marker might not for an integer if input invalid.
-        raise_from(DecoderException(fp, 'Integer marker expected'), e)
+        raise_from(DecoderException('Integer marker expected'), e)
     else:
         try:
-            return unpack(fmt, fp.read(length))[0]
+            return unpack(fmt, fpRead(length))[0]
         except StructError as e:
-            raise_from(DecoderException(fp, 'Failed to unpack integer'), e)
+            raise_from(DecoderException('Failed to unpack integer'), e)
 
 
-def __decodeFloat(fp, marker):
+def __decodeFloat(fpRead, marker):
     if marker == TYPE_FLOAT32:
         try:
-            return unpack('>f', fp.read(4))[0]
+            return unpack('>f', fpRead(4))[0]
         except StructError as e:
-            raise_from(DecoderException(fp, 'Failed to unpack float32'), e)
+            raise_from(DecoderException('Failed to unpack float32'), e)
     # TYPE_FLOAT64
     else:
         try:
-            return unpack('>d', fp.read(8))[0]
+            return unpack('>d', fpRead(8))[0]
         except StructError as e:
-            raise_from(DecoderException(fp, 'Failed to unpack float64'), e)
+            raise_from(DecoderException('Failed to unpack float64'), e)
 
 
-def __decodeChar(fp, marker):
-    raw = fp.read(1)
+def __decodeChar(fpRead, marker):
+    raw = fpRead(1)
     if not raw:
-        raise DecoderException(fp, 'Char missing')
+        raise DecoderException('Char missing')
     try:
         return raw.decode('utf-8')
     except UnicodeError as e:
-        raise_from(DecoderException(fp, 'Failed to decode char'), e)
+        raise_from(DecoderException('Failed to decode char'), e)
 
 
-def __decodeString(fp, marker):
-    length = __decodeInt(fp, fp.read(1))
+def __decodeString(fpRead, marker):
+    length = __decodeInt(fpRead, fpRead(1))
     if length < 0:
-        raise DecoderException(fp, 'String length negative')
-    raw = fp.read(length)
+        raise DecoderException('String length negative')
+    raw = fpRead(length)
     if len(raw) < length:
-        raise DecoderException(fp, 'String too short')
+        raise DecoderException('String too short')
     try:
         return raw.decode('utf-8')
     except UnicodeError as e:
-        raise_from(DecoderException(fp, 'Failed to decode string'), e)
+        raise_from(DecoderException('Failed to decode string'), e)
 
 
 # same as string, except there is no 'S' marker
-def __decodeObjectKey(fp, marker):
-    length = __decodeInt(fp, marker)
+def __decodeObjectKey(fpRead, marker):
+    length = __decodeInt(fpRead, marker)
     if length < 0:
-        raise DecoderException(fp, 'String length negative')
-    raw = fp.read(length)
+        raise DecoderException('String length negative')
+    raw = fpRead(length)
     if len(raw) < length:
-        raise DecoderException(fp, 'String too short')
+        raise DecoderException('String too short')
     try:
         return raw.decode('utf-8')
     except UnicodeError as e:
-        raise_from(DecoderException(fp, 'Failed to decode object key'), e)
+        raise_from(DecoderException('Failed to decode object key'), e)
 
 
-def __getContainerParams(fp, inMapping, noBytes):  # pylint: disable=too-many-branches
+def __getContainerParams(fpRead, inMapping, noBytes):  # pylint: disable=too-many-branches
     container = {} if inMapping else []
-    nextByte = fp.read(1)
+    nextByte = fpRead(1)
     if nextByte == CONTAINER_TYPE:
-        nextByte = fp.read(1)
+        nextByte = fpRead(1)
         if nextByte not in __types:
-            raise DecoderException(fp, 'Invalid container type')
+            raise DecoderException('Invalid container type')
         type_ = nextByte
-        nextByte = fp.read(1)
+        nextByte = fpRead(1)
     else:
         type_ = TYPE_NONE
     if nextByte == CONTAINER_COUNT:
-        count = __decodeInt(fp, fp.read(1))
+        count = __decodeInt(fpRead, fpRead(1))
         counting = True
 
         # special case - no data (None or bool)
         if type_ in __typesNoData:
             if inMapping:
-                value = __methodMap[type_](fp, type_)
+                value = __methodMap[type_](fpRead, type_)
                 for _ in range(count):
-                    container[__decodeObjectKey(fp, fp.read(1))] = value
+                    container[__decodeObjectKey(fpRead, fpRead(1))] = value
             else:
-                container = [__methodMap[type_](fp, type_)] * count
-            nextByte = fp.read(1)
+                container = [__methodMap[type_](fpRead, type_)] * count
+            nextByte = fpRead(1)
             # Make __decodeContainer finish immediately
             count = 0
         # special case - bytes array
         elif type_ == TYPE_UINT8 and not noBytes:
-            container = fp.read(count)
+            container = fpRead(count)
             if len(container) < count:
-                raise DecoderException(fp, 'Container bytes array too short')
-            nextByte = fp.read(1)
+                raise DecoderException('Container bytes array too short')
+            nextByte = fpRead(1)
             # Make __decodeContainer finish immediately
             count = 0
         else:
             # Reading ahead is just to capture type, which will not exist if type is fixed
-            nextByte = fp.read(1) if (inMapping or type_ == TYPE_NONE) else type_
+            nextByte = fpRead(1) if (inMapping or type_ == TYPE_NONE) else type_
 
     elif type_ == TYPE_NONE:
         # set to one to indicate that not finished yet
         count = 1
         counting = False
     else:
-        raise DecoderException(fp, 'Container type without count')
+        raise DecoderException('Container type without count')
     return nextByte, counting, count, type_, container
 
 
@@ -183,10 +186,10 @@ __methodMap = {TYPE_NULL: (lambda _, __: None),
 
 
 # pylint: disable=too-many-branches
-def __decodeContainer(fp, inMapping, noBytes):  # noqa (complexity)
+def __decodeContainer(fpRead, inMapping, noBytes):  # noqa (complexity)
     """marker - start of container marker (for sanity checking only)
        container - what to add elements to"""
-    marker, counting, count, type_, container = __getContainerParams(fp, inMapping, noBytes)
+    marker, counting, count, type_, container = __getContainerParams(fpRead, inMapping, noBytes)
     # stack for keeping track of child-containers
     stack = deque()
     # key for current object
@@ -206,21 +209,21 @@ def __decodeContainer(fp, inMapping, noBytes):  # noqa (complexity)
             else:
                 # without count, must read next character (since current one is container-end)
                 if not counting:
-                    marker = fp.read(1) if (inMapping or type_ == TYPE_NONE) else type_
+                    marker = fpRead(1) if (inMapping or type_ == TYPE_NONE) else type_
                 inMapping, counting, type_ = oldInMapping, oldCounting, oldType_
         else:
             # decode key for object
             if inMapping:
-                key = __decodeObjectKey(fp, marker)
-                marker = fp.read(1) if type_ == TYPE_NONE else type_
+                key = __decodeObjectKey(fpRead, marker)
+                marker = fpRead(1) if type_ == TYPE_NONE else type_
 
             # decode value
             try:
-                value = __methodMap[marker](fp, marker)
+                value = __methodMap[marker](fpRead, marker)
             except KeyError:
                 handled = False
             else:
-                marker = fp.read(1) if (inMapping or type_ == TYPE_NONE) else type_
+                marker = fpRead(1) if (inMapping or type_ == TYPE_NONE) else type_
                 handled = True
 
             # handle outside above except (on KeyError) so do not have unfriendly "exception within except" backtrace
@@ -229,15 +232,15 @@ def __decodeContainer(fp, inMapping, noBytes):  # noqa (complexity)
                 if marker == ARRAY_START:
                     stack.append((inMapping, counting, count, container, type_, key))
                     inMapping = False
-                    marker, counting, count, type_, container = __getContainerParams(fp, inMapping, noBytes)
+                    marker, counting, count, type_, container = __getContainerParams(fpRead, inMapping, noBytes)
                     continue
                 elif marker == OBJECT_START:
                     stack.append((inMapping, counting, count, container, type_, key))
                     inMapping = True
-                    marker, counting, count, type_, container = __getContainerParams(fp, inMapping, noBytes)
+                    marker, counting, count, type_, container = __getContainerParams(fpRead, inMapping, noBytes)
                     continue
                 else:
-                    raise DecoderException(fp, 'Invalid marker within %s' % ('object' if inMapping else 'array'))
+                    raise DecoderException('Invalid marker within %s' % ('object' if inMapping else 'array'))
 
         # assign (key and) value now that they have been decoded fully
         if inMapping:
@@ -295,17 +298,21 @@ def load(fp, no_bytes=False):
         | null                             | None          |
         +----------------------------------+---------------+
     """
-    marker = fp.read(1)
+    fpRead = fp.read
+    marker = fpRead(1)
     try:
-        return __methodMap[marker](fp, marker)
-    except KeyError:
-        pass
-    if marker == ARRAY_START:
-        return __decodeContainer(fp, False, no_bytes)
-    elif marker == OBJECT_START:
-        return __decodeContainer(fp, True, no_bytes)
-    else:
-        raise DecoderException(fp, 'Invalid marker')
+        try:
+            return __methodMap[marker](fpRead, marker)
+        except KeyError:
+            pass
+        if marker == ARRAY_START:
+            return __decodeContainer(fpRead, False, no_bytes)
+        elif marker == OBJECT_START:
+            return __decodeContainer(fpRead, True, no_bytes)
+        else:
+            raise DecoderException('Invalid marker')
+    except DecoderException as e:
+        raise DecoderException(e.args[0], fp) from e
 
 
 def loadb(chars, no_bytes=False):

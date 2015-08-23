@@ -3,7 +3,8 @@
 # Re-generate extension modules - this has to be called if any change is made to
 # any .py or .pxd
 
-rm -f ubjson/*.c
+# code generation can fail if out-of-date compiled extensions exist in-place
+git clean -fXd ubjson
 for ext in compat decoder encoder markers; do
     ext="ubjson/${ext}.py"
     # exclude module main so still works when using compiled extensions
