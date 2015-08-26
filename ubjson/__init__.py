@@ -15,7 +15,7 @@ decoded = ubjson.loadb(encoded)
 To use a file-like object as input/output, use dump() & load() methods instead.
 """
 
-__version__ = '0.4'
+__version__ = '0.5'
 
 __all__ = ('dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
 

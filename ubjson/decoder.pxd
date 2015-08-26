@@ -51,16 +51,16 @@ cdef unicode __decodeObjectKey(fpRead, marker)
 
 
 @cython.locals(inMapping=cython.bint, noBytes=cython.bint, nextByte=bytes, type_=bytes, count=int)
-cdef object __getContainerParams(fpRead, inMapping, noBytes)
+cdef object __getContainerParams(fpRead, inMapping, noBytes, object_pairs_hook)
 
 
 @cython.locals(inMapping=cython.bint, noBytes=cython.bint, marker=bytes, counting=cython.bint, count=int, type_=bytes)
-cdef object __decodeContainer(fpRead, inMapping, noBytes)
+cdef object __decodeContainer(fpRead, inMapping, noBytes, object_pairs_hook)
 
 
 @cython.locals(no_bytes=cython.bint, marker=bytes)
-cpdef object load(fp, no_bytes=*)
+cpdef object load(fp, no_bytes=*, object_pairs_hook=*)
 
 
 @cython.locals(no_bytes=cython.bint)
-cpdef object loadb(chars, no_bytes=*)
+cpdef object loadb(chars, no_bytes=*, object_pairs_hook=*)

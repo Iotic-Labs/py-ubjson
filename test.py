@@ -267,10 +267,15 @@ class TestEncodeDecode(TestCase):
             self.checkEncDec(obj, **opts)
 
         # dictionary key sorting
-        obj1 = OrderedDict.fromkeys('abc')
-        obj2 = OrderedDict.fromkeys('cba')
+        obj1 = OrderedDict.fromkeys('abcdefghijkl')
+        obj2 = OrderedDict.fromkeys('abcdefghijkl'[::-1])
         self.assertNotEqual(ubjdumpb(obj1), ubjdumpb(obj2))
         self.assertEqual(ubjdumpb(obj1, sort_keys=True), ubjdumpb(obj2, sort_keys=True))
+
+        # custom mapping class
+        with self.assertRaises(TypeError):
+            ubjloadb(TYPE_NULL, object_pairs_hook=list)
+        self.assertEqual(ubjloadb(ubjdumpb(obj1), object_pairs_hook=OrderedDict), obj1)
 
     def test_circular(self):
         sequence = [1, 2, 3]

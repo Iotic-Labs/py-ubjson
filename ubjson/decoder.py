@@ -9,7 +9,7 @@ from collections import deque
 from struct import unpack, error as StructError
 from decimal import Decimal, DecimalException
 
-from .compat import raise_from
+from .compat import raise_from, Mapping
 try:
     from .markers import (TYPE_NONE, TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16,
                           TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
@@ -123,8 +123,8 @@ def __decodeObjectKey(fpRead, marker):
         raise_from(DecoderException('Failed to decode object key'), e)
 
 
-def __getContainerParams(fpRead, inMapping, noBytes):  # pylint: disable=too-many-branches
-    container = {} if inMapping else []
+def __getContainerParams(fpRead, inMapping, noBytes, object_pairs_hook):  # pylint: disable=too-many-branches
+    container = object_pairs_hook() if inMapping else []
     nextByte = fpRead(1)
     if nextByte == CONTAINER_TYPE:
         nextByte = fpRead(1)
@@ -185,11 +185,11 @@ __methodMap = {TYPE_NULL: (lambda _, __: None),
                TYPE_STRING: __decodeString}
 
 
-# pylint: disable=too-many-branches
-def __decodeContainer(fpRead, inMapping, noBytes):  # noqa (complexity)
+# pylint: disable=too-many-branches,too-many-locals
+def __decodeContainer(fpRead, inMapping, noBytes, object_pairs_hook):  # noqa (complexity)
     """marker - start of container marker (for sanity checking only)
        container - what to add elements to"""
-    marker, counting, count, type_, container = __getContainerParams(fpRead, inMapping, noBytes)
+    marker, counting, count, type_, container = __getContainerParams(fpRead, inMapping, noBytes, object_pairs_hook)
     # stack for keeping track of child-containers
     stack = deque()
     # key for current object
@@ -232,12 +232,14 @@ def __decodeContainer(fpRead, inMapping, noBytes):  # noqa (complexity)
                 if marker == ARRAY_START:
                     stack.append((inMapping, counting, count, container, type_, key))
                     inMapping = False
-                    marker, counting, count, type_, container = __getContainerParams(fpRead, inMapping, noBytes)
+                    marker, counting, count, type_, container = __getContainerParams(fpRead, inMapping, noBytes,
+                                                                                     object_pairs_hook)
                     continue
                 elif marker == OBJECT_START:
                     stack.append((inMapping, counting, count, container, type_, key))
                     inMapping = True
-                    marker, counting, count, type_, container = __getContainerParams(fpRead, inMapping, noBytes)
+                    marker, counting, count, type_, container = __getContainerParams(fpRead, inMapping, noBytes,
+                                                                                     object_pairs_hook)
                     continue
                 else:
                     raise DecoderException('Invalid marker within %s' % ('object' if inMapping else 'array'))
@@ -253,7 +255,7 @@ def __decodeContainer(fpRead, inMapping, noBytes):  # noqa (complexity)
     return container
 
 
-def load(fp, no_bytes=False):
+def load(fp, no_bytes=False, object_pairs_hook=None):
     """Decodes and returns UBJSON from the given file-like object
 
     Args:
@@ -261,6 +263,9 @@ def load(fp, no_bytes=False):
         no_bytes (bool): If set, typed UBJSON arrays (uint8) will not be
                          converted to a bytes instance and instead treated like
                          any other array (i.e. result in a list).
+        object_pairs_hook (class): A alternative class to use as the mapping
+                                   type (instead of dict), e.g. OrderedDict
+                                   from the collections module.
 
     Returns:
         Decoded object
@@ -298,6 +303,11 @@ def load(fp, no_bytes=False):
         | null                             | None          |
         +----------------------------------+---------------+
     """
+    if object_pairs_hook is None:
+        object_pairs_hook = dict
+    elif not issubclass(object_pairs_hook, Mapping):
+        raise TypeError('object_pairs_hook is not a mapping type')
+
     fpRead = fp.read
     marker = fpRead(1)
     try:
@@ -306,17 +316,17 @@ def load(fp, no_bytes=False):
         except KeyError:
             pass
         if marker == ARRAY_START:
-            return __decodeContainer(fpRead, False, no_bytes)
+            return __decodeContainer(fpRead, False, bool(no_bytes), object_pairs_hook)
         elif marker == OBJECT_START:
-            return __decodeContainer(fpRead, True, no_bytes)
+            return __decodeContainer(fpRead, True, bool(no_bytes), object_pairs_hook)
         else:
             raise DecoderException('Invalid marker')
     except DecoderException as e:
-        raise DecoderException(e.args[0], fp) from e
+        raise_from(DecoderException(e.args[0], fp), e)
 
 
-def loadb(chars, no_bytes=False):
+def loadb(chars, no_bytes=False, object_pairs_hook=None):
     """Decodes and returns UBJSON from the given bytes or bytesarray object. See
        load() for available arguments."""
     with BytesIO(chars) as fp:
-        return load(fp, no_bytes=no_bytes)
+        return load(fp, no_bytes=no_bytes, object_pairs_hook=object_pairs_hook)

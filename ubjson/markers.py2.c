@@ -895,7 +895,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   /* "ubjson/markers.py":8
  * 
  * # Value types
- * TYPE_NONE = b'\x00'             # <<<<<<<<<<<<<<
+ * TYPE_NONE = b'\x00'  # Used internally only, not part of ubjson specification             # <<<<<<<<<<<<<<
  * TYPE_NULL = b'Z'
  * TYPE_BOOL_TRUE = b'T'
  */
@@ -906,7 +906,7 @@ PyMODINIT_FUNC PyInit_markers(void)
 
   /* "ubjson/markers.py":9
  * # Value types
- * TYPE_NONE = b'\x00'
+ * TYPE_NONE = b'\x00'  # Used internally only, not part of ubjson specification
  * TYPE_NULL = b'Z'             # <<<<<<<<<<<<<<
  * TYPE_BOOL_TRUE = b'T'
  * TYPE_BOOL_FALSE = b'F'
@@ -917,7 +917,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_GIVEREF(__pyx_n_b_Z);
 
   /* "ubjson/markers.py":10
- * TYPE_NONE = b'\x00'
+ * TYPE_NONE = b'\x00'  # Used internally only, not part of ubjson specification
  * TYPE_NULL = b'Z'
  * TYPE_BOOL_TRUE = b'T'             # <<<<<<<<<<<<<<
  * TYPE_BOOL_FALSE = b'F'
