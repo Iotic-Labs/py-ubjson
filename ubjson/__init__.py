@@ -17,7 +17,17 @@ To use a file-like object as input/output, use dump() & load() methods instead.
 
 __version__ = '0.5'
 
-__all__ = ('dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
+__all__ = ('extension_enabled', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
+
+# Whether cython extension is in use
+try:
+    __compiled()
+except NameError:
+    extension_enabled = False
+else:
+    extension_enabled = True
+
+#extension_enabled = False
 
 # pylint: disable=unused-import
 from .encoder import dump, dumpb, EncoderException  # noqa

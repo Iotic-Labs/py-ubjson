@@ -5306,10 +5306,10 @@ static PyObject *__pyx_f_6ubjson_7decoder___getContainerParams(PyObject *__pyx_v
  */
 
 static PyObject *__pyx_f_6ubjson_7decoder___decodeContainer(PyObject *__pyx_v_fpRead, int __pyx_v_inMapping, int __pyx_v_noBytes, PyObject *__pyx_v_object_pairs_hook) {
+  int __pyx_v_counting;
+  int __pyx_v_count;
   PyObject *__pyx_v_type_ = 0;
   PyObject *__pyx_v_marker = 0;
-  int __pyx_v_count;
-  int __pyx_v_counting;
   PyObject *__pyx_v_container = NULL;
   PyObject *__pyx_v_stack = NULL;
   PyObject *__pyx_v_key = NULL;
