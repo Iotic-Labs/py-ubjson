@@ -1130,7 +1130,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_GIVEREF(__pyx_kp_b__7);
 
   /* "ubjson/markers.py":1
- * # Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.             # <<<<<<<<<<<<<<
+ * # Copyright (c) 2015, Iotic Labs Ltd.             # <<<<<<<<<<<<<<
  * # All rights reserved.
  * # Licensed under 2-clause BSD license - see LICENSE file for details.
  */

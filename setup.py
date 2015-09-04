@@ -1,4 +1,4 @@
-# Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.
+# Copyright (c) 2015, Iotic Labs Ltd.
 # All rights reserved.
 # Licensed under 2-clause BSD license - see LICENSE file for details.
 
@@ -41,8 +41,10 @@ extension = '.py3.c' if sys.version_info[0] >= 3 else  '.py2.c'
 setup(name='ubjson',
       version=version,
       description='Universal Binary JSON encoder/decoder',
-      author='Vilnis Termanis',
-      author_email='vilnis.termanis@iotic-labs.com',
+      author='Iotic Labs Ltd.',
+      author_email='info@iotic-labs.com',
+      maintainer='Vilnis Termanis',
+      maintainer_email='vilnis.termanis@iotic-labs.com',
       url='https://github.com/Iotic-Labs/py-ubjson',
       license='BSD 2-clause',
       packages=['ubjson'],

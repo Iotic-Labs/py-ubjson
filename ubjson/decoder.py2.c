@@ -1854,8 +1854,8 @@ static PyObject *__pyx_pf_6ubjson_7decoder_16DecoderException___init__(CYTHON_UN
  */
 
 static PyObject *__pyx_f_6ubjson_7decoder___decodeHighPrec(PyObject *__pyx_v_fpRead, CYTHON_UNUSED PyObject *__pyx_v_marker) {
-  int __pyx_v_length;
   PyObject *__pyx_v_raw = 0;
+  int __pyx_v_length;
   PyObject *__pyx_v_e = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -3407,8 +3407,8 @@ static PyObject *__pyx_f_6ubjson_7decoder___decodeChar(PyObject *__pyx_v_fpRead,
  */
 
 static PyObject *__pyx_f_6ubjson_7decoder___decodeString(PyObject *__pyx_v_fpRead, CYTHON_UNUSED PyObject *__pyx_v_marker) {
-  int __pyx_v_length;
   PyObject *__pyx_v_raw = 0;
+  int __pyx_v_length;
   PyObject *__pyx_v_e = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -3742,8 +3742,8 @@ static PyObject *__pyx_f_6ubjson_7decoder___decodeString(PyObject *__pyx_v_fpRea
  */
 
 static PyObject *__pyx_f_6ubjson_7decoder___decodeObjectKey(PyObject *__pyx_v_fpRead, PyObject *__pyx_v_marker) {
-  int __pyx_v_length;
   PyObject *__pyx_v_raw = 0;
+  int __pyx_v_length;
   PyObject *__pyx_v_e = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -4073,9 +4073,9 @@ static PyObject *__pyx_f_6ubjson_7decoder___decodeObjectKey(PyObject *__pyx_v_fp
  */
 
 static PyObject *__pyx_f_6ubjson_7decoder___getContainerParams(PyObject *__pyx_v_fpRead, int __pyx_v_inMapping, int __pyx_v_noBytes, PyObject *__pyx_v_object_pairs_hook) {
-  PyObject *__pyx_v_nextByte = 0;
   int __pyx_v_count;
   PyObject *__pyx_v_type_ = 0;
+  PyObject *__pyx_v_nextByte = 0;
   PyObject *__pyx_v_container = NULL;
   int __pyx_v_counting;
   PyObject *__pyx_v_value = NULL;
@@ -4758,8 +4758,8 @@ static PyObject *__pyx_f_6ubjson_7decoder___getContainerParams(PyObject *__pyx_v
   __Pyx_AddTraceback("ubjson.decoder.__getContainerParams", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_nextByte);
   __Pyx_XDECREF(__pyx_v_type_);
+  __Pyx_XDECREF(__pyx_v_nextByte);
   __Pyx_XDECREF(__pyx_v_container);
   __Pyx_XDECREF(__pyx_v_value);
   __Pyx_XGIVEREF(__pyx_r);
@@ -4776,10 +4776,10 @@ static PyObject *__pyx_f_6ubjson_7decoder___getContainerParams(PyObject *__pyx_v
  */
 
 static PyObject *__pyx_f_6ubjson_7decoder___decodeContainer(PyObject *__pyx_v_fpRead, int __pyx_v_inMapping, int __pyx_v_noBytes, PyObject *__pyx_v_object_pairs_hook) {
-  int __pyx_v_counting;
+  int __pyx_v_count;
   PyObject *__pyx_v_type_ = 0;
   PyObject *__pyx_v_marker = 0;
-  int __pyx_v_count;
+  int __pyx_v_counting;
   PyObject *__pyx_v_container = NULL;
   PyObject *__pyx_v_stack = NULL;
   PyObject *__pyx_v_key = NULL;
@@ -9204,7 +9204,7 @@ PyMODINIT_FUNC PyInit_decoder(void)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "ubjson/decoder.py":1
- * # Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.             # <<<<<<<<<<<<<<
+ * # Copyright (c) 2015, Iotic Labs Ltd.             # <<<<<<<<<<<<<<
  * # All rights reserved.
  * # Licensed under 2-clause BSD license - see LICENSE file for details.
  */

@@ -987,7 +987,7 @@ PyMODINIT_FUNC PyInit_ubjson(void)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "ubjson/__init__.py":1
- * # Copyright (c) 2015, V. Termanis, Iotic Labs Ltd.             # <<<<<<<<<<<<<<
+ * # Copyright (c) 2015, Iotic Labs Ltd.             # <<<<<<<<<<<<<<
  * # All rights reserved.
  * # Licensed under 2-clause BSD license - see LICENSE file for details.
  */
