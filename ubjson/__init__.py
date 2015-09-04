@@ -21,13 +21,12 @@ __all__ = ('extension_enabled', 'dump', 'dumpb', 'EncoderException', 'load', 'lo
 
 # Whether cython extension is in use
 try:
-    __compiled()
+    __compiled()  # pylint: disable=undefined-variable
 except NameError:
     extension_enabled = False
 else:
     extension_enabled = True
 
-#extension_enabled = False
 
 # pylint: disable=unused-import
 from .encoder import dump, dumpb, EncoderException  # noqa

@@ -7,7 +7,7 @@ import warnings
 from glob import iglob
 from distutils.core import setup, Extension
 from distutils.command.build_ext import build_ext
-from distutils.errors import CCompilerError, DistutilsOptionError
+from distutils.errors import CCompilerError
 from distutils.errors import DistutilsPlatformError, DistutilsExecError
 
 from ubjson import __version__ as version
@@ -36,31 +36,32 @@ class build_ext_warn_on_fail(build_ext):
                           " shows how the compilation failed." % ext.name)
 
 
-extension = '.py3.c' if sys.version_info[0] >= 3 else  '.py2.c'
+extension = '.py3.c' if sys.version_info[0] >= 3 else '.py2.c'
 
-setup(name='ubjson',
-      version=version,
-      description='Universal Binary JSON encoder/decoder',
-      author='Iotic Labs Ltd.',
-      author_email='info@iotic-labs.com',
-      maintainer='Vilnis Termanis',
-      maintainer_email='vilnis.termanis@iotic-labs.com',
-      url='https://github.com/Iotic-Labs/py-ubjson',
-      license='BSD 2-clause',
-      packages=['ubjson'],
-      ext_modules = [Extension(name[:-len(extension)], [name]) for name in iglob('ubjson/*' + extension)],
-      cmdclass={"build_ext": build_ext_warn_on_fail},
-      classifiers=(
-          'Development Status :: 4 - Beta',
-          'Intended Audience :: Developers',
-          'License :: OSI Approved :: BSD License',
-          'Programming Language :: C',
-          'Programming Language :: Python',
-          'Programming Language :: Python :: 2.7',
-          'Programming Language :: Python :: 3.2',
-          'Programming Language :: Python :: 3.3',
-          'Programming Language :: Python :: 3.4',
-          'Topic :: Software Development :: Libraries'
-          'Topic :: Software Development :: Libraries :: Python Modules',
-          )
-     )
+setup(
+    name='ubjson',
+    version=version,
+    description='Universal Binary JSON encoder/decoder',
+    author='Iotic Labs Ltd.',
+    author_email='info@iotic-labs.com',
+    maintainer='Vilnis Termanis',
+    maintainer_email='vilnis.termanis@iotic-labs.com',
+    url='https://github.com/Iotic-Labs/py-ubjson',
+    license='BSD 2-clause',
+    packages=['ubjson'],
+    ext_modules=[Extension(name[:-len(extension)], [name]) for name in iglob('ubjson/*' + extension)],
+    cmdclass={"build_ext": build_ext_warn_on_fail},
+    classifiers=(
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Programming Language :: C',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Topic :: Software Development :: Libraries',
+        'Topic :: Software Development :: Libraries :: Python Modules'
+        )
+    )
