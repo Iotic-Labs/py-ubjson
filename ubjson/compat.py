@@ -1,6 +1,4 @@
-# Copyright (c) 2015, Iotic Labs Ltd.
-# All rights reserved.
-# Licensed under 2-clause BSD license - see LICENSE file for details.
+# Copyright (c) 2015 Iotic Labs Ltd. All rights reserved.
 
 # Original six.py copyright notice, on which snippets herein are based:
 #

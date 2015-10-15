@@ -1,6 +1,4 @@
-# Copyright (c) 2015, Iotic Labs Ltd.
-# All rights reserved.
-# Licensed under 2-clause BSD license - see LICENSE file for details.
+# Copyright (c) 2015 Iotic Labs Ltd. All rights reserved.
 
 import sys
 import warnings
@@ -47,14 +45,14 @@ setup(
     maintainer='Vilnis Termanis',
     maintainer_email='vilnis.termanis@iotic-labs.com',
     url='https://github.com/Iotic-Labs/py-ubjson',
-    license='BSD 2-clause',
+    # TODO - set once making public
+    # license='???',
     packages=['ubjson'],
     ext_modules=[Extension(name[:-len(extension)], [name]) for name in iglob('ubjson/*' + extension)],
     cmdclass={"build_ext": build_ext_warn_on_fail},
     classifiers=(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
         'Programming Language :: C',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',

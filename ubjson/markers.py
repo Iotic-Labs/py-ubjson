@@ -1,6 +1,4 @@
-# Copyright (c) 2015, Iotic Labs Ltd.
-# All rights reserved.
-# Licensed under 2-clause BSD license - see LICENSE file for details.
+# Copyright (c) 2015 Iotic Labs Ltd. All rights reserved.
 
 """UBJSON marker defitions"""
 
