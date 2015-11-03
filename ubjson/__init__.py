@@ -15,15 +15,15 @@ To use a file-like object as input/output, use dump() & load() methods instead.
 
 __version__ = '0.5'
 
-__all__ = ('extension_enabled', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
+__all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
 
 # Whether cython extension is in use
 try:
     __compiled()  # pylint: disable=undefined-variable
 except NameError:
-    extension_enabled = False
+    EXTENSION_ENABLED = False
 else:
-    extension_enabled = True
+    EXTENSION_ENABLED = True
 
 
 # pylint: disable=unused-import

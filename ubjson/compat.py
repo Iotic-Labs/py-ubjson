@@ -36,31 +36,31 @@ PY2 = (version_info[0] == 2)
 
 if PY2:
     # pylint:disable=undefined-variable
-    integer_types = (int, long)  # noqa
-    unicode_type = unicode  # noqa
-    text_types = (str, unicode)  # noqa
-    bytes_types = (str,)
+    INTEGER_TYPES = (int, long)  # noqa
+    UNICODE_TYPE = unicode  # noqa
+    TEXT_TYPES = (str, unicode)  # noqa
+    BYTES_TYPES = (str,)
 
-    def u(item):
+    def u(item):  # pylint: disable=invalid-name
         return unicode(item)  # noqa
 
-    stdin_raw = stdin
-    stdout_raw = stdout
-    stderr_raw = stderr
+    STDIN_RAW = stdin
+    STDOUT_RAW = stdout
+    STDERR_RAW = stderr
 
 else:
-    integer_types = (int,)
-    unicode_type = str
-    text_types = (str,)
-    bytes_types = (bytes, bytearray)
+    INTEGER_TYPES = (int,)
+    UNICODE_TYPE = str  # pylint: disable=invalid-name
+    TEXT_TYPES = (str,)
+    BYTES_TYPES = (bytes, bytearray)
     # pylint: disable=unused-import,no-name-in-module,import-error
 
-    def u(item):
+    def u(item):  # pylint: disable=invalid-name
         return str(item)
 
-    stdin_raw = stdin.buffer  # pylint: disable=no-member
-    stdout_raw = stdout.buffer  # pylint: disable=no-member
-    stderr_raw = stderr.buffer  # pylint: disable=no-member
+    STDIN_RAW = stdin.buffer  # pylint: disable=no-member
+    STDOUT_RAW = stdout.buffer  # pylint: disable=no-member
+    STDERR_RAW = stderr.buffer  # pylint: disable=no-member
 
 if version_info[:2] == (3, 2):
     # pylint: disable=exec-used
