@@ -593,11 +593,13 @@ static char __pyx_k_version[] = "__version__";
 static char __pyx_k_NameError[] = "NameError";
 static char __pyx_k_DecoderException[] = "DecoderException";
 static char __pyx_k_EncoderException[] = "EncoderException";
-static char __pyx_k_extension_enabled[] = "extension_enabled";
+static char __pyx_k_EXTENSION_ENABLED[] = "EXTENSION_ENABLED";
 static char __pyx_k_UBJSON_draft_12_implementation_w[] = "UBJSON (draft 12) implementation without No-Op support\n\nExample usage:\n\n# To encode\nencoded = ubjson.dumpb({'a': 1})\n\n# To decode\ndecoded = ubjson.loadb(encoded)\n\nTo use a file-like object as input/output, use dump() & load() methods instead.\n";
 static PyObject *__pyx_kp_u_0_5;
 static PyObject *__pyx_n_s_DecoderException;
 static PyObject *__pyx_n_u_DecoderException;
+static PyObject *__pyx_n_s_EXTENSION_ENABLED;
+static PyObject *__pyx_n_u_EXTENSION_ENABLED;
 static PyObject *__pyx_n_s_EncoderException;
 static PyObject *__pyx_n_u_EncoderException;
 static PyObject *__pyx_n_s_NameError;
@@ -608,8 +610,6 @@ static PyObject *__pyx_n_u_dump;
 static PyObject *__pyx_n_s_dumpb;
 static PyObject *__pyx_n_u_dumpb;
 static PyObject *__pyx_n_s_encoder;
-static PyObject *__pyx_n_s_extension_enabled;
-static PyObject *__pyx_n_u_extension_enabled;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_load;
 static PyObject *__pyx_n_u_load;
@@ -704,6 +704,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_u_0_5, __pyx_k_0_5, sizeof(__pyx_k_0_5), 0, 1, 0, 0},
   {&__pyx_n_s_DecoderException, __pyx_k_DecoderException, sizeof(__pyx_k_DecoderException), 0, 0, 1, 1},
   {&__pyx_n_u_DecoderException, __pyx_k_DecoderException, sizeof(__pyx_k_DecoderException), 0, 1, 0, 1},
+  {&__pyx_n_s_EXTENSION_ENABLED, __pyx_k_EXTENSION_ENABLED, sizeof(__pyx_k_EXTENSION_ENABLED), 0, 0, 1, 1},
+  {&__pyx_n_u_EXTENSION_ENABLED, __pyx_k_EXTENSION_ENABLED, sizeof(__pyx_k_EXTENSION_ENABLED), 0, 1, 0, 1},
   {&__pyx_n_s_EncoderException, __pyx_k_EncoderException, sizeof(__pyx_k_EncoderException), 0, 0, 1, 1},
   {&__pyx_n_u_EncoderException, __pyx_k_EncoderException, sizeof(__pyx_k_EncoderException), 0, 1, 0, 1},
   {&__pyx_n_s_NameError, __pyx_k_NameError, sizeof(__pyx_k_NameError), 0, 0, 1, 1},
@@ -714,8 +716,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_dumpb, __pyx_k_dumpb, sizeof(__pyx_k_dumpb), 0, 0, 1, 1},
   {&__pyx_n_u_dumpb, __pyx_k_dumpb, sizeof(__pyx_k_dumpb), 0, 1, 0, 1},
   {&__pyx_n_s_encoder, __pyx_k_encoder, sizeof(__pyx_k_encoder), 0, 0, 1, 1},
-  {&__pyx_n_s_extension_enabled, __pyx_k_extension_enabled, sizeof(__pyx_k_extension_enabled), 0, 0, 1, 1},
-  {&__pyx_n_u_extension_enabled, __pyx_k_extension_enabled, sizeof(__pyx_k_extension_enabled), 0, 1, 0, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_load, __pyx_k_load, sizeof(__pyx_k_load), 0, 0, 1, 1},
   {&__pyx_n_u_load, __pyx_k_load, sizeof(__pyx_k_load), 0, 1, 0, 1},
@@ -741,11 +741,11 @@ static int __Pyx_InitCachedConstants(void) {
   /* "ubjson/__init__.py":18
  * __version__ = '0.5'
  * 
- * __all__ = ('extension_enabled', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')             # <<<<<<<<<<<<<<
+ * __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')             # <<<<<<<<<<<<<<
  * 
  * # Whether cython extension is in use
  */
-  __pyx_tuple_ = PyTuple_Pack(7, __pyx_n_u_extension_enabled, __pyx_n_u_dump, __pyx_n_u_dumpb, __pyx_n_u_EncoderException, __pyx_n_u_load, __pyx_n_u_loadb, __pyx_n_u_DecoderException); if (unlikely(!__pyx_tuple_)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple_ = PyTuple_Pack(7, __pyx_n_u_EXTENSION_ENABLED, __pyx_n_u_dump, __pyx_n_u_dumpb, __pyx_n_u_EncoderException, __pyx_n_u_load, __pyx_n_u_loadb, __pyx_n_u_DecoderException); if (unlikely(!__pyx_tuple_)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
   __Pyx_RefNannyFinishContext();
@@ -866,14 +866,14 @@ PyMODINIT_FUNC PyInit_ubjson(void)
  * 
  * __version__ = '0.5'             # <<<<<<<<<<<<<<
  * 
- * __all__ = ('extension_enabled', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
+ * __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
  */
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_kp_u_0_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 16; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "ubjson/__init__.py":18
  * __version__ = '0.5'
  * 
- * __all__ = ('extension_enabled', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')             # <<<<<<<<<<<<<<
+ * __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')             # <<<<<<<<<<<<<<
  * 
  * # Whether cython extension is in use
  */
@@ -895,7 +895,7 @@ PyMODINIT_FUNC PyInit_ubjson(void)
  * try:
  *     __compiled()  # pylint: disable=undefined-variable             # <<<<<<<<<<<<<<
  * except NameError:
- *     extension_enabled = False
+ *     EXTENSION_ENABLED = False
  */
       __pyx_f_6ubjson_8__init_____compiled(0);
 
@@ -909,14 +909,14 @@ PyMODINIT_FUNC PyInit_ubjson(void)
     }
 
     /* "ubjson/__init__.py":26
- *     extension_enabled = False
+ *     EXTENSION_ENABLED = False
  * else:
- *     extension_enabled = True             # <<<<<<<<<<<<<<
+ *     EXTENSION_ENABLED = True             # <<<<<<<<<<<<<<
  * 
  * 
  */
     /*else:*/ {
-      if (PyDict_SetItem(__pyx_d, __pyx_n_s_extension_enabled, Py_True) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 26; __pyx_clineno = __LINE__; goto __pyx_L4_except_error;}
+      if (PyDict_SetItem(__pyx_d, __pyx_n_s_EXTENSION_ENABLED, Py_True) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 26; __pyx_clineno = __LINE__; goto __pyx_L4_except_error;}
     }
     goto __pyx_L9_try_end;
     __pyx_L4_except_error:;
