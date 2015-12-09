@@ -577,7 +577,7 @@ int __pyx_module_is_main_ubjson____init__ = 0;
 
 /* Implementation of 'ubjson.__init__' */
 static PyObject *__pyx_builtin_NameError;
-static char __pyx_k_0_5[] = "0.5";
+static char __pyx_k_0_6[] = "0.6";
 static char __pyx_k_all[] = "__all__";
 static char __pyx_k_dump[] = "dump";
 static char __pyx_k_load[] = "load";
@@ -595,7 +595,7 @@ static char __pyx_k_DecoderException[] = "DecoderException";
 static char __pyx_k_EncoderException[] = "EncoderException";
 static char __pyx_k_EXTENSION_ENABLED[] = "EXTENSION_ENABLED";
 static char __pyx_k_UBJSON_draft_12_implementation_w[] = "UBJSON (draft 12) implementation without No-Op support\n\nExample usage:\n\n# To encode\nencoded = ubjson.dumpb({'a': 1})\n\n# To decode\ndecoded = ubjson.loadb(encoded)\n\nTo use a file-like object as input/output, use dump() & load() methods instead.\n";
-static PyObject *__pyx_kp_u_0_5;
+static PyObject *__pyx_kp_u_0_6;
 static PyObject *__pyx_n_s_DecoderException;
 static PyObject *__pyx_n_u_DecoderException;
 static PyObject *__pyx_n_s_EXTENSION_ENABLED;
@@ -622,7 +622,7 @@ static PyObject *__pyx_n_s_version;
 static PyObject *__pyx_pf_6ubjson_8__init_____compiled(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_tuple_;
 
-/* "ubjson/__init__.pxd":6
+/* "ubjson/__init__.pxd":19
  * 
  * # Used to check whether module has been cythonised
  * cpdef inline void __compiled():             # <<<<<<<<<<<<<<
@@ -660,7 +660,7 @@ static PyObject *__pyx_pf_6ubjson_8__init_____compiled(CYTHON_UNUSED PyObject *_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__compiled", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_void_to_None(__pyx_f_6ubjson_8__init_____compiled(0)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 6; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_void_to_None(__pyx_f_6ubjson_8__init_____compiled(0)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 19; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -701,7 +701,7 @@ static struct PyModuleDef __pyx_moduledef = {
 #endif
 
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
-  {&__pyx_kp_u_0_5, __pyx_k_0_5, sizeof(__pyx_k_0_5), 0, 1, 0, 0},
+  {&__pyx_kp_u_0_6, __pyx_k_0_6, sizeof(__pyx_k_0_6), 0, 1, 0, 0},
   {&__pyx_n_s_DecoderException, __pyx_k_DecoderException, sizeof(__pyx_k_DecoderException), 0, 0, 1, 1},
   {&__pyx_n_u_DecoderException, __pyx_k_DecoderException, sizeof(__pyx_k_DecoderException), 0, 1, 0, 1},
   {&__pyx_n_s_EXTENSION_ENABLED, __pyx_k_EXTENSION_ENABLED, sizeof(__pyx_k_EXTENSION_ENABLED), 0, 0, 1, 1},
@@ -728,7 +728,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_NameError = __Pyx_GetBuiltinName(__pyx_n_s_NameError); if (!__pyx_builtin_NameError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_builtin_NameError = __Pyx_GetBuiltinName(__pyx_n_s_NameError); if (!__pyx_builtin_NameError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 36; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -738,14 +738,14 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "ubjson/__init__.py":18
- * __version__ = '0.5'
+  /* "ubjson/__init__.py":31
+ * __version__ = '0.6'
  * 
  * __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')             # <<<<<<<<<<<<<<
  * 
  * # Whether cython extension is in use
  */
-  __pyx_tuple_ = PyTuple_Pack(7, __pyx_n_u_EXTENSION_ENABLED, __pyx_n_u_dump, __pyx_n_u_dumpb, __pyx_n_u_EncoderException, __pyx_n_u_load, __pyx_n_u_loadb, __pyx_n_u_DecoderException); if (unlikely(!__pyx_tuple_)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple_ = PyTuple_Pack(7, __pyx_n_u_EXTENSION_ENABLED, __pyx_n_u_dump, __pyx_n_u_dumpb, __pyx_n_u_EncoderException, __pyx_n_u_load, __pyx_n_u_loadb, __pyx_n_u_DecoderException); if (unlikely(!__pyx_tuple_)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 31; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
   __Pyx_RefNannyFinishContext();
@@ -861,25 +861,25 @@ PyMODINIT_FUNC PyInit_ubjson(void)
   if (__Pyx_patch_abc() < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   #endif
 
-  /* "ubjson/__init__.py":16
+  /* "ubjson/__init__.py":29
  * """
  * 
- * __version__ = '0.5'             # <<<<<<<<<<<<<<
+ * __version__ = '0.6'             # <<<<<<<<<<<<<<
  * 
  * __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_kp_u_0_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 16; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_kp_u_0_6) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 29; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "ubjson/__init__.py":18
- * __version__ = '0.5'
+  /* "ubjson/__init__.py":31
+ * __version__ = '0.6'
  * 
  * __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')             # <<<<<<<<<<<<<<
  * 
  * # Whether cython extension is in use
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_all, __pyx_tuple_) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_all, __pyx_tuple_) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 31; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "ubjson/__init__.py":21
+  /* "ubjson/__init__.py":34
  * 
  * # Whether cython extension is in use
  * try:             # <<<<<<<<<<<<<<
@@ -890,7 +890,7 @@ PyMODINIT_FUNC PyInit_ubjson(void)
     if (__pyx_t_1||__pyx_t_2||__pyx_t_3); else {/*mark used*/}
     /*try:*/ {
 
-      /* "ubjson/__init__.py":22
+      /* "ubjson/__init__.py":35
  * # Whether cython extension is in use
  * try:
  *     __compiled()  # pylint: disable=undefined-variable             # <<<<<<<<<<<<<<
@@ -899,7 +899,7 @@ PyMODINIT_FUNC PyInit_ubjson(void)
  */
       __pyx_f_6ubjson_8__init_____compiled(0);
 
-      /* "ubjson/__init__.py":21
+      /* "ubjson/__init__.py":34
  * 
  * # Whether cython extension is in use
  * try:             # <<<<<<<<<<<<<<
@@ -908,7 +908,7 @@ PyMODINIT_FUNC PyInit_ubjson(void)
  */
     }
 
-    /* "ubjson/__init__.py":26
+    /* "ubjson/__init__.py":39
  *     EXTENSION_ENABLED = False
  * else:
  *     EXTENSION_ENABLED = True             # <<<<<<<<<<<<<<
@@ -916,12 +916,12 @@ PyMODINIT_FUNC PyInit_ubjson(void)
  * 
  */
     /*else:*/ {
-      if (PyDict_SetItem(__pyx_d, __pyx_n_s_EXTENSION_ENABLED, Py_True) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 26; __pyx_clineno = __LINE__; goto __pyx_L4_except_error;}
+      if (PyDict_SetItem(__pyx_d, __pyx_n_s_EXTENSION_ENABLED, Py_True) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 39; __pyx_clineno = __LINE__; goto __pyx_L4_except_error;}
     }
     goto __pyx_L9_try_end;
     __pyx_L4_except_error:;
 
-    /* "ubjson/__init__.py":21
+    /* "ubjson/__init__.py":34
  * 
  * # Whether cython extension is in use
  * try:             # <<<<<<<<<<<<<<
@@ -932,14 +932,14 @@ PyMODINIT_FUNC PyInit_ubjson(void)
     __pyx_L9_try_end:;
   }
 
-  /* "ubjson/__init__.py":30
+  /* "ubjson/__init__.py":43
  * 
  * # pylint: disable=unused-import
  * from .encoder import dump, dumpb, EncoderException  # noqa             # <<<<<<<<<<<<<<
  * # pylint: disable=unused-import
  * from .decoder import load, loadb, DecoderException  # noqa
  */
-  __pyx_t_4 = PyList_New(3); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyList_New(3); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_INCREF(__pyx_n_s_dump);
   __Pyx_GIVEREF(__pyx_n_s_dump);
@@ -950,29 +950,29 @@ PyMODINIT_FUNC PyInit_ubjson(void)
   __Pyx_INCREF(__pyx_n_s_EncoderException);
   __Pyx_GIVEREF(__pyx_n_s_EncoderException);
   PyList_SET_ITEM(__pyx_t_4, 2, __pyx_n_s_EncoderException);
-  __pyx_t_5 = __Pyx_Import(__pyx_n_s_encoder, __pyx_t_4, 1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_Import(__pyx_n_s_encoder, __pyx_t_4, 1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_5, __pyx_n_s_dump); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_5, __pyx_n_s_dump); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dump, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dump, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_5, __pyx_n_s_dumpb); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_5, __pyx_n_s_dumpb); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dumpb, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dumpb, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_5, __pyx_n_s_EncoderException); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_5, __pyx_n_s_EncoderException); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_EncoderException, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_EncoderException, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "ubjson/__init__.py":32
+  /* "ubjson/__init__.py":45
  * from .encoder import dump, dumpb, EncoderException  # noqa
  * # pylint: disable=unused-import
  * from .decoder import load, loadb, DecoderException  # noqa             # <<<<<<<<<<<<<<
  */
-  __pyx_t_5 = PyList_New(3); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyList_New(3); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 45; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_INCREF(__pyx_n_s_load);
   __Pyx_GIVEREF(__pyx_n_s_load);
@@ -983,34 +983,34 @@ PyMODINIT_FUNC PyInit_ubjson(void)
   __Pyx_INCREF(__pyx_n_s_DecoderException);
   __Pyx_GIVEREF(__pyx_n_s_DecoderException);
   PyList_SET_ITEM(__pyx_t_5, 2, __pyx_n_s_DecoderException);
-  __pyx_t_4 = __Pyx_Import(__pyx_n_s_decoder, __pyx_t_5, 1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_Import(__pyx_n_s_decoder, __pyx_t_5, 1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 45; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_ImportFrom(__pyx_t_4, __pyx_n_s_load); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_ImportFrom(__pyx_t_4, __pyx_n_s_load); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 45; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_load, __pyx_t_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_load, __pyx_t_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 45; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_ImportFrom(__pyx_t_4, __pyx_n_s_loadb); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_ImportFrom(__pyx_t_4, __pyx_n_s_loadb); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 45; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_loadb, __pyx_t_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_loadb, __pyx_t_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 45; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_ImportFrom(__pyx_t_4, __pyx_n_s_DecoderException); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_ImportFrom(__pyx_t_4, __pyx_n_s_DecoderException); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 45; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_DecoderException, __pyx_t_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_DecoderException, __pyx_t_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 45; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "ubjson/__init__.py":1
- * # Copyright (c) 2015 Iotic Labs Ltd. All rights reserved.             # <<<<<<<<<<<<<<
- * 
- * """UBJSON (draft 12) implementation without No-Op support
+ * # Copyright 2015 Iotic Labs Ltd             # <<<<<<<<<<<<<<
+ * #
+ * # Licensed under the Apache License, Version 2.0 (the "License");
  */
   __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "ubjson/__init__.pxd":6
+  /* "ubjson/__init__.pxd":19
  * 
  * # Used to check whether module has been cythonised
  * cpdef inline void __compiled():             # <<<<<<<<<<<<<<

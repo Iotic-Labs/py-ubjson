@@ -892,7 +892,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   if (__Pyx_patch_abc() < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   #endif
 
-  /* "ubjson/markers.py":6
+  /* "ubjson/markers.py":19
  * 
  * # Value types
  * TYPE_NONE = b'\x00'  # Used internally only, not part of ubjson specification             # <<<<<<<<<<<<<<
@@ -904,7 +904,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_NONE, __pyx_kp_b_);
   __Pyx_GIVEREF(__pyx_kp_b_);
 
-  /* "ubjson/markers.py":7
+  /* "ubjson/markers.py":20
  * # Value types
  * TYPE_NONE = b'\x00'  # Used internally only, not part of ubjson specification
  * TYPE_NULL = b'Z'             # <<<<<<<<<<<<<<
@@ -916,7 +916,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_NULL, __pyx_n_b_Z);
   __Pyx_GIVEREF(__pyx_n_b_Z);
 
-  /* "ubjson/markers.py":8
+  /* "ubjson/markers.py":21
  * TYPE_NONE = b'\x00'  # Used internally only, not part of ubjson specification
  * TYPE_NULL = b'Z'
  * TYPE_BOOL_TRUE = b'T'             # <<<<<<<<<<<<<<
@@ -928,7 +928,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_BOOL_TRUE, __pyx_n_b_T);
   __Pyx_GIVEREF(__pyx_n_b_T);
 
-  /* "ubjson/markers.py":9
+  /* "ubjson/markers.py":22
  * TYPE_NULL = b'Z'
  * TYPE_BOOL_TRUE = b'T'
  * TYPE_BOOL_FALSE = b'F'             # <<<<<<<<<<<<<<
@@ -940,7 +940,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_BOOL_FALSE, __pyx_n_b_F);
   __Pyx_GIVEREF(__pyx_n_b_F);
 
-  /* "ubjson/markers.py":10
+  /* "ubjson/markers.py":23
  * TYPE_BOOL_TRUE = b'T'
  * TYPE_BOOL_FALSE = b'F'
  * TYPE_INT8 = b'i'             # <<<<<<<<<<<<<<
@@ -952,7 +952,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT8, __pyx_n_b_i);
   __Pyx_GIVEREF(__pyx_n_b_i);
 
-  /* "ubjson/markers.py":11
+  /* "ubjson/markers.py":24
  * TYPE_BOOL_FALSE = b'F'
  * TYPE_INT8 = b'i'
  * TYPE_UINT8 = b'U'             # <<<<<<<<<<<<<<
@@ -964,7 +964,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_UINT8, __pyx_n_b_U);
   __Pyx_GIVEREF(__pyx_n_b_U);
 
-  /* "ubjson/markers.py":12
+  /* "ubjson/markers.py":25
  * TYPE_INT8 = b'i'
  * TYPE_UINT8 = b'U'
  * TYPE_INT16 = b'I'             # <<<<<<<<<<<<<<
@@ -976,7 +976,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT16, __pyx_n_b_I);
   __Pyx_GIVEREF(__pyx_n_b_I);
 
-  /* "ubjson/markers.py":13
+  /* "ubjson/markers.py":26
  * TYPE_UINT8 = b'U'
  * TYPE_INT16 = b'I'
  * TYPE_INT32 = b'l'             # <<<<<<<<<<<<<<
@@ -988,7 +988,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT32, __pyx_n_b_l);
   __Pyx_GIVEREF(__pyx_n_b_l);
 
-  /* "ubjson/markers.py":14
+  /* "ubjson/markers.py":27
  * TYPE_INT16 = b'I'
  * TYPE_INT32 = b'l'
  * TYPE_INT64 = b'L'             # <<<<<<<<<<<<<<
@@ -1000,7 +1000,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT64, __pyx_n_b_L);
   __Pyx_GIVEREF(__pyx_n_b_L);
 
-  /* "ubjson/markers.py":15
+  /* "ubjson/markers.py":28
  * TYPE_INT32 = b'l'
  * TYPE_INT64 = b'L'
  * TYPE_FLOAT32 = b'd'             # <<<<<<<<<<<<<<
@@ -1012,7 +1012,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_FLOAT32, __pyx_n_b_d);
   __Pyx_GIVEREF(__pyx_n_b_d);
 
-  /* "ubjson/markers.py":16
+  /* "ubjson/markers.py":29
  * TYPE_INT64 = b'L'
  * TYPE_FLOAT32 = b'd'
  * TYPE_FLOAT64 = b'D'             # <<<<<<<<<<<<<<
@@ -1024,7 +1024,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_FLOAT64, __pyx_n_b_D);
   __Pyx_GIVEREF(__pyx_n_b_D);
 
-  /* "ubjson/markers.py":17
+  /* "ubjson/markers.py":30
  * TYPE_FLOAT32 = b'd'
  * TYPE_FLOAT64 = b'D'
  * TYPE_HIGH_PREC = b'H'             # <<<<<<<<<<<<<<
@@ -1036,7 +1036,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_HIGH_PREC, __pyx_n_b_H);
   __Pyx_GIVEREF(__pyx_n_b_H);
 
-  /* "ubjson/markers.py":18
+  /* "ubjson/markers.py":31
  * TYPE_FLOAT64 = b'D'
  * TYPE_HIGH_PREC = b'H'
  * TYPE_CHAR = b'C'             # <<<<<<<<<<<<<<
@@ -1048,7 +1048,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_CHAR, __pyx_n_b_C);
   __Pyx_GIVEREF(__pyx_n_b_C);
 
-  /* "ubjson/markers.py":19
+  /* "ubjson/markers.py":32
  * TYPE_HIGH_PREC = b'H'
  * TYPE_CHAR = b'C'
  * TYPE_STRING = b'S'             # <<<<<<<<<<<<<<
@@ -1060,7 +1060,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_STRING, __pyx_n_b_S);
   __Pyx_GIVEREF(__pyx_n_b_S);
 
-  /* "ubjson/markers.py":22
+  /* "ubjson/markers.py":35
  * 
  * # Container delimiters
  * OBJECT_START = b'{'             # <<<<<<<<<<<<<<
@@ -1072,7 +1072,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_OBJECT_START, __pyx_kp_b__2);
   __Pyx_GIVEREF(__pyx_kp_b__2);
 
-  /* "ubjson/markers.py":23
+  /* "ubjson/markers.py":36
  * # Container delimiters
  * OBJECT_START = b'{'
  * OBJECT_END = b'}'             # <<<<<<<<<<<<<<
@@ -1084,7 +1084,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_OBJECT_END, __pyx_kp_b__3);
   __Pyx_GIVEREF(__pyx_kp_b__3);
 
-  /* "ubjson/markers.py":24
+  /* "ubjson/markers.py":37
  * OBJECT_START = b'{'
  * OBJECT_END = b'}'
  * ARRAY_START = b'['             # <<<<<<<<<<<<<<
@@ -1096,7 +1096,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_ARRAY_START, __pyx_kp_b__4);
   __Pyx_GIVEREF(__pyx_kp_b__4);
 
-  /* "ubjson/markers.py":25
+  /* "ubjson/markers.py":38
  * OBJECT_END = b'}'
  * ARRAY_START = b'['
  * ARRAY_END = b']'             # <<<<<<<<<<<<<<
@@ -1108,7 +1108,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_ARRAY_END, __pyx_kp_b__5);
   __Pyx_GIVEREF(__pyx_kp_b__5);
 
-  /* "ubjson/markers.py":28
+  /* "ubjson/markers.py":41
  * 
  * # Optional container parameters
  * CONTAINER_TYPE = b'$'             # <<<<<<<<<<<<<<
@@ -1119,7 +1119,7 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_CONTAINER_TYPE, __pyx_kp_b__6);
   __Pyx_GIVEREF(__pyx_kp_b__6);
 
-  /* "ubjson/markers.py":29
+  /* "ubjson/markers.py":42
  * # Optional container parameters
  * CONTAINER_TYPE = b'$'
  * CONTAINER_COUNT = b'#'             # <<<<<<<<<<<<<<
@@ -1130,9 +1130,9 @@ PyMODINIT_FUNC PyInit_markers(void)
   __Pyx_GIVEREF(__pyx_kp_b__7);
 
   /* "ubjson/markers.py":1
- * # Copyright (c) 2015 Iotic Labs Ltd. All rights reserved.             # <<<<<<<<<<<<<<
- * 
- * """UBJSON marker defitions"""
+ * # Copyright 2015 Iotic Labs Ltd             # <<<<<<<<<<<<<<
+ * #
+ * # Licensed under the Apache License, Version 2.0 (the "License");
  */
   __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
