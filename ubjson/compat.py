@@ -34,46 +34,41 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
 """Python v2.7 (NOT 2.6) compatibility"""
 
-from sys import stderr, stdout, stdin, version_info
+# pylint: disable=unused-import,invalid-name,redefined-variable-type,wrong-import-position,no-name-in-module
+# pylint: disable=import-error
 
-try:
-    # pylint:disable=no-name-in-module,unused-import
-    from collections.abc import Mapping, Sequence
-except ImportError:
-    from collections import Mapping, Sequence  # noqa
+
+from sys import stderr, stdout, stdin, version_info
 
 PY2 = (version_info[0] == 2)
 
 if PY2:
+    from collections import Mapping, Sequence  # noqa
+
     # pylint:disable=undefined-variable
     INTEGER_TYPES = (int, long)  # noqa
     UNICODE_TYPE = unicode  # noqa
     TEXT_TYPES = (str, unicode)  # noqa
     BYTES_TYPES = (str,)
 
-    def u(item):  # pylint: disable=invalid-name
-        return unicode(item)  # noqa
-
     STDIN_RAW = stdin
     STDOUT_RAW = stdout
     STDERR_RAW = stderr
 
 else:
+    from collections.abc import Mapping, Sequence  # noqa
+
     INTEGER_TYPES = (int,)
-    UNICODE_TYPE = str  # pylint: disable=invalid-name
+    UNICODE_TYPE = str
     TEXT_TYPES = (str,)
     BYTES_TYPES = (bytes, bytearray)
-    # pylint: disable=unused-import,no-name-in-module,import-error
-
-    def u(item):  # pylint: disable=invalid-name
-        return str(item)
 
     STDIN_RAW = stdin.buffer  # pylint: disable=no-member
     STDOUT_RAW = stdout.buffer  # pylint: disable=no-member
     STDERR_RAW = stderr.buffer  # pylint: disable=no-member
+
 
 if version_info[:2] == (3, 2):
     # pylint: disable=exec-used

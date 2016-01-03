@@ -21,7 +21,6 @@ from decimal import Decimal
 from struct import pack
 from collections import OrderedDict
 
-from ubjson.compat import u
 from ubjson import dump as ubjdump, dumpb as ubjdumpb, loadb as ubjloadb, EncoderException, DecoderException
 
 # Not imported from ubjson.markers since cannot access them directly if compiled with cython
@@ -64,7 +63,7 @@ class TestEncodeDecode(TestCase):
     if PY2:  # pragma: no cover
         def type_check(self, actual, expected):
             self.assertEqual(actual, expected)
-    else:
+    else:  # pragma: no cover
         def type_check(self, actual, expected):
             self.assertEqual(actual, ord(expected))
 
@@ -113,23 +112,23 @@ class TestEncodeDecode(TestCase):
         self.check_enc_dec(None, 1)
 
     def test_char(self):
-        self.assertEqual(ubjdumpb(u('a')), TYPE_CHAR + 'a'.encode('utf-8'))
+        self.assertEqual(ubjdumpb(u'a'), TYPE_CHAR + 'a'.encode('utf-8'))
         # no char, char invalid utf-8
         for suffix in (b'', b'\xfe'):
             with self.assertRaises(DecoderException):
                 ubjloadb(TYPE_CHAR + suffix)
-        for char in (u('a'), u('\0'), u('~')):
+        for char in (u'a', u'\0', u'~'):
             self.check_enc_dec(char, 2)
 
     def test_string(self):
-        self.assertEqual(ubjdumpb(u('ab')), TYPE_STRING + TYPE_UINT8 + b'\x02' + 'ab'.encode('utf-8'))
-        self.check_enc_dec(u(''), 3)
+        self.assertEqual(ubjdumpb(u'ab'), TYPE_STRING + TYPE_UINT8 + b'\x02' + 'ab'.encode('utf-8'))
+        self.check_enc_dec(u'', 3)
         # invalid string size, string too short, string invalid utf-8
         for suffix in (b'\x81', b'\x01', b'\x01' + b'\xfe'):
             with self.assertRaises(DecoderException):
                 ubjloadb(TYPE_STRING + TYPE_INT8 + suffix)
         # Note: In Python 2 plain str type is encoded as byte array
-        for string in ('some ascii', u('\u00a9 with extended\u2122'), u('long string') * 100):
+        for string in ('some ascii', u'\u00a9 with extended\u2122', u'long string' * 100):
             self.check_enc_dec(string, 4, length_greater_or_equal=True)
 
     def test_int(self):
@@ -190,6 +189,12 @@ class TestEncodeDecode(TestCase):
             self.check_enc_dec(value, total_size, equal_delta=(0.0001 * abs(value)), expected_type=type_)
 
     def test_array(self):
+        # invalid length
+        with self.assertRaises(DecoderException):
+            ubjloadb(ARRAY_START + CONTAINER_COUNT + ubjdumpb(-5))
+        # unencodable type within
+        with self.assertRaises(EncoderException):
+            ubjdumpb([type(None)])
         for sequence in list, tuple:
             self.assertEqual(ubjdumpb(sequence()), ARRAY_START + ARRAY_END)
         self.assertEqual(ubjdumpb((None,), container_count=True), (ARRAY_START + CONTAINER_COUNT + TYPE_UINT8 +
@@ -214,6 +219,7 @@ class TestEncodeDecode(TestCase):
         self.check_enc_dec(b'')
         self.check_enc_dec(b'\x01' * 4)
         self.assertEqual(ubjloadb(ubjdumpb(b'\x04' * 4), no_bytes=True), [4] * 4)
+        self.check_enc_dec(b'largebinary' * 100)
 
     def test_container_fixed(self):
         raw_start = ARRAY_START + CONTAINER_TYPE + TYPE_INT8 + CONTAINER_COUNT + TYPE_UINT8
@@ -246,6 +252,9 @@ class TestEncodeDecode(TestCase):
                                                                        b'\x01' + TYPE_UINT8 + b'\x01' +
                                                                        'a'.encode('utf-8') + TYPE_NULL))
         self.check_enc_dec({})
+        # negative length
+        with self.assertRaises(DecoderException):
+            ubjloadb(OBJECT_START + CONTAINER_COUNT + ubjdumpb(-1))
         with self.assertRaises(EncoderException):
             ubjdumpb({123: 'non-string key'})
         with self.assertRaises(EncoderException):
@@ -266,8 +275,9 @@ class TestEncodeDecode(TestCase):
                'hp': Decimal('10e15'),
                'char': 'a',
                'str': 'here is a string',
-               'unicode': u('\u00a9 with extended\u2122'),
-               u('\u00a9 with extended\u2122'): 'unicode-key',
+               'unicode': u'\u00a9 with extended\u2122',
+               '': 'empty key',
+               u'\u00a9 with extended\u2122': 'unicode-key',
                'null': None,
                'true': True,
                'false': False,

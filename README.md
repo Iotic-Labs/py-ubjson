@@ -1,6 +1,6 @@
 # Overview
 
-This is a non-recursive Python v3.2+ (and 2.7+) [Universal Binary JSON](http://ubjson.org) encoder/decoder based on the [draft-12](UBJSON-Specification.md) specification.
+This is a Python v3.2+ (and 2.7+) [Universal Binary JSON](http://ubjson.org) encoder/decoder based on the [draft-12](UBJSON-Specification.md) specification.
 
 
 # Installing / packaging
@@ -69,8 +69,8 @@ Note: This requires [coverage](https://pypi.python.org/pypi/coverage).
 
 # Why?
 The only existing implementation I was aware of at the time of writing ([simpleubjson](https://github.com/brainwater/simpleubjson)) had the following limitations:
-- Uses recursive encoding/decoding
 - Does not support efficient binary encoding
 - Only supports draft-9
 - Only supports individual Python types rather than anything implementing an interface (e.g. _Mapping_)
+- Does not decode nested arrays or objects in expected form
 - Lacks C extension speed-up

@@ -13,10 +13,9 @@
 # limitations under the License.
 
 
-"""Non-resursive UBJSON encoder"""
+"""UBJSON draft v12 encoder"""
 
-from collections import deque
-from struct import pack
+from struct import pack, Struct
 from decimal import Decimal
 from io import BytesIO
 
@@ -28,6 +27,18 @@ try:
     # encoder.pxd defines these when C extension is enabled
 except ImportError:  # pragma: no cover
     pass
+
+# Lookup tables for encoding small intergers, pre-initialised larger integer & float packers
+__SMALL_INTS_ENCODED = {i: TYPE_INT8 + pack('>b', i) for i in range(-128, 128)}
+__SMALL_UINTS_ENCODED = {i: TYPE_UINT8 + pack('>B', i) for i in range(256)}
+__PACK_INT16 = Struct('>h').pack
+__PACK_INT32 = Struct('>i').pack
+__PACK_INT64 = Struct('>q').pack
+__PACK_FLOAT32 = Struct('>f').pack
+__PACK_FLOAT64 = Struct('>d').pack
+
+# Prefix applicable to specialised byte array container
+__BYTES_ARRAY_PREFIX = ARRAY_START + CONTAINER_TYPE + TYPE_UINT8 + CONTAINER_COUNT
 
 
 class EncoderException(TypeError):
@@ -51,32 +62,30 @@ def __encode_decimal(fp_write, item):
 
 def __encode_int(fp_write, item):
     if item >= 0:
-        if item <= 255:
-            fp_write(TYPE_UINT8)
-            fp_write(pack('>B', item))
-        elif item <= 32767:
+        if item < 2 ** 8:
+            fp_write(__SMALL_UINTS_ENCODED[item])
+        elif item < 2 ** 15:
             fp_write(TYPE_INT16)
-            fp_write(pack('>h', item))
-        elif item <= 2147483647:
+            fp_write(__PACK_INT16(item))
+        elif item < 2 ** 31:
             fp_write(TYPE_INT32)
-            fp_write(pack('>i', item))
-        elif item <= 9223372036854775807:
+            fp_write(__PACK_INT32(item))
+        elif item < 2 ** 63:
             fp_write(TYPE_INT64)
-            fp_write(pack('>q', item))
+            fp_write(__PACK_INT64(item))
         else:
             __encode_high_prec(fp_write, item)
-    elif item >= -128:
-        fp_write(TYPE_INT8)
-        fp_write(pack('>b', item))
-    elif item >= -32768:
+    elif item >= -(2 ** 7):
+        fp_write(__SMALL_INTS_ENCODED[item])
+    elif item >= -(2 ** 15):
         fp_write(TYPE_INT16)
-        fp_write(pack('>h', item))
-    elif item >= -2147483648:
+        fp_write(__PACK_INT16(item))
+    elif item >= -(2 ** 31):
         fp_write(TYPE_INT32)
-        fp_write(pack('>i', item))
-    elif item >= -9223372036854775808:
+        fp_write(__PACK_INT32(item))
+    elif item >= -(2 ** 63):
         fp_write(TYPE_INT64)
-        fp_write(pack('>q', item))
+        fp_write(__PACK_INT64(item))
     else:
         __encode_high_prec(fp_write, item)
 
@@ -84,10 +93,10 @@ def __encode_int(fp_write, item):
 def __encode_float(fp_write, item):
     if 1.18e-38 <= abs(item) <= 3.4e38 or item == 0:
         fp_write(TYPE_FLOAT32)
-        fp_write(pack('>f', item))
+        fp_write(__PACK_FLOAT32(item))
     elif 2.23e-308 <= abs(item) < 1.8e308:
         fp_write(TYPE_FLOAT64)
-        fp_write(pack('>d', item))
+        fp_write(__PACK_FLOAT64(item))
     else:
         __encode_high_prec(fp_write, item)
 
@@ -99,23 +108,20 @@ def __encode_string(fp_write, item):
         fp_write(TYPE_CHAR)
     else:
         fp_write(TYPE_STRING)
-        __encode_int(fp_write, length)
-    fp_write(encoded_val)
-
-
-# similar to encode_string, except 'S' marker is not added
-def __encode_object_key(fp_write, key):
-    encoded_val = key.encode('utf-8') if isinstance(key, UNICODE_TYPE) else key
-    __encode_int(fp_write, len(encoded_val))
+        if length < 2 ** 8:
+            fp_write(__SMALL_UINTS_ENCODED[length])
+        else:
+            __encode_int(fp_write, length)
     fp_write(encoded_val)
 
 
 def __encode_bytes(fp_write, item):
-    fp_write(ARRAY_START)
-    fp_write(CONTAINER_TYPE)
-    fp_write(TYPE_UINT8)
-    fp_write(CONTAINER_COUNT)
-    __encode_int(fp_write, len(item))
+    fp_write(__BYTES_ARRAY_PREFIX)
+    length = len(item)
+    if length < 2 ** 8:
+        fp_write(__SMALL_UINTS_ENCODED[length])
+    else:
+        __encode_int(fp_write, length)
     fp_write(item)
     # no ARRAY_END since length was specified
 
@@ -151,114 +157,71 @@ def __encode_value(fp_write, item):
     return True
 
 
-# pylint: disable=too-many-branches,too-many-statements
-def __encode_container(fp_write, obj, in_mapping, seen_containers, container_count, sort_keys):  # noqa (complexity)
-    """Performs encoding within an array or object"""
-    # stack for keeping track of sequences and mappings without requiring recursion
-    stack = deque()
-    # current object being encoded
-    current = obj
-    container_id = 0
+def __encode_array(fp_write, item, seen_containers, container_count, sort_keys):
+    # circular reference check
+    container_id = id(item)
+    if container_id in seen_containers:
+        raise EncoderException('Circular reference detected')
+    seen_containers[container_id] = item
 
-    while True:
-        # Get next item from container (or finish container and return to parent)
-        if in_mapping:
-            try:
-                key, item = next(current)
-            except StopIteration:
-                try:
-                    in_mapping, current, container_id = stack.pop()
-                except IndexError:
-                    # top-level container reached
-                    break
-                else:
-                    if not container_count:
-                        fp_write(OBJECT_END)
-                    # for circular reference checking
-                    del seen_containers[container_id]
-                    continue
-            # allow both str & unicode for Python 2
-            if isinstance(key, TEXT_TYPES):
-                __encode_object_key(fp_write, key)
-            else:
-                raise EncoderException('Mapping keys can only be strings')
-        else:
-            # sequence
-            try:
-                item = next(current)
-            except StopIteration:
-                try:
-                    in_mapping, current, container_id = stack.pop()
-                except IndexError:
-                    # top-level container reached
-                    break
-                else:
-                    if not container_count:
-                        fp_write(ARRAY_END)
-                    # for circular reference checking
-                    del seen_containers[container_id]
-                    continue
+    fp_write(ARRAY_START)
+    if container_count:
+        fp_write(CONTAINER_COUNT)
+        __encode_int(fp_write, len(item))
 
-        if not __encode_value(fp_write, item):
+    for value in item:
+        if not __encode_value(fp_write, value):
             # order important since mappings could also be sequences
-            if isinstance(item, Mapping):
-                # circular reference check
-                container_id = id(item)
-                if container_id in seen_containers:
-                    raise EncoderException('Circular reference detected')
-                seen_containers[container_id] = item
-
-                fp_write(OBJECT_START)
-                if container_count:
-                    fp_write(CONTAINER_COUNT)
-                    __encode_int(fp_write, len(item))
-                stack.append((in_mapping, current, container_id))
-                current = iter(sorted(item.items()) if sort_keys else item.items())
-                in_mapping = True
-
-            elif isinstance(item, Sequence):
-                # circular reference check
-                container_id = id(item)
-                if container_id in seen_containers:
-                    raise EncoderException('Circular reference detected')
-                seen_containers[container_id] = item
-
-                fp_write(ARRAY_START)
-                if container_count:
-                    fp_write(CONTAINER_COUNT)
-                    __encode_int(fp_write, len(item))
-                stack.append((in_mapping, current, container_id))
-                current = iter(item)
-                in_mapping = False
-
+            if isinstance(value, Mapping):
+                __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+            elif isinstance(value, Sequence):
+                __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
             else:
-                raise EncoderException('Cannot encode item of type %s' % type(item))
+                raise EncoderException('Cannot encode item of type %s' % type(value))
+
+    if not container_count:
+        fp_write(ARRAY_END)
+
+    del seen_containers[container_id]
 
 
-def __dump(obj, fp_write, container_count, sort_keys):  # noqa (complexity)
-    if not __encode_value(fp_write, obj):
-        # order important since mappings could also be sequences
-        if isinstance(obj, Mapping):
-            fp_write(OBJECT_START)
-            if container_count:
-                fp_write(CONTAINER_COUNT)
-                __encode_int(fp_write, len(obj))
-            __encode_container(fp_write, iter(sorted(obj.items()) if sort_keys else obj.items()), True, {id(obj): obj},
-                               container_count, sort_keys)
-            if not container_count:
-                fp_write(OBJECT_END)
+def __encode_object(fp_write, item, seen_containers, container_count, sort_keys):
+    # circular reference check
+    container_id = id(item)
+    if container_id in seen_containers:
+        raise EncoderException('Circular reference detected')
+    seen_containers[container_id] = item
 
-        elif isinstance(obj, Sequence):
-            fp_write(ARRAY_START)
-            if container_count:
-                fp_write(CONTAINER_COUNT)
-                __encode_int(fp_write, len(obj))
-            __encode_container(fp_write, iter(obj), False, {id(obj): obj}, container_count, sort_keys)
-            if not container_count:
-                fp_write(ARRAY_END)
+    fp_write(OBJECT_START)
+    if container_count:
+        fp_write(CONTAINER_COUNT)
+        __encode_int(fp_write, len(item))
 
+    for key, value in sorted(item.items()) if sort_keys else item.items():
+        # allow both str & unicode for Python 2
+        if not isinstance(key, TEXT_TYPES):
+            raise EncoderException('Mapping keys can only be strings')
+        encoded_val = key.encode('utf-8')
+        length = len(encoded_val)
+        if length < 2 ** 8:
+            fp_write(__SMALL_UINTS_ENCODED[length])
         else:
-            raise EncoderException('Cannot encode item of type %s' % type(obj))
+            __encode_int(fp_write, length)
+        fp_write(encoded_val)
+
+        if not __encode_value(fp_write, value):
+            # order important since mappings could also be sequences
+            if isinstance(value, Mapping):
+                __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+            elif isinstance(value, Sequence):
+                __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
+            else:
+                raise EncoderException('Cannot encode item of type %s' % type(value))
+
+    if not container_count:
+        fp_write(OBJECT_END)
+
+    del seen_containers[container_id]
 
 
 def dump(obj, fp, container_count=False, sort_keys=False):
@@ -319,12 +282,20 @@ def dump(obj, fp, container_count=False, sort_keys=False):
     - Mapping keys have to be strings: str for Python3 and unicode or str in
       Python 2.
     """
-    __dump(obj, fp.write, container_count=container_count, sort_keys=sort_keys)
+    fp_write = fp.write
+    if not __encode_value(fp_write, obj):
+        # order important since mappings could also be sequences
+        if isinstance(obj, Mapping):
+            __encode_object(fp_write, obj, {}, container_count, sort_keys)
+        elif isinstance(obj, Sequence):
+            __encode_array(fp_write, obj, {}, container_count, sort_keys)
+        else:
+            raise EncoderException('Cannot encode item of type %s' % type(obj))
 
 
 def dumpb(obj, container_count=False, sort_keys=False):
     """Returns the given object as UBJSON in a bytes instance. See dump() for
        available arguments."""
     with BytesIO() as fp:
-        __dump(obj, fp.write, container_count=container_count, sort_keys=sort_keys)
+        dump(obj, fp, container_count=container_count, sort_keys=sort_keys)
         return fp.getvalue()

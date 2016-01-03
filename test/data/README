@@ -1,0 +1,9 @@
+The below listed example files have been taken from simplubjson
+(https://github.com/kxepal/simpleubjson):
+
+CouchDB4k.compact.json
+MediaContent.compact.json
+TwitterTimeline.compact.json
+
+Copyright (C) 2011-2014 Alexander Shorin
+BSD 2-clause license

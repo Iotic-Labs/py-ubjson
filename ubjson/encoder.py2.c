@@ -454,7 +454,7 @@ struct __pyx_opt_args_6ubjson_7encoder_dumpb;
 /* "ubjson/encoder.pxd":60
  * 
  * @cython.locals(container_count=cython.bint, sort_keys=cython.bint)
- * cpdef int dump(obj, fp, container_count=*, sort_keys=*) except -1             # <<<<<<<<<<<<<<
+ * cpdef void dump(obj, fp, container_count=*, sort_keys=*) except *             # <<<<<<<<<<<<<<
  * 
  * 
  */
@@ -569,12 +569,25 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObjec
 
 static CYTHON_INLINE PyObject *__Pyx_GetModuleGlobalName(PyObject *name);
 
-static CYTHON_INLINE void __Pyx_ErrRestore(PyObject *type, PyObject *value, PyObject *tb);
-static CYTHON_INLINE void __Pyx_ErrFetch(PyObject **type, PyObject **value, PyObject **tb);
-
-static void __Pyx_WriteUnraisable(const char *name, int clineno,
-                                  int lineno, const char *filename,
-                                  int full_traceback, int nogil);
+#if PY_MAJOR_VERSION >= 3 && !CYTHON_COMPILING_IN_PYPY
+static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
+    PyObject *value;
+    value = PyDict_GetItemWithError(d, key);
+    if (unlikely(!value)) {
+        if (!PyErr_Occurred()) {
+            PyObject* args = PyTuple_Pack(1, key);
+            if (likely(args))
+                PyErr_SetObject(PyExc_KeyError, args);
+            Py_XDECREF(args);
+        }
+        return NULL;
+    }
+    Py_INCREF(value);
+    return value;
+}
+#else
+    #define __Pyx_PyDict_GetItem(d, key) PyObject_GetItem(d, key)
+#endif
 
 #if CYTHON_COMPILING_IN_CPYTHON
 static PyObject* __Pyx_PyInt_EqObjC(PyObject *op1, PyObject *op2, long intval, int inplace);
@@ -583,14 +596,21 @@ static PyObject* __Pyx_PyInt_EqObjC(PyObject *op1, PyObject *op2, long intval, i
     PyObject_RichCompare(op1, op2, Py_EQ)
     #endif
 
+static CYTHON_INLINE int __Pyx_PyDict_ContainsTF(PyObject* item, PyObject* dict, int eq) {
+    int result = PyDict_Contains(dict, item);
+    return unlikely(result < 0) ? result : (result == (eq == Py_EQ));
+}
+
+static CYTHON_INLINE void __Pyx_ErrRestore(PyObject *type, PyObject *value, PyObject *tb);
+static CYTHON_INLINE void __Pyx_ErrFetch(PyObject **type, PyObject **value, PyObject **tb);
+
+static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb, PyObject *cause);
+
 #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func);
 #else
 #define __Pyx_PyObject_CallNoArg(func) __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL)
 #endif
-
-#define __Pyx_PyIter_Next(obj) __Pyx_PyIter_Next2(obj, NULL)
-static CYTHON_INLINE PyObject *__Pyx_PyIter_Next2(PyObject *, PyObject *);
 
 static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected);
 
@@ -599,70 +619,6 @@ static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index);
 static CYTHON_INLINE int __Pyx_IterFinish(void);
 
 static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected);
-
-static CYTHON_INLINE void __Pyx_ExceptionSave(PyObject **type, PyObject **value, PyObject **tb);
-static void __Pyx_ExceptionReset(PyObject *type, PyObject *value, PyObject *tb);
-
-static int __Pyx_GetException(PyObject **type, PyObject **value, PyObject **tb);
-
-static PyObject* __Pyx_PyObject_CallMethod0(PyObject* obj, PyObject* method_name);
-
-static CYTHON_INLINE PyObject* __Pyx__PyObject_Pop(PyObject* L);
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyList_Pop(PyObject* L);
-#define __Pyx_PyObject_Pop(L) (likely(PyList_CheckExact(L)) ?\
-    __Pyx_PyList_Pop(L) : __Pyx__PyObject_Pop(L))
-#else
-#define __Pyx_PyList_Pop(L)  __Pyx__PyObject_Pop(L)
-#define __Pyx_PyObject_Pop(L)  __Pyx__PyObject_Pop(L)
-#endif
-
-typedef struct {
-    PyObject *type;
-    PyObject **method_name;
-    PyCFunction func;
-    PyObject *method;
-    int flag;
-} __Pyx_CachedCFunction;
-
-static PyObject* __Pyx__CallUnboundCMethod0(__Pyx_CachedCFunction* cfunc, PyObject* self);
-#if CYTHON_COMPILING_IN_CPYTHON
-#define __Pyx_CallUnboundCMethod0(cfunc, self)\
-    ((likely((cfunc)->func)) ?\
-        (likely((cfunc)->flag == METH_NOARGS) ?  (*((cfunc)->func))(self, NULL) :\
-         (likely((cfunc)->flag == (METH_VARARGS | METH_KEYWORDS)) ?  ((*(PyCFunctionWithKeywords)(cfunc)->func)(self, __pyx_empty_tuple, NULL)) :\
-             ((cfunc)->flag == METH_VARARGS ?  (*((cfunc)->func))(self, __pyx_empty_tuple) : __Pyx__CallUnboundCMethod0(cfunc, self)))) :\
-        __Pyx__CallUnboundCMethod0(cfunc, self))
-#else
-#define __Pyx_CallUnboundCMethod0(cfunc, self)  __Pyx__CallUnboundCMethod0(cfunc, self)
-#endif
-
-static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb, PyObject *cause);
-
-static CYTHON_INLINE int __Pyx_PyDict_ContainsTF(PyObject* item, PyObject* dict, int eq) {
-    int result = PyDict_Contains(dict, item);
-    return unlikely(result < 0) ? result : (result == (eq == Py_EQ));
-}
-
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE int __Pyx_PyList_Append(PyObject* list, PyObject* x) {
-    PyListObject* L = (PyListObject*) list;
-    Py_ssize_t len = Py_SIZE(list);
-    if (likely(L->allocated > len) & likely(len > (L->allocated >> 1))) {
-        Py_INCREF(x);
-        PyList_SET_ITEM(list, len, x);
-        Py_SIZE(list) = len+1;
-        return 0;
-    }
-    return PyList_Append(list, x);
-}
-#else
-#define __Pyx_PyList_Append(L,x) PyList_Append(L,x)
-#endif
-
-static PyObject* __Pyx_PyObject_CallMethod1(PyObject* obj, PyObject* method_name, PyObject* arg);
-
-static CYTHON_INLINE int __Pyx_PyObject_Append(PyObject* L, PyObject* x);
 
 static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
     Py_ssize_t num_min, Py_ssize_t num_max, Py_ssize_t num_found);
@@ -698,6 +654,11 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_LookupSpecial(PyObject* obj, PyObj
 #define __Pyx_PyObject_LookupSpecial(o,n) __Pyx_PyObject_GetAttrStr(o,n)
 #endif
 
+static CYTHON_INLINE void __Pyx_ExceptionSave(PyObject **type, PyObject **value, PyObject **tb);
+static void __Pyx_ExceptionReset(PyObject *type, PyObject *value, PyObject *tb);
+
+static int __Pyx_GetException(PyObject **type, PyObject **value, PyObject **tb);
+
 static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level);
 
 static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name);
@@ -726,19 +687,36 @@ static void __pyx_insert_code_object(int code_line, PyCodeObject* code_object);
 static void __Pyx_AddTraceback(const char *funcname, int c_line,
                                int py_line, const char *filename);
 
+static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *);
+
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
+
 static CYTHON_INLINE unsigned PY_LONG_LONG __Pyx_PyInt_As_unsigned_PY_LONG_LONG(PyObject *);
 
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_unsigned_PY_LONG_LONG(unsigned PY_LONG_LONG value);
 
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
-
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
-
-static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *);
-
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
 
 static int __Pyx_check_binary_version(void);
+
+#if CYTHON_COMPILING_IN_CPYTHON
+#define __Pyx_PyObject_DelAttrStr(o,n) __Pyx_PyObject_SetAttrStr(o,n,NULL)
+static CYTHON_INLINE int __Pyx_PyObject_SetAttrStr(PyObject* obj, PyObject* attr_name, PyObject* value) {
+    PyTypeObject* tp = Py_TYPE(obj);
+    if (likely(tp->tp_setattro))
+        return tp->tp_setattro(obj, attr_name, value);
+#if PY_MAJOR_VERSION < 3
+    if (likely(tp->tp_setattr))
+        return tp->tp_setattr(obj, PyString_AS_STRING(attr_name), value);
+#endif
+    return PyObject_SetAttr(obj, attr_name, value);
+}
+#else
+#define __Pyx_PyObject_DelAttrStr(o,n)   PyObject_DelAttr(o,n)
+#define __Pyx_PyObject_SetAttrStr(o,n,v) PyObject_SetAttr(o,n,v)
+#endif
+
+static int __Pyx_ExportVoidPtr(PyObject *name, void *p, const char *sig);
 
 static int __Pyx_ExportFunction(const char *name, void (*f)(void), const char *sig);
 
@@ -802,17 +780,19 @@ static PyObject **__pyx_vp_6ubjson_7markers_CONTAINER_COUNT = 0;
 #define __pyx_v_6ubjson_7markers_CONTAINER_COUNT (*__pyx_vp_6ubjson_7markers_CONTAINER_COUNT)
 
 /* Module declarations from 'ubjson.encoder' */
+static PyObject *__pyx_v_6ubjson_7encoder___SMALL_INTS_ENCODED = 0;
+static PyObject *__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED = 0;
+static PyObject *__pyx_v_6ubjson_7encoder___BYTES_ARRAY_PREFIX = 0;
 static void __pyx_f_6ubjson_7encoder___encode_high_prec(PyObject *, PyObject *); /*proto*/
 static void __pyx_f_6ubjson_7encoder___encode_decimal(PyObject *, PyObject *); /*proto*/
 static void __pyx_f_6ubjson_7encoder___encode_int(PyObject *, PyObject *); /*proto*/
 static void __pyx_f_6ubjson_7encoder___encode_float(PyObject *, PyObject *); /*proto*/
 static void __pyx_f_6ubjson_7encoder___encode_string(PyObject *, PyObject *); /*proto*/
-static void __pyx_f_6ubjson_7encoder___encode_object_key(PyObject *, PyObject *); /*proto*/
 static void __pyx_f_6ubjson_7encoder___encode_bytes(PyObject *, PyObject *); /*proto*/
 static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *, PyObject *); /*proto*/
-static int __pyx_f_6ubjson_7encoder___encode_container(PyObject *, PyObject *, int, PyObject *, int, int); /*proto*/
-static int __pyx_f_6ubjson_7encoder___dump(PyObject *, PyObject *, int, int); /*proto*/
-static int __pyx_f_6ubjson_7encoder_dump(PyObject *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_6ubjson_7encoder_dump *__pyx_optional_args); /*proto*/
+static void __pyx_f_6ubjson_7encoder___encode_array(PyObject *, PyObject *, PyObject *, int, int); /*proto*/
+static void __pyx_f_6ubjson_7encoder___encode_object(PyObject *, PyObject *, PyObject *, int, int); /*proto*/
+static void __pyx_f_6ubjson_7encoder_dump(PyObject *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_6ubjson_7encoder_dump *__pyx_optional_args); /*proto*/
 static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_6ubjson_7encoder_dumpb *__pyx_optional_args); /*proto*/
 #define __Pyx_MODULE_NAME "ubjson.encoder"
 int __pyx_module_is_main_ubjson__encoder = 0;
@@ -820,8 +800,7 @@ int __pyx_module_is_main_ubjson__encoder = 0;
 /* Implementation of 'ubjson.encoder' */
 static PyObject *__pyx_builtin_ImportError;
 static PyObject *__pyx_builtin_TypeError;
-static PyObject *__pyx_builtin_StopIteration;
-static PyObject *__pyx_builtin_IndexError;
+static PyObject *__pyx_builtin_range;
 static PyObject *__pyx_builtin_id;
 static char __pyx_k_B[] = ">B";
 static char __pyx_k_b[] = ">b";
@@ -835,17 +814,16 @@ static char __pyx_k_id[] = "id";
 static char __pyx_k_io[] = "io";
 static char __pyx_k_doc[] = "__doc__";
 static char __pyx_k_obj[] = "obj";
-static char __pyx_k_pop[] = "pop";
 static char __pyx_k_exit[] = "__exit__";
 static char __pyx_k_main[] = "__main__";
 static char __pyx_k_pack[] = "pack";
 static char __pyx_k_test[] = "__test__";
-static char __pyx_k_deque[] = "deque";
 static char __pyx_k_enter[] = "__enter__";
 static char __pyx_k_items[] = "items";
+static char __pyx_k_range[] = "range";
 static char __pyx_k_utf_8[] = "utf-8";
 static char __pyx_k_write[] = "write";
-static char __pyx_k_append[] = "append";
+static char __pyx_k_Struct[] = "Struct";
 static char __pyx_k_compat[] = "compat";
 static char __pyx_k_encode[] = "encode";
 static char __pyx_k_import[] = "__import__";
@@ -859,6 +837,7 @@ static char __pyx_k_markers[] = "markers";
 static char __pyx_k_prepare[] = "__prepare__";
 static char __pyx_k_Sequence[] = "Sequence";
 static char __pyx_k_getvalue[] = "getvalue";
+static char __pyx_k_pyx_capi[] = "__pyx_capi__";
 static char __pyx_k_qualname[] = "__qualname__";
 static char __pyx_k_ARRAY_END[] = "ARRAY_END";
 static char __pyx_k_TYPE_CHAR[] = "TYPE_CHAR";
@@ -867,8 +846,10 @@ static char __pyx_k_TYPE_NULL[] = "TYPE_NULL";
 static char __pyx_k_TypeError[] = "TypeError";
 static char __pyx_k_metaclass[] = "__metaclass__";
 static char __pyx_k_sort_keys[] = "sort_keys";
-static char __pyx_k_IndexError[] = "IndexError";
 static char __pyx_k_OBJECT_END[] = "OBJECT_END";
+static char __pyx_k_PACK_INT16[] = "__PACK_INT16";
+static char __pyx_k_PACK_INT32[] = "__PACK_INT32";
+static char __pyx_k_PACK_INT64[] = "__PACK_INT64";
 static char __pyx_k_TEXT_TYPES[] = "TEXT_TYPES";
 static char __pyx_k_TYPE_INT16[] = "TYPE_INT16";
 static char __pyx_k_TYPE_INT32[] = "TYPE_INT32";
@@ -878,13 +859,13 @@ static char __pyx_k_ARRAY_START[] = "ARRAY_START";
 static char __pyx_k_BYTES_TYPES[] = "BYTES_TYPES";
 static char __pyx_k_ImportError[] = "ImportError";
 static char __pyx_k_TYPE_STRING[] = "TYPE_STRING";
-static char __pyx_k_collections[] = "collections";
 static char __pyx_k_OBJECT_START[] = "OBJECT_START";
+static char __pyx_k_PACK_FLOAT32[] = "__PACK_FLOAT32";
+static char __pyx_k_PACK_FLOAT64[] = "__PACK_FLOAT64";
 static char __pyx_k_TYPE_FLOAT32[] = "TYPE_FLOAT32";
 static char __pyx_k_TYPE_FLOAT64[] = "TYPE_FLOAT64";
 static char __pyx_k_UNICODE_TYPE[] = "UNICODE_TYPE";
 static char __pyx_k_INTEGER_TYPES[] = "INTEGER_TYPES";
-static char __pyx_k_StopIteration[] = "StopIteration";
 static char __pyx_k_CONTAINER_TYPE[] = "CONTAINER_TYPE";
 static char __pyx_k_TYPE_BOOL_TRUE[] = "TYPE_BOOL_TRUE";
 static char __pyx_k_TYPE_HIGH_PREC[] = "TYPE_HIGH_PREC";
@@ -893,14 +874,18 @@ static char __pyx_k_CONTAINER_COUNT[] = "CONTAINER_COUNT";
 static char __pyx_k_TYPE_BOOL_FALSE[] = "TYPE_BOOL_FALSE";
 static char __pyx_k_container_count[] = "container_count";
 static char __pyx_k_EncoderException[] = "EncoderException";
+static char __pyx_k_BYTES_ARRAY_PREFIX[] = "__BYTES_ARRAY_PREFIX";
+static char __pyx_k_SMALL_INTS_ENCODED[] = "__SMALL_INTS_ENCODED";
+static char __pyx_k_SMALL_UINTS_ENCODED[] = "__SMALL_UINTS_ENCODED";
+static char __pyx_k_UBJSON_draft_v12_encoder[] = "UBJSON draft v12 encoder";
 static char __pyx_k_Circular_reference_detected[] = "Circular reference detected";
 static char __pyx_k_Cannot_encode_item_of_type_s[] = "Cannot encode item of type %s";
-static char __pyx_k_Non_resursive_UBJSON_encoder[] = "Non-resursive UBJSON encoder";
 static char __pyx_k_Mapping_keys_can_only_be_strings[] = "Mapping keys can only be strings";
 static char __pyx_k_Raised_when_encoding_of_an_objec[] = "Raised when encoding of an object fails.";
 static PyObject *__pyx_n_s_ARRAY_END;
 static PyObject *__pyx_n_s_ARRAY_START;
 static PyObject *__pyx_kp_s_B;
+static PyObject *__pyx_n_s_BYTES_ARRAY_PREFIX;
 static PyObject *__pyx_n_s_BYTES_TYPES;
 static PyObject *__pyx_n_s_BytesIO;
 static PyObject *__pyx_n_s_CONTAINER_COUNT;
@@ -911,14 +896,20 @@ static PyObject *__pyx_n_s_Decimal;
 static PyObject *__pyx_n_s_EncoderException;
 static PyObject *__pyx_n_s_INTEGER_TYPES;
 static PyObject *__pyx_n_s_ImportError;
-static PyObject *__pyx_n_s_IndexError;
 static PyObject *__pyx_n_s_Mapping;
 static PyObject *__pyx_kp_s_Mapping_keys_can_only_be_strings;
 static PyObject *__pyx_n_s_OBJECT_END;
 static PyObject *__pyx_n_s_OBJECT_START;
+static PyObject *__pyx_n_s_PACK_FLOAT32;
+static PyObject *__pyx_n_s_PACK_FLOAT64;
+static PyObject *__pyx_n_s_PACK_INT16;
+static PyObject *__pyx_n_s_PACK_INT32;
+static PyObject *__pyx_n_s_PACK_INT64;
 static PyObject *__pyx_kp_s_Raised_when_encoding_of_an_objec;
+static PyObject *__pyx_n_s_SMALL_INTS_ENCODED;
+static PyObject *__pyx_n_s_SMALL_UINTS_ENCODED;
 static PyObject *__pyx_n_s_Sequence;
-static PyObject *__pyx_n_s_StopIteration;
+static PyObject *__pyx_n_s_Struct;
 static PyObject *__pyx_n_s_TEXT_TYPES;
 static PyObject *__pyx_n_s_TYPE_BOOL_FALSE;
 static PyObject *__pyx_n_s_TYPE_BOOL_TRUE;
@@ -935,14 +926,11 @@ static PyObject *__pyx_n_s_TYPE_STRING;
 static PyObject *__pyx_n_s_TYPE_UINT8;
 static PyObject *__pyx_n_s_TypeError;
 static PyObject *__pyx_n_s_UNICODE_TYPE;
-static PyObject *__pyx_n_s_append;
 static PyObject *__pyx_kp_s_b;
-static PyObject *__pyx_n_s_collections;
 static PyObject *__pyx_n_s_compat;
 static PyObject *__pyx_n_s_container_count;
 static PyObject *__pyx_kp_s_d;
 static PyObject *__pyx_n_s_decimal;
-static PyObject *__pyx_n_s_deque;
 static PyObject *__pyx_n_s_doc;
 static PyObject *__pyx_n_s_encode;
 static PyObject *__pyx_n_s_enter;
@@ -962,10 +950,11 @@ static PyObject *__pyx_n_s_metaclass;
 static PyObject *__pyx_n_s_module;
 static PyObject *__pyx_n_s_obj;
 static PyObject *__pyx_n_s_pack;
-static PyObject *__pyx_n_s_pop;
 static PyObject *__pyx_n_s_prepare;
+static PyObject *__pyx_n_s_pyx_capi;
 static PyObject *__pyx_kp_s_q;
 static PyObject *__pyx_n_s_qualname;
+static PyObject *__pyx_n_s_range;
 static PyObject *__pyx_n_s_sort_keys;
 static PyObject *__pyx_n_s_struct;
 static PyObject *__pyx_n_s_test;
@@ -974,16 +963,15 @@ static PyObject *__pyx_kp_s_utf_8;
 static PyObject *__pyx_n_s_write;
 static PyObject *__pyx_pf_6ubjson_7encoder_dump(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_obj, PyObject *__pyx_v_fp, int __pyx_v_container_count, int __pyx_v_sort_keys); /* proto */
 static PyObject *__pyx_pf_6ubjson_7encoder_2dumpb(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_obj, int __pyx_v_container_count, int __pyx_v_sort_keys); /* proto */
-static __Pyx_CachedCFunction __pyx_umethod_PyList_Type_pop = {0, &__pyx_n_s_pop, 0, 0, 0};
 static PyObject *__pyx_float_3_4e38;
 static PyObject *__pyx_float_1_8e308;
 static PyObject *__pyx_float_1_18eneg_38;
 static PyObject *__pyx_float_2_23eneg_308;
 static PyObject *__pyx_int_0;
-static PyObject *__pyx_int_255;
-static PyObject *__pyx_int_32767;
-static PyObject *__pyx_int_2147483647;
-static PyObject *__pyx_int_9223372036854775807;
+static PyObject *__pyx_int_256;
+static PyObject *__pyx_int_32768;
+static PyObject *__pyx_int_2147483648;
+static PyObject *__pyx_int_9223372036854775808;
 static PyObject *__pyx_int_neg_128;
 static PyObject *__pyx_int_neg_32768;
 static PyObject *__pyx_int_neg_2147483648;
@@ -997,8 +985,13 @@ static PyObject *__pyx_tuple__6;
 static PyObject *__pyx_tuple__7;
 static PyObject *__pyx_tuple__8;
 static PyObject *__pyx_tuple__9;
+static PyObject *__pyx_tuple__10;
+static PyObject *__pyx_tuple__11;
+static PyObject *__pyx_tuple__12;
+static PyObject *__pyx_tuple__13;
+static PyObject *__pyx_tuple__14;
 
-/* "ubjson/encoder.py":38
+/* "ubjson/encoder.py":49
  * 
  * 
  * def __encode_high_prec(fp_write, item):             # <<<<<<<<<<<<<<
@@ -1019,7 +1012,7 @@ static void __pyx_f_6ubjson_7encoder___encode_high_prec(PyObject *__pyx_v_fp_wri
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__encode_high_prec", 0);
 
-  /* "ubjson/encoder.py":39
+  /* "ubjson/encoder.py":50
  * 
  * def __encode_high_prec(fp_write, item):
  *     fp_write(TYPE_HIGH_PREC)             # <<<<<<<<<<<<<<
@@ -1038,30 +1031,30 @@ static void __pyx_f_6ubjson_7encoder___encode_high_prec(PyObject *__pyx_v_fp_wri
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_TYPE_HIGH_PREC); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 39; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_TYPE_HIGH_PREC); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 50; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 39; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 50; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
     __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_HIGH_PREC);
     __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_HIGH_PREC);
     PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_6ubjson_7markers_TYPE_HIGH_PREC);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 39; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 50; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ubjson/encoder.py":40
+  /* "ubjson/encoder.py":51
  * def __encode_high_prec(fp_write, item):
  *     fp_write(TYPE_HIGH_PREC)
  *     encoded_val = str(Decimal(item)).encode('utf-8')             # <<<<<<<<<<<<<<
  *     __encode_int(fp_write, len(encoded_val))
  *     fp_write(encoded_val)
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_Decimal); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_Decimal); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -1074,51 +1067,51 @@ static void __pyx_f_6ubjson_7encoder___encode_high_prec(PyObject *__pyx_v_fp_wri
     }
   }
   if (!__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_item); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_item); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
     __Pyx_INCREF(__pyx_v_item);
     __Pyx_GIVEREF(__pyx_v_item);
     PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_item);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_encoded_val = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "ubjson/encoder.py":41
+  /* "ubjson/encoder.py":52
  *     fp_write(TYPE_HIGH_PREC)
  *     encoded_val = str(Decimal(item)).encode('utf-8')
  *     __encode_int(fp_write, len(encoded_val))             # <<<<<<<<<<<<<<
  *     fp_write(encoded_val)
  * 
  */
-  __pyx_t_5 = PyObject_Length(__pyx_v_encoded_val); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 41; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 41; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyObject_Length(__pyx_v_encoded_val); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_1);
+  __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_1); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ubjson/encoder.py":42
+  /* "ubjson/encoder.py":53
  *     encoded_val = str(Decimal(item)).encode('utf-8')
  *     __encode_int(fp_write, len(encoded_val))
  *     fp_write(encoded_val)             # <<<<<<<<<<<<<<
@@ -1137,23 +1130,23 @@ static void __pyx_f_6ubjson_7encoder___encode_high_prec(PyObject *__pyx_v_fp_wri
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_encoded_val); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 42; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_encoded_val); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 53; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 42; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 53; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
     __Pyx_INCREF(__pyx_v_encoded_val);
     __Pyx_GIVEREF(__pyx_v_encoded_val);
     PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_encoded_val);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 42; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 53; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ubjson/encoder.py":38
+  /* "ubjson/encoder.py":49
  * 
  * 
  * def __encode_high_prec(fp_write, item):             # <<<<<<<<<<<<<<
@@ -1168,13 +1161,13 @@ static void __pyx_f_6ubjson_7encoder___encode_high_prec(PyObject *__pyx_v_fp_wri
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_WriteUnraisable("ubjson.encoder.__encode_high_prec", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __Pyx_AddTraceback("ubjson.encoder.__encode_high_prec", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_encoded_val);
   __Pyx_RefNannyFinishContext();
 }
 
-/* "ubjson/encoder.py":45
+/* "ubjson/encoder.py":56
  * 
  * 
  * def __encode_decimal(fp_write, item):             # <<<<<<<<<<<<<<
@@ -1195,7 +1188,7 @@ static void __pyx_f_6ubjson_7encoder___encode_decimal(PyObject *__pyx_v_fp_write
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__encode_decimal", 0);
 
-  /* "ubjson/encoder.py":46
+  /* "ubjson/encoder.py":57
  * 
  * def __encode_decimal(fp_write, item):
  *     fp_write(TYPE_HIGH_PREC)             # <<<<<<<<<<<<<<
@@ -1214,60 +1207,60 @@ static void __pyx_f_6ubjson_7encoder___encode_decimal(PyObject *__pyx_v_fp_write
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_TYPE_HIGH_PREC); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_TYPE_HIGH_PREC); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 57; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 57; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
     __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_HIGH_PREC);
     __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_HIGH_PREC);
     PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_6ubjson_7markers_TYPE_HIGH_PREC);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 57; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ubjson/encoder.py":47
+  /* "ubjson/encoder.py":58
  * def __encode_decimal(fp_write, item):
  *     fp_write(TYPE_HIGH_PREC)
  *     encoded_val = str(item).encode('utf-8')             # <<<<<<<<<<<<<<
  *     __encode_int(fp_write, len(encoded_val))
  *     fp_write(encoded_val)
  */
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 47; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_v_item);
   __Pyx_GIVEREF(__pyx_v_item);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_item);
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 47; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_encode); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 47; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_encode); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 47; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_encoded_val = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "ubjson/encoder.py":48
+  /* "ubjson/encoder.py":59
  *     fp_write(TYPE_HIGH_PREC)
  *     encoded_val = str(item).encode('utf-8')
  *     __encode_int(fp_write, len(encoded_val))             # <<<<<<<<<<<<<<
  *     fp_write(encoded_val)
  * 
  */
-  __pyx_t_5 = PyObject_Length(__pyx_v_encoded_val); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 48; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 48; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyObject_Length(__pyx_v_encoded_val); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 59; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 59; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_2);
+  __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_2); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 59; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "ubjson/encoder.py":49
+  /* "ubjson/encoder.py":60
  *     encoded_val = str(item).encode('utf-8')
  *     __encode_int(fp_write, len(encoded_val))
  *     fp_write(encoded_val)             # <<<<<<<<<<<<<<
@@ -1286,23 +1279,23 @@ static void __pyx_f_6ubjson_7encoder___encode_decimal(PyObject *__pyx_v_fp_write
     }
   }
   if (!__pyx_t_4) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_encoded_val); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 49; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_encoded_val); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 60; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
   } else {
-    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 49; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 60; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
     __Pyx_INCREF(__pyx_v_encoded_val);
     __Pyx_GIVEREF(__pyx_v_encoded_val);
     PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_encoded_val);
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 49; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 60; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "ubjson/encoder.py":45
+  /* "ubjson/encoder.py":56
  * 
  * 
  * def __encode_decimal(fp_write, item):             # <<<<<<<<<<<<<<
@@ -1317,18 +1310,18 @@ static void __pyx_f_6ubjson_7encoder___encode_decimal(PyObject *__pyx_v_fp_write
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_WriteUnraisable("ubjson.encoder.__encode_decimal", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __Pyx_AddTraceback("ubjson.encoder.__encode_decimal", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_encoded_val);
   __Pyx_RefNannyFinishContext();
 }
 
-/* "ubjson/encoder.py":52
+/* "ubjson/encoder.py":63
  * 
  * 
  * def __encode_int(fp_write, item):             # <<<<<<<<<<<<<<
  *     if item >= 0:
- *         if item <= 255:
+ *         if item < 2 ** 8:
  */
 
 static void __pyx_f_6ubjson_7encoder___encode_int(PyObject *__pyx_v_fp_write, PyObject *__pyx_v_item) {
@@ -1338,798 +1331,615 @@ static void __pyx_f_6ubjson_7encoder___encode_int(PyObject *__pyx_v_fp_write, Py
   PyObject *__pyx_t_3 = NULL;
   PyObject *__pyx_t_4 = NULL;
   PyObject *__pyx_t_5 = NULL;
-  Py_ssize_t __pyx_t_6;
-  PyObject *__pyx_t_7 = NULL;
+  PyObject *__pyx_t_6 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__encode_int", 0);
 
-  /* "ubjson/encoder.py":53
+  /* "ubjson/encoder.py":64
  * 
  * def __encode_int(fp_write, item):
  *     if item >= 0:             # <<<<<<<<<<<<<<
- *         if item <= 255:
- *             fp_write(TYPE_UINT8)
+ *         if item < 2 ** 8:
+ *             fp_write(__SMALL_UINTS_ENCODED[item])
  */
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_0, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 53; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 53; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_0, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 64; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 64; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
 
-    /* "ubjson/encoder.py":54
+    /* "ubjson/encoder.py":65
  * def __encode_int(fp_write, item):
  *     if item >= 0:
- *         if item <= 255:             # <<<<<<<<<<<<<<
- *             fp_write(TYPE_UINT8)
- *             fp_write(pack('>B', item))
+ *         if item < 2 ** 8:             # <<<<<<<<<<<<<<
+ *             fp_write(__SMALL_UINTS_ENCODED[item])
+ *         elif item < 2 ** 15:
  */
-    __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_255, Py_LE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 54; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 54; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_256, Py_LT); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 65; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 65; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     if (__pyx_t_2) {
 
-      /* "ubjson/encoder.py":55
+      /* "ubjson/encoder.py":66
  *     if item >= 0:
- *         if item <= 255:
- *             fp_write(TYPE_UINT8)             # <<<<<<<<<<<<<<
- *             fp_write(pack('>B', item))
- *         elif item <= 32767:
- */
-      __Pyx_INCREF(__pyx_v_fp_write);
-      __pyx_t_3 = __pyx_v_fp_write; __pyx_t_4 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_3, function);
-        }
-      }
-      if (!__pyx_t_4) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_6ubjson_7markers_TYPE_UINT8); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 55; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-      } else {
-        __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 55; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
-        __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_UINT8);
-        __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_UINT8);
-        PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_6ubjson_7markers_TYPE_UINT8);
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 55; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-      /* "ubjson/encoder.py":56
- *         if item <= 255:
- *             fp_write(TYPE_UINT8)
- *             fp_write(pack('>B', item))             # <<<<<<<<<<<<<<
- *         elif item <= 32767:
+ *         if item < 2 ** 8:
+ *             fp_write(__SMALL_UINTS_ENCODED[item])             # <<<<<<<<<<<<<<
+ *         elif item < 2 ** 15:
  *             fp_write(TYPE_INT16)
  */
-      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 56; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_4 = NULL;
-      __pyx_t_6 = 0;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_5, function);
-          __pyx_t_6 = 1;
-        }
+      if (unlikely(__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED == Py_None)) {
+        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 66; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       }
-      __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 56; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_7);
-      if (__pyx_t_4) {
-        __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __pyx_t_4 = NULL;
-      }
-      __Pyx_INCREF(__pyx_kp_s_B);
-      __Pyx_GIVEREF(__pyx_kp_s_B);
-      PyTuple_SET_ITEM(__pyx_t_7, 0+__pyx_t_6, __pyx_kp_s_B);
-      __Pyx_INCREF(__pyx_v_item);
-      __Pyx_GIVEREF(__pyx_v_item);
-      PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_item);
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 56; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = __Pyx_PyDict_GetItem(__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED, __pyx_v_item); if (unlikely(__pyx_t_3 == NULL)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 66; __pyx_clineno = __LINE__; goto __pyx_L1_error;};
       __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_INCREF(__pyx_v_fp_write);
-      __pyx_t_5 = __pyx_v_fp_write; __pyx_t_7 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-        __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_5);
-        if (likely(__pyx_t_7)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-          __Pyx_INCREF(__pyx_t_7);
+      __pyx_t_4 = __pyx_v_fp_write; __pyx_t_5 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
+        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
+        if (likely(__pyx_t_5)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+          __Pyx_INCREF(__pyx_t_5);
           __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_5, function);
+          __Pyx_DECREF_SET(__pyx_t_4, function);
         }
       }
-      if (!__pyx_t_7) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 56; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      if (!__pyx_t_5) {
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 66; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_GOTREF(__pyx_t_1);
       } else {
-        __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 56; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 66; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_6);
+        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
         __Pyx_GIVEREF(__pyx_t_3);
-        PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_3);
+        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_3);
         __pyx_t_3 = 0;
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 56; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 66; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-      /* "ubjson/encoder.py":54
- * def __encode_int(fp_write, item):
- *     if item >= 0:
- *         if item <= 255:             # <<<<<<<<<<<<<<
- *             fp_write(TYPE_UINT8)
- *             fp_write(pack('>B', item))
- */
-      goto __pyx_L4;
-    }
-
-    /* "ubjson/encoder.py":57
- *             fp_write(TYPE_UINT8)
- *             fp_write(pack('>B', item))
- *         elif item <= 32767:             # <<<<<<<<<<<<<<
- *             fp_write(TYPE_INT16)
- *             fp_write(pack('>h', item))
- */
-    __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_32767, Py_LE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 57; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 57; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (__pyx_t_2) {
-
-      /* "ubjson/encoder.py":58
- *             fp_write(pack('>B', item))
- *         elif item <= 32767:
- *             fp_write(TYPE_INT16)             # <<<<<<<<<<<<<<
- *             fp_write(pack('>h', item))
- *         elif item <= 2147483647:
- */
-      __Pyx_INCREF(__pyx_v_fp_write);
-      __pyx_t_5 = __pyx_v_fp_write; __pyx_t_4 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_5, function);
-        }
-      }
-      if (!__pyx_t_4) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_6ubjson_7markers_TYPE_INT16); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-      } else {
-        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
-        __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT16);
-        __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT16);
-        PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT16);
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-      /* "ubjson/encoder.py":59
- *         elif item <= 32767:
- *             fp_write(TYPE_INT16)
- *             fp_write(pack('>h', item))             # <<<<<<<<<<<<<<
- *         elif item <= 2147483647:
- *             fp_write(TYPE_INT32)
- */
-      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 59; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = NULL;
-      __pyx_t_6 = 0;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_3, function);
-          __pyx_t_6 = 1;
-        }
-      }
-      __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 59; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_7);
-      if (__pyx_t_4) {
-        __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __pyx_t_4 = NULL;
-      }
-      __Pyx_INCREF(__pyx_kp_s_h);
-      __Pyx_GIVEREF(__pyx_kp_s_h);
-      PyTuple_SET_ITEM(__pyx_t_7, 0+__pyx_t_6, __pyx_kp_s_h);
-      __Pyx_INCREF(__pyx_v_item);
-      __Pyx_GIVEREF(__pyx_v_item);
-      PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_item);
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 59; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_INCREF(__pyx_v_fp_write);
-      __pyx_t_3 = __pyx_v_fp_write; __pyx_t_7 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-        __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_3);
-        if (likely(__pyx_t_7)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-          __Pyx_INCREF(__pyx_t_7);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_3, function);
-        }
-      }
-      if (!__pyx_t_7) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 59; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-      } else {
-        __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 59; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
-        __Pyx_GIVEREF(__pyx_t_5);
-        PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_5);
-        __pyx_t_5 = 0;
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 59; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-      /* "ubjson/encoder.py":57
- *             fp_write(TYPE_UINT8)
- *             fp_write(pack('>B', item))
- *         elif item <= 32767:             # <<<<<<<<<<<<<<
- *             fp_write(TYPE_INT16)
- *             fp_write(pack('>h', item))
- */
-      goto __pyx_L4;
-    }
-
-    /* "ubjson/encoder.py":60
- *             fp_write(TYPE_INT16)
- *             fp_write(pack('>h', item))
- *         elif item <= 2147483647:             # <<<<<<<<<<<<<<
- *             fp_write(TYPE_INT32)
- *             fp_write(pack('>i', item))
- */
-    __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_2147483647, Py_LE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 60; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 60; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (__pyx_t_2) {
-
-      /* "ubjson/encoder.py":61
- *             fp_write(pack('>h', item))
- *         elif item <= 2147483647:
- *             fp_write(TYPE_INT32)             # <<<<<<<<<<<<<<
- *             fp_write(pack('>i', item))
- *         elif item <= 9223372036854775807:
- */
-      __Pyx_INCREF(__pyx_v_fp_write);
-      __pyx_t_3 = __pyx_v_fp_write; __pyx_t_4 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_3, function);
-        }
-      }
-      if (!__pyx_t_4) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_6ubjson_7markers_TYPE_INT32); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-      } else {
-        __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
-        __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT32);
-        __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT32);
-        PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT32);
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-      /* "ubjson/encoder.py":62
- *         elif item <= 2147483647:
- *             fp_write(TYPE_INT32)
- *             fp_write(pack('>i', item))             # <<<<<<<<<<<<<<
- *         elif item <= 9223372036854775807:
- *             fp_write(TYPE_INT64)
- */
-      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 62; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_4 = NULL;
-      __pyx_t_6 = 0;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_5, function);
-          __pyx_t_6 = 1;
-        }
-      }
-      __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 62; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_7);
-      if (__pyx_t_4) {
-        __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __pyx_t_4 = NULL;
-      }
-      __Pyx_INCREF(__pyx_kp_s_i);
-      __Pyx_GIVEREF(__pyx_kp_s_i);
-      PyTuple_SET_ITEM(__pyx_t_7, 0+__pyx_t_6, __pyx_kp_s_i);
-      __Pyx_INCREF(__pyx_v_item);
-      __Pyx_GIVEREF(__pyx_v_item);
-      PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_item);
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 62; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_INCREF(__pyx_v_fp_write);
-      __pyx_t_5 = __pyx_v_fp_write; __pyx_t_7 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-        __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_5);
-        if (likely(__pyx_t_7)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-          __Pyx_INCREF(__pyx_t_7);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_5, function);
-        }
-      }
-      if (!__pyx_t_7) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 62; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-      } else {
-        __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 62; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
-        __Pyx_GIVEREF(__pyx_t_3);
-        PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_3);
-        __pyx_t_3 = 0;
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 62; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-      /* "ubjson/encoder.py":60
- *             fp_write(TYPE_INT16)
- *             fp_write(pack('>h', item))
- *         elif item <= 2147483647:             # <<<<<<<<<<<<<<
- *             fp_write(TYPE_INT32)
- *             fp_write(pack('>i', item))
- */
-      goto __pyx_L4;
-    }
-
-    /* "ubjson/encoder.py":63
- *             fp_write(TYPE_INT32)
- *             fp_write(pack('>i', item))
- *         elif item <= 9223372036854775807:             # <<<<<<<<<<<<<<
- *             fp_write(TYPE_INT64)
- *             fp_write(pack('>q', item))
- */
-    __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_9223372036854775807, Py_LE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 63; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 63; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (__pyx_t_2) {
-
-      /* "ubjson/encoder.py":64
- *             fp_write(pack('>i', item))
- *         elif item <= 9223372036854775807:
- *             fp_write(TYPE_INT64)             # <<<<<<<<<<<<<<
- *             fp_write(pack('>q', item))
- *         else:
- */
-      __Pyx_INCREF(__pyx_v_fp_write);
-      __pyx_t_5 = __pyx_v_fp_write; __pyx_t_4 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_5, function);
-        }
-      }
-      if (!__pyx_t_4) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_6ubjson_7markers_TYPE_INT64); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 64; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-      } else {
-        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 64; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
-        __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT64);
-        __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT64);
-        PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT64);
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 64; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
       /* "ubjson/encoder.py":65
- *         elif item <= 9223372036854775807:
- *             fp_write(TYPE_INT64)
- *             fp_write(pack('>q', item))             # <<<<<<<<<<<<<<
- *         else:
- *             __encode_high_prec(fp_write, item)
- */
-      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 65; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = NULL;
-      __pyx_t_6 = 0;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_3, function);
-          __pyx_t_6 = 1;
-        }
-      }
-      __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 65; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_7);
-      if (__pyx_t_4) {
-        __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __pyx_t_4 = NULL;
-      }
-      __Pyx_INCREF(__pyx_kp_s_q);
-      __Pyx_GIVEREF(__pyx_kp_s_q);
-      PyTuple_SET_ITEM(__pyx_t_7, 0+__pyx_t_6, __pyx_kp_s_q);
-      __Pyx_INCREF(__pyx_v_item);
-      __Pyx_GIVEREF(__pyx_v_item);
-      PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_item);
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 65; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_INCREF(__pyx_v_fp_write);
-      __pyx_t_3 = __pyx_v_fp_write; __pyx_t_7 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-        __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_3);
-        if (likely(__pyx_t_7)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-          __Pyx_INCREF(__pyx_t_7);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_3, function);
-        }
-      }
-      if (!__pyx_t_7) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 65; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-      } else {
-        __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 65; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
-        __Pyx_GIVEREF(__pyx_t_5);
-        PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_5);
-        __pyx_t_5 = 0;
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 65; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-      /* "ubjson/encoder.py":63
- *             fp_write(TYPE_INT32)
- *             fp_write(pack('>i', item))
- *         elif item <= 9223372036854775807:             # <<<<<<<<<<<<<<
- *             fp_write(TYPE_INT64)
- *             fp_write(pack('>q', item))
+ * def __encode_int(fp_write, item):
+ *     if item >= 0:
+ *         if item < 2 ** 8:             # <<<<<<<<<<<<<<
+ *             fp_write(__SMALL_UINTS_ENCODED[item])
+ *         elif item < 2 ** 15:
  */
       goto __pyx_L4;
     }
 
     /* "ubjson/encoder.py":67
- *             fp_write(pack('>q', item))
+ *         if item < 2 ** 8:
+ *             fp_write(__SMALL_UINTS_ENCODED[item])
+ *         elif item < 2 ** 15:             # <<<<<<<<<<<<<<
+ *             fp_write(TYPE_INT16)
+ *             fp_write(__PACK_INT16(item))
+ */
+    __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_32768, Py_LT); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 67; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 67; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (__pyx_t_2) {
+
+      /* "ubjson/encoder.py":68
+ *             fp_write(__SMALL_UINTS_ENCODED[item])
+ *         elif item < 2 ** 15:
+ *             fp_write(TYPE_INT16)             # <<<<<<<<<<<<<<
+ *             fp_write(__PACK_INT16(item))
+ *         elif item < 2 ** 31:
+ */
+      __Pyx_INCREF(__pyx_v_fp_write);
+      __pyx_t_4 = __pyx_v_fp_write; __pyx_t_6 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
+        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_4);
+        if (likely(__pyx_t_6)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+          __Pyx_INCREF(__pyx_t_6);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_4, function);
+        }
+      }
+      if (!__pyx_t_6) {
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_TYPE_INT16); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 68; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+      } else {
+        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 68; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_6); __pyx_t_6 = NULL;
+        __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT16);
+        __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT16);
+        PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT16);
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 68; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+      /* "ubjson/encoder.py":69
+ *         elif item < 2 ** 15:
+ *             fp_write(TYPE_INT16)
+ *             fp_write(__PACK_INT16(item))             # <<<<<<<<<<<<<<
+ *         elif item < 2 ** 31:
+ *             fp_write(TYPE_INT32)
+ */
+      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_PACK_INT16); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 69; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_6 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
+        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
+        if (likely(__pyx_t_6)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+          __Pyx_INCREF(__pyx_t_6);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_3, function);
+        }
+      }
+      if (!__pyx_t_6) {
+        __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_item); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 69; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_4);
+      } else {
+        __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 69; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
+        __Pyx_INCREF(__pyx_v_item);
+        __Pyx_GIVEREF(__pyx_v_item);
+        PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_item);
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 69; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_INCREF(__pyx_v_fp_write);
+      __pyx_t_3 = __pyx_v_fp_write; __pyx_t_5 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
+        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
+        if (likely(__pyx_t_5)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+          __Pyx_INCREF(__pyx_t_5);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_3, function);
+        }
+      }
+      if (!__pyx_t_5) {
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 69; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+      } else {
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 69; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_6);
+        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
+        __Pyx_GIVEREF(__pyx_t_4);
+        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_4);
+        __pyx_t_4 = 0;
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 69; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+      /* "ubjson/encoder.py":67
+ *         if item < 2 ** 8:
+ *             fp_write(__SMALL_UINTS_ENCODED[item])
+ *         elif item < 2 ** 15:             # <<<<<<<<<<<<<<
+ *             fp_write(TYPE_INT16)
+ *             fp_write(__PACK_INT16(item))
+ */
+      goto __pyx_L4;
+    }
+
+    /* "ubjson/encoder.py":70
+ *             fp_write(TYPE_INT16)
+ *             fp_write(__PACK_INT16(item))
+ *         elif item < 2 ** 31:             # <<<<<<<<<<<<<<
+ *             fp_write(TYPE_INT32)
+ *             fp_write(__PACK_INT32(item))
+ */
+    __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_2147483648, Py_LT); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 70; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 70; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (__pyx_t_2) {
+
+      /* "ubjson/encoder.py":71
+ *             fp_write(__PACK_INT16(item))
+ *         elif item < 2 ** 31:
+ *             fp_write(TYPE_INT32)             # <<<<<<<<<<<<<<
+ *             fp_write(__PACK_INT32(item))
+ *         elif item < 2 ** 63:
+ */
+      __Pyx_INCREF(__pyx_v_fp_write);
+      __pyx_t_3 = __pyx_v_fp_write; __pyx_t_6 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
+        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
+        if (likely(__pyx_t_6)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+          __Pyx_INCREF(__pyx_t_6);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_3, function);
+        }
+      }
+      if (!__pyx_t_6) {
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_6ubjson_7markers_TYPE_INT32); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 71; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+      } else {
+        __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 71; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
+        __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT32);
+        __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT32);
+        PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT32);
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 71; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+      /* "ubjson/encoder.py":72
+ *         elif item < 2 ** 31:
+ *             fp_write(TYPE_INT32)
+ *             fp_write(__PACK_INT32(item))             # <<<<<<<<<<<<<<
+ *         elif item < 2 ** 63:
+ *             fp_write(TYPE_INT64)
+ */
+      __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_PACK_INT32); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 72; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_6 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
+        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_4);
+        if (likely(__pyx_t_6)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+          __Pyx_INCREF(__pyx_t_6);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_4, function);
+        }
+      }
+      if (!__pyx_t_6) {
+        __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_item); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 72; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_3);
+      } else {
+        __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 72; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
+        __Pyx_INCREF(__pyx_v_item);
+        __Pyx_GIVEREF(__pyx_v_item);
+        PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_item);
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 72; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_INCREF(__pyx_v_fp_write);
+      __pyx_t_4 = __pyx_v_fp_write; __pyx_t_5 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
+        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
+        if (likely(__pyx_t_5)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+          __Pyx_INCREF(__pyx_t_5);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_4, function);
+        }
+      }
+      if (!__pyx_t_5) {
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 72; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+      } else {
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 72; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_6);
+        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
+        __Pyx_GIVEREF(__pyx_t_3);
+        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_3);
+        __pyx_t_3 = 0;
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 72; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+      /* "ubjson/encoder.py":70
+ *             fp_write(TYPE_INT16)
+ *             fp_write(__PACK_INT16(item))
+ *         elif item < 2 ** 31:             # <<<<<<<<<<<<<<
+ *             fp_write(TYPE_INT32)
+ *             fp_write(__PACK_INT32(item))
+ */
+      goto __pyx_L4;
+    }
+
+    /* "ubjson/encoder.py":73
+ *             fp_write(TYPE_INT32)
+ *             fp_write(__PACK_INT32(item))
+ *         elif item < 2 ** 63:             # <<<<<<<<<<<<<<
+ *             fp_write(TYPE_INT64)
+ *             fp_write(__PACK_INT64(item))
+ */
+    __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_9223372036854775808, Py_LT); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 73; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 73; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (__pyx_t_2) {
+
+      /* "ubjson/encoder.py":74
+ *             fp_write(__PACK_INT32(item))
+ *         elif item < 2 ** 63:
+ *             fp_write(TYPE_INT64)             # <<<<<<<<<<<<<<
+ *             fp_write(__PACK_INT64(item))
+ *         else:
+ */
+      __Pyx_INCREF(__pyx_v_fp_write);
+      __pyx_t_4 = __pyx_v_fp_write; __pyx_t_6 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
+        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_4);
+        if (likely(__pyx_t_6)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+          __Pyx_INCREF(__pyx_t_6);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_4, function);
+        }
+      }
+      if (!__pyx_t_6) {
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_TYPE_INT64); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 74; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+      } else {
+        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 74; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_6); __pyx_t_6 = NULL;
+        __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT64);
+        __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT64);
+        PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT64);
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 74; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+      /* "ubjson/encoder.py":75
+ *         elif item < 2 ** 63:
+ *             fp_write(TYPE_INT64)
+ *             fp_write(__PACK_INT64(item))             # <<<<<<<<<<<<<<
+ *         else:
+ *             __encode_high_prec(fp_write, item)
+ */
+      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_PACK_INT64); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 75; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_6 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
+        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
+        if (likely(__pyx_t_6)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+          __Pyx_INCREF(__pyx_t_6);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_3, function);
+        }
+      }
+      if (!__pyx_t_6) {
+        __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_item); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 75; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_4);
+      } else {
+        __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 75; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
+        __Pyx_INCREF(__pyx_v_item);
+        __Pyx_GIVEREF(__pyx_v_item);
+        PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_item);
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 75; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_INCREF(__pyx_v_fp_write);
+      __pyx_t_3 = __pyx_v_fp_write; __pyx_t_5 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
+        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
+        if (likely(__pyx_t_5)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+          __Pyx_INCREF(__pyx_t_5);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_3, function);
+        }
+      }
+      if (!__pyx_t_5) {
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 75; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+      } else {
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 75; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_6);
+        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
+        __Pyx_GIVEREF(__pyx_t_4);
+        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_4);
+        __pyx_t_4 = 0;
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 75; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+      /* "ubjson/encoder.py":73
+ *             fp_write(TYPE_INT32)
+ *             fp_write(__PACK_INT32(item))
+ *         elif item < 2 ** 63:             # <<<<<<<<<<<<<<
+ *             fp_write(TYPE_INT64)
+ *             fp_write(__PACK_INT64(item))
+ */
+      goto __pyx_L4;
+    }
+
+    /* "ubjson/encoder.py":77
+ *             fp_write(__PACK_INT64(item))
  *         else:
  *             __encode_high_prec(fp_write, item)             # <<<<<<<<<<<<<<
- *     elif item >= -128:
- *         fp_write(TYPE_INT8)
+ *     elif item >= -(2 ** 7):
+ *         fp_write(__SMALL_INTS_ENCODED[item])
  */
     /*else*/ {
-      __pyx_f_6ubjson_7encoder___encode_high_prec(__pyx_v_fp_write, __pyx_v_item);
+      __pyx_f_6ubjson_7encoder___encode_high_prec(__pyx_v_fp_write, __pyx_v_item); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
     __pyx_L4:;
 
-    /* "ubjson/encoder.py":53
+    /* "ubjson/encoder.py":64
  * 
  * def __encode_int(fp_write, item):
  *     if item >= 0:             # <<<<<<<<<<<<<<
- *         if item <= 255:
- *             fp_write(TYPE_UINT8)
+ *         if item < 2 ** 8:
+ *             fp_write(__SMALL_UINTS_ENCODED[item])
  */
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":68
+  /* "ubjson/encoder.py":78
  *         else:
  *             __encode_high_prec(fp_write, item)
- *     elif item >= -128:             # <<<<<<<<<<<<<<
- *         fp_write(TYPE_INT8)
- *         fp_write(pack('>b', item))
+ *     elif item >= -(2 ** 7):             # <<<<<<<<<<<<<<
+ *         fp_write(__SMALL_INTS_ENCODED[item])
+ *     elif item >= -(2 ** 15):
  */
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_neg_128, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 68; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 68; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_neg_128, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
 
-    /* "ubjson/encoder.py":69
+    /* "ubjson/encoder.py":79
  *             __encode_high_prec(fp_write, item)
- *     elif item >= -128:
- *         fp_write(TYPE_INT8)             # <<<<<<<<<<<<<<
- *         fp_write(pack('>b', item))
- *     elif item >= -32768:
+ *     elif item >= -(2 ** 7):
+ *         fp_write(__SMALL_INTS_ENCODED[item])             # <<<<<<<<<<<<<<
+ *     elif item >= -(2 ** 15):
+ *         fp_write(TYPE_INT16)
  */
+    if (unlikely(__pyx_v_6ubjson_7encoder___SMALL_INTS_ENCODED == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    }
+    __pyx_t_3 = __Pyx_PyDict_GetItem(__pyx_v_6ubjson_7encoder___SMALL_INTS_ENCODED, __pyx_v_item); if (unlikely(__pyx_t_3 == NULL)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;};
+    __Pyx_GOTREF(__pyx_t_3);
     __Pyx_INCREF(__pyx_v_fp_write);
-    __pyx_t_3 = __pyx_v_fp_write; __pyx_t_4 = NULL;
-    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+    __pyx_t_6 = __pyx_v_fp_write; __pyx_t_4 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
+      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_6);
       if (likely(__pyx_t_4)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
         __Pyx_INCREF(__pyx_t_4);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
+        __Pyx_DECREF_SET(__pyx_t_6, function);
       }
     }
     if (!__pyx_t_4) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_6ubjson_7markers_TYPE_INT8); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 69; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_1);
-    } else {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 69; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
-      __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT8);
-      __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT8);
-      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT8);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 69; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    }
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-    /* "ubjson/encoder.py":70
- *     elif item >= -128:
- *         fp_write(TYPE_INT8)
- *         fp_write(pack('>b', item))             # <<<<<<<<<<<<<<
- *     elif item >= -32768:
- *         fp_write(TYPE_INT16)
- */
-    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 70; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_4 = NULL;
-    __pyx_t_6 = 0;
-    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_4)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_4);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
-        __pyx_t_6 = 1;
-      }
-    }
-    __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 70; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_7);
-    if (__pyx_t_4) {
-      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __pyx_t_4 = NULL;
-    }
-    __Pyx_INCREF(__pyx_kp_s_b);
-    __Pyx_GIVEREF(__pyx_kp_s_b);
-    PyTuple_SET_ITEM(__pyx_t_7, 0+__pyx_t_6, __pyx_kp_s_b);
-    __Pyx_INCREF(__pyx_v_item);
-    __Pyx_GIVEREF(__pyx_v_item);
-    PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_item);
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 70; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_INCREF(__pyx_v_fp_write);
-    __pyx_t_5 = __pyx_v_fp_write; __pyx_t_7 = NULL;
-    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_7)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_7);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
-      }
-    }
-    if (!__pyx_t_7) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 70; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 70; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
       __Pyx_GIVEREF(__pyx_t_3);
-      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_3);
+      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_3);
       __pyx_t_3 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 70; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "ubjson/encoder.py":68
+    /* "ubjson/encoder.py":78
  *         else:
  *             __encode_high_prec(fp_write, item)
- *     elif item >= -128:             # <<<<<<<<<<<<<<
- *         fp_write(TYPE_INT8)
- *         fp_write(pack('>b', item))
+ *     elif item >= -(2 ** 7):             # <<<<<<<<<<<<<<
+ *         fp_write(__SMALL_INTS_ENCODED[item])
+ *     elif item >= -(2 ** 15):
  */
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":71
- *         fp_write(TYPE_INT8)
- *         fp_write(pack('>b', item))
- *     elif item >= -32768:             # <<<<<<<<<<<<<<
+  /* "ubjson/encoder.py":80
+ *     elif item >= -(2 ** 7):
+ *         fp_write(__SMALL_INTS_ENCODED[item])
+ *     elif item >= -(2 ** 15):             # <<<<<<<<<<<<<<
  *         fp_write(TYPE_INT16)
- *         fp_write(pack('>h', item))
+ *         fp_write(__PACK_INT16(item))
  */
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_neg_32768, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 71; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 71; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_neg_32768, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 80; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 80; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
 
-    /* "ubjson/encoder.py":72
- *         fp_write(pack('>b', item))
- *     elif item >= -32768:
+    /* "ubjson/encoder.py":81
+ *         fp_write(__SMALL_INTS_ENCODED[item])
+ *     elif item >= -(2 ** 15):
  *         fp_write(TYPE_INT16)             # <<<<<<<<<<<<<<
- *         fp_write(pack('>h', item))
- *     elif item >= -2147483648:
+ *         fp_write(__PACK_INT16(item))
+ *     elif item >= -(2 ** 31):
  */
     __Pyx_INCREF(__pyx_v_fp_write);
-    __pyx_t_5 = __pyx_v_fp_write; __pyx_t_4 = NULL;
-    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_4)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_4);
+    __pyx_t_6 = __pyx_v_fp_write; __pyx_t_5 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_6);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+        __Pyx_INCREF(__pyx_t_5);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
+        __Pyx_DECREF_SET(__pyx_t_6, function);
       }
     }
-    if (!__pyx_t_4) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_6ubjson_7markers_TYPE_INT16); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 72; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (!__pyx_t_5) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_6ubjson_7markers_TYPE_INT16); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 81; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
     } else {
-      __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 72; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 81; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5); __pyx_t_5 = NULL;
       __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT16);
       __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT16);
       PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT16);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 72; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 81; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "ubjson/encoder.py":73
- *     elif item >= -32768:
+    /* "ubjson/encoder.py":82
+ *     elif item >= -(2 ** 15):
  *         fp_write(TYPE_INT16)
- *         fp_write(pack('>h', item))             # <<<<<<<<<<<<<<
- *     elif item >= -2147483648:
+ *         fp_write(__PACK_INT16(item))             # <<<<<<<<<<<<<<
+ *     elif item >= -(2 ** 31):
  *         fp_write(TYPE_INT32)
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 73; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_PACK_INT16); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = NULL;
-    __pyx_t_6 = 0;
+    __pyx_t_5 = NULL;
     if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-      if (likely(__pyx_t_4)) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
+      if (likely(__pyx_t_5)) {
         PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_4);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
-        __pyx_t_6 = 1;
-      }
-    }
-    __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 73; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_7);
-    if (__pyx_t_4) {
-      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __pyx_t_4 = NULL;
-    }
-    __Pyx_INCREF(__pyx_kp_s_h);
-    __Pyx_GIVEREF(__pyx_kp_s_h);
-    PyTuple_SET_ITEM(__pyx_t_7, 0+__pyx_t_6, __pyx_kp_s_h);
-    __Pyx_INCREF(__pyx_v_item);
-    __Pyx_GIVEREF(__pyx_v_item);
-    PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_item);
-    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 73; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_INCREF(__pyx_v_fp_write);
-    __pyx_t_3 = __pyx_v_fp_write; __pyx_t_7 = NULL;
-    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_3);
-      if (likely(__pyx_t_7)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_7);
+        __Pyx_INCREF(__pyx_t_5);
         __Pyx_INCREF(function);
         __Pyx_DECREF_SET(__pyx_t_3, function);
       }
     }
-    if (!__pyx_t_7) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 73; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
+    if (!__pyx_t_5) {
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_item); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_6);
     } else {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 73; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
-      __Pyx_GIVEREF(__pyx_t_5);
-      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_5);
-      __pyx_t_5 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 73; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      __Pyx_INCREF(__pyx_v_item);
+      __Pyx_GIVEREF(__pyx_v_item);
+      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_item);
+      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-    /* "ubjson/encoder.py":71
- *         fp_write(TYPE_INT8)
- *         fp_write(pack('>b', item))
- *     elif item >= -32768:             # <<<<<<<<<<<<<<
- *         fp_write(TYPE_INT16)
- *         fp_write(pack('>h', item))
- */
-    goto __pyx_L3;
-  }
-
-  /* "ubjson/encoder.py":74
- *         fp_write(TYPE_INT16)
- *         fp_write(pack('>h', item))
- *     elif item >= -2147483648:             # <<<<<<<<<<<<<<
- *         fp_write(TYPE_INT32)
- *         fp_write(pack('>i', item))
- */
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_neg_2147483648, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 74; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 74; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (__pyx_t_2) {
-
-    /* "ubjson/encoder.py":75
- *         fp_write(pack('>h', item))
- *     elif item >= -2147483648:
- *         fp_write(TYPE_INT32)             # <<<<<<<<<<<<<<
- *         fp_write(pack('>i', item))
- *     elif item >= -9223372036854775808:
- */
     __Pyx_INCREF(__pyx_v_fp_write);
     __pyx_t_3 = __pyx_v_fp_write; __pyx_t_4 = NULL;
     if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -2142,155 +1952,236 @@ static void __pyx_f_6ubjson_7encoder___encode_int(PyObject *__pyx_v_fp_write, Py
       }
     }
     if (!__pyx_t_4) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_6ubjson_7markers_TYPE_INT32); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 75; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 75; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
-      __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT32);
-      __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT32);
-      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT32);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 75; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GIVEREF(__pyx_t_6);
+      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_6);
+      __pyx_t_6 = 0;
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "ubjson/encoder.py":76
- *     elif item >= -2147483648:
- *         fp_write(TYPE_INT32)
- *         fp_write(pack('>i', item))             # <<<<<<<<<<<<<<
- *     elif item >= -9223372036854775808:
- *         fp_write(TYPE_INT64)
- */
-    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 76; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_4 = NULL;
-    __pyx_t_6 = 0;
-    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_4)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_4);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
-        __pyx_t_6 = 1;
-      }
-    }
-    __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 76; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_7);
-    if (__pyx_t_4) {
-      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __pyx_t_4 = NULL;
-    }
-    __Pyx_INCREF(__pyx_kp_s_i);
-    __Pyx_GIVEREF(__pyx_kp_s_i);
-    PyTuple_SET_ITEM(__pyx_t_7, 0+__pyx_t_6, __pyx_kp_s_i);
-    __Pyx_INCREF(__pyx_v_item);
-    __Pyx_GIVEREF(__pyx_v_item);
-    PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_item);
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 76; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_INCREF(__pyx_v_fp_write);
-    __pyx_t_5 = __pyx_v_fp_write; __pyx_t_7 = NULL;
-    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_7)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_7);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
-      }
-    }
-    if (!__pyx_t_7) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 76; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
-    } else {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 76; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
-      __Pyx_GIVEREF(__pyx_t_3);
-      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_3);
-      __pyx_t_3 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 76; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    }
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-    /* "ubjson/encoder.py":74
+    /* "ubjson/encoder.py":80
+ *     elif item >= -(2 ** 7):
+ *         fp_write(__SMALL_INTS_ENCODED[item])
+ *     elif item >= -(2 ** 15):             # <<<<<<<<<<<<<<
  *         fp_write(TYPE_INT16)
- *         fp_write(pack('>h', item))
- *     elif item >= -2147483648:             # <<<<<<<<<<<<<<
- *         fp_write(TYPE_INT32)
- *         fp_write(pack('>i', item))
+ *         fp_write(__PACK_INT16(item))
  */
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":77
+  /* "ubjson/encoder.py":83
+ *         fp_write(TYPE_INT16)
+ *         fp_write(__PACK_INT16(item))
+ *     elif item >= -(2 ** 31):             # <<<<<<<<<<<<<<
  *         fp_write(TYPE_INT32)
- *         fp_write(pack('>i', item))
- *     elif item >= -9223372036854775808:             # <<<<<<<<<<<<<<
- *         fp_write(TYPE_INT64)
- *         fp_write(pack('>q', item))
+ *         fp_write(__PACK_INT32(item))
  */
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_neg_9223372036854775808, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_neg_2147483648, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 83; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 83; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
 
-    /* "ubjson/encoder.py":78
- *         fp_write(pack('>i', item))
- *     elif item >= -9223372036854775808:
- *         fp_write(TYPE_INT64)             # <<<<<<<<<<<<<<
- *         fp_write(pack('>q', item))
- *     else:
+    /* "ubjson/encoder.py":84
+ *         fp_write(__PACK_INT16(item))
+ *     elif item >= -(2 ** 31):
+ *         fp_write(TYPE_INT32)             # <<<<<<<<<<<<<<
+ *         fp_write(__PACK_INT32(item))
+ *     elif item >= -(2 ** 63):
  */
     __Pyx_INCREF(__pyx_v_fp_write);
-    __pyx_t_5 = __pyx_v_fp_write; __pyx_t_4 = NULL;
-    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
+    __pyx_t_3 = __pyx_v_fp_write; __pyx_t_5 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_3, function);
+      }
+    }
+    if (!__pyx_t_5) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_6ubjson_7markers_TYPE_INT32); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 84; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 84; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT32);
+      __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT32);
+      PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT32);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 84; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "ubjson/encoder.py":85
+ *     elif item >= -(2 ** 31):
+ *         fp_write(TYPE_INT32)
+ *         fp_write(__PACK_INT32(item))             # <<<<<<<<<<<<<<
+ *     elif item >= -(2 ** 63):
+ *         fp_write(TYPE_INT64)
+ */
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_PACK_INT32); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_5 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_6);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_6, function);
+      }
+    }
+    if (!__pyx_t_5) {
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_item); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_3);
+    } else {
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      __Pyx_INCREF(__pyx_v_item);
+      __Pyx_GIVEREF(__pyx_v_item);
+      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_item);
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_INCREF(__pyx_v_fp_write);
+    __pyx_t_6 = __pyx_v_fp_write; __pyx_t_4 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
+      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_6);
       if (likely(__pyx_t_4)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
         __Pyx_INCREF(__pyx_t_4);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
+        __Pyx_DECREF_SET(__pyx_t_6, function);
       }
     }
     if (!__pyx_t_4) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_6ubjson_7markers_TYPE_INT64); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else {
-      __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
+      __Pyx_GIVEREF(__pyx_t_3);
+      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_3);
+      __pyx_t_3 = 0;
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "ubjson/encoder.py":83
+ *         fp_write(TYPE_INT16)
+ *         fp_write(__PACK_INT16(item))
+ *     elif item >= -(2 ** 31):             # <<<<<<<<<<<<<<
+ *         fp_write(TYPE_INT32)
+ *         fp_write(__PACK_INT32(item))
+ */
+    goto __pyx_L3;
+  }
+
+  /* "ubjson/encoder.py":86
+ *         fp_write(TYPE_INT32)
+ *         fp_write(__PACK_INT32(item))
+ *     elif item >= -(2 ** 63):             # <<<<<<<<<<<<<<
+ *         fp_write(TYPE_INT64)
+ *         fp_write(__PACK_INT64(item))
+ */
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_item, __pyx_int_neg_9223372036854775808, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 86; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 86; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (__pyx_t_2) {
+
+    /* "ubjson/encoder.py":87
+ *         fp_write(__PACK_INT32(item))
+ *     elif item >= -(2 ** 63):
+ *         fp_write(TYPE_INT64)             # <<<<<<<<<<<<<<
+ *         fp_write(__PACK_INT64(item))
+ *     else:
+ */
+    __Pyx_INCREF(__pyx_v_fp_write);
+    __pyx_t_6 = __pyx_v_fp_write; __pyx_t_5 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_6);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_6, function);
+      }
+    }
+    if (!__pyx_t_5) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_6ubjson_7markers_TYPE_INT64); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 87; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 87; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5); __pyx_t_5 = NULL;
       __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_INT64);
       __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_INT64);
       PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_6ubjson_7markers_TYPE_INT64);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 87; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "ubjson/encoder.py":79
- *     elif item >= -9223372036854775808:
+    /* "ubjson/encoder.py":88
+ *     elif item >= -(2 ** 63):
  *         fp_write(TYPE_INT64)
- *         fp_write(pack('>q', item))             # <<<<<<<<<<<<<<
+ *         fp_write(__PACK_INT64(item))             # <<<<<<<<<<<<<<
  *     else:
  *         __encode_high_prec(fp_write, item)
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_PACK_INT64); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = NULL;
-    __pyx_t_6 = 0;
+    __pyx_t_5 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_3, function);
+      }
+    }
+    if (!__pyx_t_5) {
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_item); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_6);
+    } else {
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      __Pyx_INCREF(__pyx_v_item);
+      __Pyx_GIVEREF(__pyx_v_item);
+      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_item);
+      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_INCREF(__pyx_v_fp_write);
+    __pyx_t_3 = __pyx_v_fp_write; __pyx_t_4 = NULL;
     if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
       __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
       if (likely(__pyx_t_4)) {
@@ -2298,81 +2189,54 @@ static void __pyx_f_6ubjson_7encoder___encode_int(PyObject *__pyx_v_fp_write, Py
         __Pyx_INCREF(__pyx_t_4);
         __Pyx_INCREF(function);
         __Pyx_DECREF_SET(__pyx_t_3, function);
-        __pyx_t_6 = 1;
       }
     }
-    __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_7);
-    if (__pyx_t_4) {
-      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __pyx_t_4 = NULL;
-    }
-    __Pyx_INCREF(__pyx_kp_s_q);
-    __Pyx_GIVEREF(__pyx_kp_s_q);
-    PyTuple_SET_ITEM(__pyx_t_7, 0+__pyx_t_6, __pyx_kp_s_q);
-    __Pyx_INCREF(__pyx_v_item);
-    __Pyx_GIVEREF(__pyx_v_item);
-    PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_item);
-    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_INCREF(__pyx_v_fp_write);
-    __pyx_t_3 = __pyx_v_fp_write; __pyx_t_7 = NULL;
-    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_3);
-      if (likely(__pyx_t_7)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_7);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
-      }
-    }
-    if (!__pyx_t_7) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    if (!__pyx_t_4) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
-      __Pyx_GIVEREF(__pyx_t_5);
-      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_5);
-      __pyx_t_5 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 79; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
+      __Pyx_GIVEREF(__pyx_t_6);
+      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_6);
+      __pyx_t_6 = 0;
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "ubjson/encoder.py":77
+    /* "ubjson/encoder.py":86
  *         fp_write(TYPE_INT32)
- *         fp_write(pack('>i', item))
- *     elif item >= -9223372036854775808:             # <<<<<<<<<<<<<<
+ *         fp_write(__PACK_INT32(item))
+ *     elif item >= -(2 ** 63):             # <<<<<<<<<<<<<<
  *         fp_write(TYPE_INT64)
- *         fp_write(pack('>q', item))
+ *         fp_write(__PACK_INT64(item))
  */
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":81
- *         fp_write(pack('>q', item))
+  /* "ubjson/encoder.py":90
+ *         fp_write(__PACK_INT64(item))
  *     else:
  *         __encode_high_prec(fp_write, item)             # <<<<<<<<<<<<<<
  * 
  * 
  */
   /*else*/ {
-    __pyx_f_6ubjson_7encoder___encode_high_prec(__pyx_v_fp_write, __pyx_v_item);
+    __pyx_f_6ubjson_7encoder___encode_high_prec(__pyx_v_fp_write, __pyx_v_item); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 90; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_L3:;
 
-  /* "ubjson/encoder.py":52
+  /* "ubjson/encoder.py":63
  * 
  * 
  * def __encode_int(fp_write, item):             # <<<<<<<<<<<<<<
  *     if item >= 0:
- *         if item <= 255:
+ *         if item < 2 ** 8:
  */
 
   /* function exit code */
@@ -2382,13 +2246,13 @@ static void __pyx_f_6ubjson_7encoder___encode_int(PyObject *__pyx_v_fp_write, Py
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_WriteUnraisable("ubjson.encoder.__encode_int", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("ubjson.encoder.__encode_int", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
 }
 
-/* "ubjson/encoder.py":84
+/* "ubjson/encoder.py":93
  * 
  * 
  * def __encode_float(fp_write, item):             # <<<<<<<<<<<<<<
@@ -2404,48 +2268,47 @@ static void __pyx_f_6ubjson_7encoder___encode_float(PyObject *__pyx_v_fp_write, 
   int __pyx_t_4;
   PyObject *__pyx_t_5 = NULL;
   PyObject *__pyx_t_6 = NULL;
-  Py_ssize_t __pyx_t_7;
-  PyObject *__pyx_t_8 = NULL;
+  PyObject *__pyx_t_7 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__encode_float", 0);
 
-  /* "ubjson/encoder.py":85
+  /* "ubjson/encoder.py":94
  * 
  * def __encode_float(fp_write, item):
  *     if 1.18e-38 <= abs(item) <= 3.4e38 or item == 0:             # <<<<<<<<<<<<<<
  *         fp_write(TYPE_FLOAT32)
- *         fp_write(pack('>f', item))
+ *         fp_write(__PACK_FLOAT32(item))
  */
-  __pyx_t_2 = PyNumber_Absolute(__pyx_v_item); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyNumber_Absolute(__pyx_v_item); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 94; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyObject_RichCompare(__pyx_float_1_18eneg_38, __pyx_t_2, Py_LE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyObject_RichCompare(__pyx_float_1_18eneg_38, __pyx_t_2, Py_LE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 94; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__Pyx_PyObject_IsTrue(__pyx_t_3)) {
     __Pyx_DECREF(__pyx_t_3);
-    __pyx_t_3 = PyObject_RichCompare(__pyx_t_2, __pyx_float_3_4e38, Py_LE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyObject_RichCompare(__pyx_t_2, __pyx_float_3_4e38, Py_LE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 94; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_4 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_4 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 94; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (!__pyx_t_4) {
   } else {
     __pyx_t_1 = __pyx_t_4;
     goto __pyx_L4_bool_binop_done;
   }
-  __pyx_t_3 = __Pyx_PyInt_EqObjC(__pyx_v_item, __pyx_int_0, 0, 0); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyInt_EqObjC(__pyx_v_item, __pyx_int_0, 0, 0); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 94; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_4 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 85; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_4 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 94; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_1 = __pyx_t_4;
   __pyx_L4_bool_binop_done:;
   if (__pyx_t_1) {
 
-    /* "ubjson/encoder.py":86
+    /* "ubjson/encoder.py":95
  * def __encode_float(fp_write, item):
  *     if 1.18e-38 <= abs(item) <= 3.4e38 or item == 0:
  *         fp_write(TYPE_FLOAT32)             # <<<<<<<<<<<<<<
- *         fp_write(pack('>f', item))
+ *         fp_write(__PACK_FLOAT32(item))
  *     elif 2.23e-308 <= abs(item) < 1.8e308:
  */
     __Pyx_INCREF(__pyx_v_fp_write);
@@ -2460,33 +2323,32 @@ static void __pyx_f_6ubjson_7encoder___encode_float(PyObject *__pyx_v_fp_write, 
       }
     }
     if (!__pyx_t_5) {
-      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_TYPE_FLOAT32); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 86; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_TYPE_FLOAT32); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 95; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
     } else {
-      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 86; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 95; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
       __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_FLOAT32);
       __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_FLOAT32);
       PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_TYPE_FLOAT32);
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 86; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 95; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "ubjson/encoder.py":87
+    /* "ubjson/encoder.py":96
  *     if 1.18e-38 <= abs(item) <= 3.4e38 or item == 0:
  *         fp_write(TYPE_FLOAT32)
- *         fp_write(pack('>f', item))             # <<<<<<<<<<<<<<
+ *         fp_write(__PACK_FLOAT32(item))             # <<<<<<<<<<<<<<
  *     elif 2.23e-308 <= abs(item) < 1.8e308:
  *         fp_write(TYPE_FLOAT64)
  */
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 87; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_PACK_FLOAT32); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_5 = NULL;
-    __pyx_t_7 = 0;
     if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
       __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_6);
       if (likely(__pyx_t_5)) {
@@ -2494,87 +2356,86 @@ static void __pyx_f_6ubjson_7encoder___encode_float(PyObject *__pyx_v_fp_write, 
         __Pyx_INCREF(__pyx_t_5);
         __Pyx_INCREF(function);
         __Pyx_DECREF_SET(__pyx_t_6, function);
-        __pyx_t_7 = 1;
       }
     }
-    __pyx_t_8 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 87; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_8);
-    if (__pyx_t_5) {
-      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_5); __pyx_t_5 = NULL;
+    if (!__pyx_t_5) {
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_item); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+    } else {
+      __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_7);
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      __Pyx_INCREF(__pyx_v_item);
+      __Pyx_GIVEREF(__pyx_v_item);
+      PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_v_item);
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_7, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     }
-    __Pyx_INCREF(__pyx_kp_s_f);
-    __Pyx_GIVEREF(__pyx_kp_s_f);
-    PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_7, __pyx_kp_s_f);
-    __Pyx_INCREF(__pyx_v_item);
-    __Pyx_GIVEREF(__pyx_v_item);
-    PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_7, __pyx_v_item);
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 87; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_INCREF(__pyx_v_fp_write);
-    __pyx_t_6 = __pyx_v_fp_write; __pyx_t_8 = NULL;
+    __pyx_t_6 = __pyx_v_fp_write; __pyx_t_7 = NULL;
     if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
-      __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_6);
-      if (likely(__pyx_t_8)) {
+      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_6);
+      if (likely(__pyx_t_7)) {
         PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
-        __Pyx_INCREF(__pyx_t_8);
+        __Pyx_INCREF(__pyx_t_7);
         __Pyx_INCREF(function);
         __Pyx_DECREF_SET(__pyx_t_6, function);
       }
     }
-    if (!__pyx_t_8) {
-      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 87; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (!__pyx_t_7) {
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_GOTREF(__pyx_t_3);
     } else {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 87; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_8); __pyx_t_8 = NULL;
+      __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_7); __pyx_t_7 = NULL;
       __Pyx_GIVEREF(__pyx_t_2);
       PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_2);
       __pyx_t_2 = 0;
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 87; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "ubjson/encoder.py":85
+    /* "ubjson/encoder.py":94
  * 
  * def __encode_float(fp_write, item):
  *     if 1.18e-38 <= abs(item) <= 3.4e38 or item == 0:             # <<<<<<<<<<<<<<
  *         fp_write(TYPE_FLOAT32)
- *         fp_write(pack('>f', item))
+ *         fp_write(__PACK_FLOAT32(item))
  */
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":88
+  /* "ubjson/encoder.py":97
  *         fp_write(TYPE_FLOAT32)
- *         fp_write(pack('>f', item))
+ *         fp_write(__PACK_FLOAT32(item))
  *     elif 2.23e-308 <= abs(item) < 1.8e308:             # <<<<<<<<<<<<<<
  *         fp_write(TYPE_FLOAT64)
- *         fp_write(pack('>d', item))
+ *         fp_write(__PACK_FLOAT64(item))
  */
-  __pyx_t_3 = PyNumber_Absolute(__pyx_v_item); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyNumber_Absolute(__pyx_v_item); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 97; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = PyObject_RichCompare(__pyx_float_2_23eneg_308, __pyx_t_3, Py_LE); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = PyObject_RichCompare(__pyx_float_2_23eneg_308, __pyx_t_3, Py_LE); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 97; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__Pyx_PyObject_IsTrue(__pyx_t_6)) {
     __Pyx_DECREF(__pyx_t_6);
-    __pyx_t_6 = PyObject_RichCompare(__pyx_t_3, __pyx_float_1_8e308, Py_LT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_6 = PyObject_RichCompare(__pyx_t_3, __pyx_float_1_8e308, Py_LT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 97; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_1 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_1 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 97; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   if (__pyx_t_1) {
 
-    /* "ubjson/encoder.py":89
- *         fp_write(pack('>f', item))
+    /* "ubjson/encoder.py":98
+ *         fp_write(__PACK_FLOAT32(item))
  *     elif 2.23e-308 <= abs(item) < 1.8e308:
  *         fp_write(TYPE_FLOAT64)             # <<<<<<<<<<<<<<
- *         fp_write(pack('>d', item))
+ *         fp_write(__PACK_FLOAT64(item))
  *     else:
  */
     __Pyx_INCREF(__pyx_v_fp_write);
@@ -2589,33 +2450,32 @@ static void __pyx_f_6ubjson_7encoder___encode_float(PyObject *__pyx_v_fp_write, 
       }
     }
     if (!__pyx_t_5) {
-      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_6ubjson_7markers_TYPE_FLOAT64); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 89; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_6ubjson_7markers_TYPE_FLOAT64); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 98; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_6);
     } else {
-      __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 89; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 98; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_5); __pyx_t_5 = NULL;
       __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_FLOAT64);
       __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_FLOAT64);
       PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_v_6ubjson_7markers_TYPE_FLOAT64);
-      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, NULL); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 89; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, NULL); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 98; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "ubjson/encoder.py":90
+    /* "ubjson/encoder.py":99
  *     elif 2.23e-308 <= abs(item) < 1.8e308:
  *         fp_write(TYPE_FLOAT64)
- *         fp_write(pack('>d', item))             # <<<<<<<<<<<<<<
+ *         fp_write(__PACK_FLOAT64(item))             # <<<<<<<<<<<<<<
  *     else:
  *         __encode_high_prec(fp_write, item)
  */
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 90; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_PACK_FLOAT64); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 99; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_5 = NULL;
-    __pyx_t_7 = 0;
     if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
       __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_2);
       if (likely(__pyx_t_5)) {
@@ -2623,76 +2483,75 @@ static void __pyx_f_6ubjson_7encoder___encode_float(PyObject *__pyx_v_fp_write, 
         __Pyx_INCREF(__pyx_t_5);
         __Pyx_INCREF(function);
         __Pyx_DECREF_SET(__pyx_t_2, function);
-        __pyx_t_7 = 1;
       }
     }
-    __pyx_t_8 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 90; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_8);
-    if (__pyx_t_5) {
-      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_5); __pyx_t_5 = NULL;
+    if (!__pyx_t_5) {
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_item); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 99; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_3);
+    } else {
+      __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 99; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_7);
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      __Pyx_INCREF(__pyx_v_item);
+      __Pyx_GIVEREF(__pyx_v_item);
+      PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_v_item);
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 99; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     }
-    __Pyx_INCREF(__pyx_kp_s_d);
-    __Pyx_GIVEREF(__pyx_kp_s_d);
-    PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_7, __pyx_kp_s_d);
-    __Pyx_INCREF(__pyx_v_item);
-    __Pyx_GIVEREF(__pyx_v_item);
-    PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_7, __pyx_v_item);
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_8, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 90; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_INCREF(__pyx_v_fp_write);
-    __pyx_t_2 = __pyx_v_fp_write; __pyx_t_8 = NULL;
+    __pyx_t_2 = __pyx_v_fp_write; __pyx_t_7 = NULL;
     if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-      __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_2);
-      if (likely(__pyx_t_8)) {
+      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_7)) {
         PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-        __Pyx_INCREF(__pyx_t_8);
+        __Pyx_INCREF(__pyx_t_7);
         __Pyx_INCREF(function);
         __Pyx_DECREF_SET(__pyx_t_2, function);
       }
     }
-    if (!__pyx_t_8) {
-      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 90; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (!__pyx_t_7) {
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 99; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_6);
     } else {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 90; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 99; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_8); __pyx_t_8 = NULL;
+      __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_7); __pyx_t_7 = NULL;
       __Pyx_GIVEREF(__pyx_t_3);
       PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_3);
       __pyx_t_3 = 0;
-      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 90; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 99; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "ubjson/encoder.py":88
+    /* "ubjson/encoder.py":97
  *         fp_write(TYPE_FLOAT32)
- *         fp_write(pack('>f', item))
+ *         fp_write(__PACK_FLOAT32(item))
  *     elif 2.23e-308 <= abs(item) < 1.8e308:             # <<<<<<<<<<<<<<
  *         fp_write(TYPE_FLOAT64)
- *         fp_write(pack('>d', item))
+ *         fp_write(__PACK_FLOAT64(item))
  */
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":92
- *         fp_write(pack('>d', item))
+  /* "ubjson/encoder.py":101
+ *         fp_write(__PACK_FLOAT64(item))
  *     else:
  *         __encode_high_prec(fp_write, item)             # <<<<<<<<<<<<<<
  * 
  * 
  */
   /*else*/ {
-    __pyx_f_6ubjson_7encoder___encode_high_prec(__pyx_v_fp_write, __pyx_v_item);
+    __pyx_f_6ubjson_7encoder___encode_high_prec(__pyx_v_fp_write, __pyx_v_item); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 101; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_L3:;
 
-  /* "ubjson/encoder.py":84
+  /* "ubjson/encoder.py":93
  * 
  * 
  * def __encode_float(fp_write, item):             # <<<<<<<<<<<<<<
@@ -2707,13 +2566,13 @@ static void __pyx_f_6ubjson_7encoder___encode_float(PyObject *__pyx_v_fp_write, 
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_WriteUnraisable("ubjson.encoder.__encode_float", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_AddTraceback("ubjson.encoder.__encode_float", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
 }
 
-/* "ubjson/encoder.py":95
+/* "ubjson/encoder.py":104
  * 
  * 
  * def __encode_string(fp_write, item):             # <<<<<<<<<<<<<<
@@ -2731,37 +2590,38 @@ static void __pyx_f_6ubjson_7encoder___encode_string(PyObject *__pyx_v_fp_write,
   int __pyx_t_4;
   PyObject *__pyx_t_5 = NULL;
   PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__encode_string", 0);
 
-  /* "ubjson/encoder.py":96
+  /* "ubjson/encoder.py":105
  * 
  * def __encode_string(fp_write, item):
  *     encoded_val = item.encode('utf-8')             # <<<<<<<<<<<<<<
  *     length = len(encoded_val)
  *     if length == 1:
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_item, __pyx_n_s_encode); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_item, __pyx_n_s_encode); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 105; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 105; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_encoded_val = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "ubjson/encoder.py":97
+  /* "ubjson/encoder.py":106
  * def __encode_string(fp_write, item):
  *     encoded_val = item.encode('utf-8')
  *     length = len(encoded_val)             # <<<<<<<<<<<<<<
  *     if length == 1:
  *         fp_write(TYPE_CHAR)
  */
-  __pyx_t_3 = PyObject_Length(__pyx_v_encoded_val); if (unlikely(__pyx_t_3 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 97; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyObject_Length(__pyx_v_encoded_val); if (unlikely(__pyx_t_3 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 106; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_v_length = __pyx_t_3;
 
-  /* "ubjson/encoder.py":98
+  /* "ubjson/encoder.py":107
  *     encoded_val = item.encode('utf-8')
  *     length = len(encoded_val)
  *     if length == 1:             # <<<<<<<<<<<<<<
@@ -2771,7 +2631,7 @@ static void __pyx_f_6ubjson_7encoder___encode_string(PyObject *__pyx_v_fp_write,
   __pyx_t_4 = ((__pyx_v_length == 1) != 0);
   if (__pyx_t_4) {
 
-    /* "ubjson/encoder.py":99
+    /* "ubjson/encoder.py":108
  *     length = len(encoded_val)
  *     if length == 1:
  *         fp_write(TYPE_CHAR)             # <<<<<<<<<<<<<<
@@ -2790,23 +2650,23 @@ static void __pyx_f_6ubjson_7encoder___encode_string(PyObject *__pyx_v_fp_write,
       }
     }
     if (!__pyx_t_5) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_6ubjson_7markers_TYPE_CHAR); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 99; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_6ubjson_7markers_TYPE_CHAR); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 108; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
     } else {
-      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 99; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 108; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
       __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_CHAR);
       __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_CHAR);
       PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_TYPE_CHAR);
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 99; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 108; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "ubjson/encoder.py":98
+    /* "ubjson/encoder.py":107
  *     encoded_val = item.encode('utf-8')
  *     length = len(encoded_val)
  *     if length == 1:             # <<<<<<<<<<<<<<
@@ -2816,12 +2676,12 @@ static void __pyx_f_6ubjson_7encoder___encode_string(PyObject *__pyx_v_fp_write,
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":101
+  /* "ubjson/encoder.py":110
  *         fp_write(TYPE_CHAR)
  *     else:
  *         fp_write(TYPE_STRING)             # <<<<<<<<<<<<<<
- *         __encode_int(fp_write, length)
- *     fp_write(encoded_val)
+ *         if length < 2 ** 8:
+ *             fp_write(__SMALL_UINTS_ENCODED[length])
  */
   /*else*/ {
     __Pyx_INCREF(__pyx_v_fp_write);
@@ -2836,72 +2696,140 @@ static void __pyx_f_6ubjson_7encoder___encode_string(PyObject *__pyx_v_fp_write,
       }
     }
     if (!__pyx_t_6) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_6ubjson_7markers_TYPE_STRING); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 101; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_6ubjson_7markers_TYPE_STRING); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 110; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
     } else {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 101; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 110; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
       __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_STRING);
       __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_STRING);
       PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_6ubjson_7markers_TYPE_STRING);
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 101; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 110; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "ubjson/encoder.py":102
+    /* "ubjson/encoder.py":111
  *     else:
  *         fp_write(TYPE_STRING)
- *         __encode_int(fp_write, length)             # <<<<<<<<<<<<<<
+ *         if length < 2 ** 8:             # <<<<<<<<<<<<<<
+ *             fp_write(__SMALL_UINTS_ENCODED[length])
+ *         else:
+ */
+    __pyx_t_4 = ((__pyx_v_length < 0x100) != 0);
+    if (__pyx_t_4) {
+
+      /* "ubjson/encoder.py":112
+ *         fp_write(TYPE_STRING)
+ *         if length < 2 ** 8:
+ *             fp_write(__SMALL_UINTS_ENCODED[length])             # <<<<<<<<<<<<<<
+ *         else:
+ *             __encode_int(fp_write, length)
+ */
+      if (unlikely(__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED == Py_None)) {
+        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 112; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      }
+      __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_length); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 112; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __pyx_t_5 = __Pyx_PyDict_GetItem(__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED, __pyx_t_1); if (unlikely(__pyx_t_5 == NULL)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 112; __pyx_clineno = __LINE__; goto __pyx_L1_error;};
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __Pyx_INCREF(__pyx_v_fp_write);
+      __pyx_t_1 = __pyx_v_fp_write; __pyx_t_6 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_1))) {
+        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_1);
+        if (likely(__pyx_t_6)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
+          __Pyx_INCREF(__pyx_t_6);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_1, function);
+        }
+      }
+      if (!__pyx_t_6) {
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_5); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 112; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_2);
+      } else {
+        __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 112; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_7);
+        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6); __pyx_t_6 = NULL;
+        __Pyx_GIVEREF(__pyx_t_5);
+        PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_5);
+        __pyx_t_5 = 0;
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_7, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 112; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_2);
+        __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+      /* "ubjson/encoder.py":111
+ *     else:
+ *         fp_write(TYPE_STRING)
+ *         if length < 2 ** 8:             # <<<<<<<<<<<<<<
+ *             fp_write(__SMALL_UINTS_ENCODED[length])
+ *         else:
+ */
+      goto __pyx_L4;
+    }
+
+    /* "ubjson/encoder.py":114
+ *             fp_write(__SMALL_UINTS_ENCODED[length])
+ *         else:
+ *             __encode_int(fp_write, length)             # <<<<<<<<<<<<<<
  *     fp_write(encoded_val)
  * 
  */
-    __pyx_t_2 = PyInt_FromSsize_t(__pyx_v_length); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 102; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_2);
-    __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_2);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    /*else*/ {
+      __pyx_t_2 = PyInt_FromSsize_t(__pyx_v_length); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 114; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_2); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 114; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    }
+    __pyx_L4:;
   }
   __pyx_L3:;
 
-  /* "ubjson/encoder.py":103
- *         fp_write(TYPE_STRING)
- *         __encode_int(fp_write, length)
+  /* "ubjson/encoder.py":115
+ *         else:
+ *             __encode_int(fp_write, length)
  *     fp_write(encoded_val)             # <<<<<<<<<<<<<<
  * 
  * 
  */
   __Pyx_INCREF(__pyx_v_fp_write);
-  __pyx_t_1 = __pyx_v_fp_write; __pyx_t_5 = NULL;
+  __pyx_t_1 = __pyx_v_fp_write; __pyx_t_7 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_1))) {
-    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_1);
-    if (likely(__pyx_t_5)) {
+    __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_1);
+    if (likely(__pyx_t_7)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
-      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_7);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_1, function);
     }
   }
-  if (!__pyx_t_5) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_encoded_val); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!__pyx_t_7) {
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_encoded_val); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
   } else {
-    __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
+    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_7); __pyx_t_7 = NULL;
     __Pyx_INCREF(__pyx_v_encoded_val);
     __Pyx_GIVEREF(__pyx_v_encoded_val);
-    PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_encoded_val);
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_encoded_val);
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "ubjson/encoder.py":95
+  /* "ubjson/encoder.py":104
  * 
  * 
  * def __encode_string(fp_write, item):             # <<<<<<<<<<<<<<
@@ -2916,308 +2844,42 @@ static void __pyx_f_6ubjson_7encoder___encode_string(PyObject *__pyx_v_fp_write,
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_WriteUnraisable("ubjson.encoder.__encode_string", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_AddTraceback("ubjson.encoder.__encode_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_encoded_val);
   __Pyx_RefNannyFinishContext();
 }
 
-/* "ubjson/encoder.py":107
- * 
- * # similar to encode_string, except 'S' marker is not added
- * def __encode_object_key(fp_write, key):             # <<<<<<<<<<<<<<
- *     encoded_val = key.encode('utf-8') if isinstance(key, UNICODE_TYPE) else key
- *     __encode_int(fp_write, len(encoded_val))
- */
-
-static void __pyx_f_6ubjson_7encoder___encode_object_key(PyObject *__pyx_v_fp_write, PyObject *__pyx_v_key) {
-  PyObject *__pyx_v_encoded_val = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  int __pyx_t_3;
-  PyObject *__pyx_t_4 = NULL;
-  Py_ssize_t __pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("__encode_object_key", 0);
-
-  /* "ubjson/encoder.py":108
- * # similar to encode_string, except 'S' marker is not added
- * def __encode_object_key(fp_write, key):
- *     encoded_val = key.encode('utf-8') if isinstance(key, UNICODE_TYPE) else key             # <<<<<<<<<<<<<<
- *     __encode_int(fp_write, len(encoded_val))
- *     fp_write(encoded_val)
- */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_UNICODE_TYPE); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 108; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyObject_IsInstance(__pyx_v_key, __pyx_t_2); if (unlikely(__pyx_t_3 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 108; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if ((__pyx_t_3 != 0)) {
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_key, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 108; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__4, NULL); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 108; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_1 = __pyx_t_4;
-    __pyx_t_4 = 0;
-  } else {
-    __Pyx_INCREF(__pyx_v_key);
-    __pyx_t_1 = __pyx_v_key;
-  }
-  __pyx_v_encoded_val = __pyx_t_1;
-  __pyx_t_1 = 0;
-
-  /* "ubjson/encoder.py":109
- * def __encode_object_key(fp_write, key):
- *     encoded_val = key.encode('utf-8') if isinstance(key, UNICODE_TYPE) else key
- *     __encode_int(fp_write, len(encoded_val))             # <<<<<<<<<<<<<<
- *     fp_write(encoded_val)
- * 
- */
-  __pyx_t_5 = PyObject_Length(__pyx_v_encoded_val); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 109; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 109; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_1);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "ubjson/encoder.py":110
- *     encoded_val = key.encode('utf-8') if isinstance(key, UNICODE_TYPE) else key
- *     __encode_int(fp_write, len(encoded_val))
- *     fp_write(encoded_val)             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __Pyx_INCREF(__pyx_v_fp_write);
-  __pyx_t_4 = __pyx_v_fp_write; __pyx_t_2 = NULL;
-  if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_2);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
-    }
-  }
-  if (!__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_encoded_val); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 110; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-  } else {
-    __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 110; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_2); __pyx_t_2 = NULL;
-    __Pyx_INCREF(__pyx_v_encoded_val);
-    __Pyx_GIVEREF(__pyx_v_encoded_val);
-    PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_encoded_val);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 110; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "ubjson/encoder.py":107
- * 
- * # similar to encode_string, except 'S' marker is not added
- * def __encode_object_key(fp_write, key):             # <<<<<<<<<<<<<<
- *     encoded_val = key.encode('utf-8') if isinstance(key, UNICODE_TYPE) else key
- *     __encode_int(fp_write, len(encoded_val))
- */
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_WriteUnraisable("ubjson.encoder.__encode_object_key", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_encoded_val);
-  __Pyx_RefNannyFinishContext();
-}
-
-/* "ubjson/encoder.py":113
+/* "ubjson/encoder.py":118
  * 
  * 
  * def __encode_bytes(fp_write, item):             # <<<<<<<<<<<<<<
- *     fp_write(ARRAY_START)
- *     fp_write(CONTAINER_TYPE)
+ *     fp_write(__BYTES_ARRAY_PREFIX)
+ *     length = len(item)
  */
 
 static void __pyx_f_6ubjson_7encoder___encode_bytes(PyObject *__pyx_v_fp_write, PyObject *__pyx_v_item) {
+  Py_ssize_t __pyx_v_length;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
   PyObject *__pyx_t_4 = NULL;
   Py_ssize_t __pyx_t_5;
+  int __pyx_t_6;
+  PyObject *__pyx_t_7 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__encode_bytes", 0);
 
-  /* "ubjson/encoder.py":114
- * 
- * def __encode_bytes(fp_write, item):
- *     fp_write(ARRAY_START)             # <<<<<<<<<<<<<<
- *     fp_write(CONTAINER_TYPE)
- *     fp_write(TYPE_UINT8)
- */
-  __Pyx_INCREF(__pyx_v_fp_write);
-  __pyx_t_2 = __pyx_v_fp_write; __pyx_t_3 = NULL;
-  if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
-    }
-  }
-  if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_ARRAY_START); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 114; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-  } else {
-    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 114; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
-    __Pyx_INCREF(__pyx_v_6ubjson_7markers_ARRAY_START);
-    __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_ARRAY_START);
-    PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_6ubjson_7markers_ARRAY_START);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 114; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "ubjson/encoder.py":115
- * def __encode_bytes(fp_write, item):
- *     fp_write(ARRAY_START)
- *     fp_write(CONTAINER_TYPE)             # <<<<<<<<<<<<<<
- *     fp_write(TYPE_UINT8)
- *     fp_write(CONTAINER_COUNT)
- */
-  __Pyx_INCREF(__pyx_v_fp_write);
-  __pyx_t_2 = __pyx_v_fp_write; __pyx_t_4 = NULL;
-  if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_4)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_4);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
-    }
-  }
-  if (!__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_CONTAINER_TYPE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-  } else {
-    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
-    __Pyx_INCREF(__pyx_v_6ubjson_7markers_CONTAINER_TYPE);
-    __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_CONTAINER_TYPE);
-    PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_6ubjson_7markers_CONTAINER_TYPE);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "ubjson/encoder.py":116
- *     fp_write(ARRAY_START)
- *     fp_write(CONTAINER_TYPE)
- *     fp_write(TYPE_UINT8)             # <<<<<<<<<<<<<<
- *     fp_write(CONTAINER_COUNT)
- *     __encode_int(fp_write, len(item))
- */
-  __Pyx_INCREF(__pyx_v_fp_write);
-  __pyx_t_2 = __pyx_v_fp_write; __pyx_t_3 = NULL;
-  if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
-    }
-  }
-  if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_TYPE_UINT8); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 116; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-  } else {
-    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 116; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
-    __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_UINT8);
-    __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_UINT8);
-    PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_6ubjson_7markers_TYPE_UINT8);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 116; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "ubjson/encoder.py":117
- *     fp_write(CONTAINER_TYPE)
- *     fp_write(TYPE_UINT8)
- *     fp_write(CONTAINER_COUNT)             # <<<<<<<<<<<<<<
- *     __encode_int(fp_write, len(item))
- *     fp_write(item)
- */
-  __Pyx_INCREF(__pyx_v_fp_write);
-  __pyx_t_2 = __pyx_v_fp_write; __pyx_t_4 = NULL;
-  if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_4)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_4);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
-    }
-  }
-  if (!__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_CONTAINER_COUNT); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 117; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-  } else {
-    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 117; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
-    __Pyx_INCREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-    __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-    PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 117; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "ubjson/encoder.py":118
- *     fp_write(TYPE_UINT8)
- *     fp_write(CONTAINER_COUNT)
- *     __encode_int(fp_write, len(item))             # <<<<<<<<<<<<<<
- *     fp_write(item)
- *     # no ARRAY_END since length was specified
- */
-  __pyx_t_5 = PyObject_Length(__pyx_v_item); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_1);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
   /* "ubjson/encoder.py":119
- *     fp_write(CONTAINER_COUNT)
- *     __encode_int(fp_write, len(item))
- *     fp_write(item)             # <<<<<<<<<<<<<<
- *     # no ARRAY_END since length was specified
  * 
+ * def __encode_bytes(fp_write, item):
+ *     fp_write(__BYTES_ARRAY_PREFIX)             # <<<<<<<<<<<<<<
+ *     length = len(item)
+ *     if length < 2 ** 8:
  */
   __Pyx_INCREF(__pyx_v_fp_write);
   __pyx_t_2 = __pyx_v_fp_write; __pyx_t_3 = NULL;
@@ -3231,15 +2893,15 @@ static void __pyx_f_6ubjson_7encoder___encode_bytes(PyObject *__pyx_v_fp_write, 
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_item); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7encoder___BYTES_ARRAY_PREFIX); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
-    __Pyx_INCREF(__pyx_v_item);
-    __Pyx_GIVEREF(__pyx_v_item);
-    PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_item);
+    __Pyx_INCREF(__pyx_v_6ubjson_7encoder___BYTES_ARRAY_PREFIX);
+    __Pyx_GIVEREF(__pyx_v_6ubjson_7encoder___BYTES_ARRAY_PREFIX);
+    PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_6ubjson_7encoder___BYTES_ARRAY_PREFIX);
     __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -3247,12 +2909,137 @@ static void __pyx_f_6ubjson_7encoder___encode_bytes(PyObject *__pyx_v_fp_write, 
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ubjson/encoder.py":113
+  /* "ubjson/encoder.py":120
+ * def __encode_bytes(fp_write, item):
+ *     fp_write(__BYTES_ARRAY_PREFIX)
+ *     length = len(item)             # <<<<<<<<<<<<<<
+ *     if length < 2 ** 8:
+ *         fp_write(__SMALL_UINTS_ENCODED[length])
+ */
+  __pyx_t_5 = PyObject_Length(__pyx_v_item); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 120; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_v_length = __pyx_t_5;
+
+  /* "ubjson/encoder.py":121
+ *     fp_write(__BYTES_ARRAY_PREFIX)
+ *     length = len(item)
+ *     if length < 2 ** 8:             # <<<<<<<<<<<<<<
+ *         fp_write(__SMALL_UINTS_ENCODED[length])
+ *     else:
+ */
+  __pyx_t_6 = ((__pyx_v_length < 0x100) != 0);
+  if (__pyx_t_6) {
+
+    /* "ubjson/encoder.py":122
+ *     length = len(item)
+ *     if length < 2 ** 8:
+ *         fp_write(__SMALL_UINTS_ENCODED[length])             # <<<<<<<<<<<<<<
+ *     else:
+ *         __encode_int(fp_write, length)
+ */
+    if (unlikely(__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 122; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    }
+    __pyx_t_2 = PyInt_FromSsize_t(__pyx_v_length); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 122; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_4 = __Pyx_PyDict_GetItem(__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED, __pyx_t_2); if (unlikely(__pyx_t_4 == NULL)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 122; __pyx_clineno = __LINE__; goto __pyx_L1_error;};
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_INCREF(__pyx_v_fp_write);
+    __pyx_t_2 = __pyx_v_fp_write; __pyx_t_3 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_3)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+        __Pyx_INCREF(__pyx_t_3);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_2, function);
+      }
+    }
+    if (!__pyx_t_3) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 122; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 122; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_7);
+      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_3); __pyx_t_3 = NULL;
+      __Pyx_GIVEREF(__pyx_t_4);
+      PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_4);
+      __pyx_t_4 = 0;
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 122; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "ubjson/encoder.py":121
+ *     fp_write(__BYTES_ARRAY_PREFIX)
+ *     length = len(item)
+ *     if length < 2 ** 8:             # <<<<<<<<<<<<<<
+ *         fp_write(__SMALL_UINTS_ENCODED[length])
+ *     else:
+ */
+    goto __pyx_L3;
+  }
+
+  /* "ubjson/encoder.py":124
+ *         fp_write(__SMALL_UINTS_ENCODED[length])
+ *     else:
+ *         __encode_int(fp_write, length)             # <<<<<<<<<<<<<<
+ *     fp_write(item)
+ *     # no ARRAY_END since length was specified
+ */
+  /*else*/ {
+    __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_length); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 124; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_1); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 124; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  }
+  __pyx_L3:;
+
+  /* "ubjson/encoder.py":125
+ *     else:
+ *         __encode_int(fp_write, length)
+ *     fp_write(item)             # <<<<<<<<<<<<<<
+ *     # no ARRAY_END since length was specified
+ * 
+ */
+  __Pyx_INCREF(__pyx_v_fp_write);
+  __pyx_t_2 = __pyx_v_fp_write; __pyx_t_7 = NULL;
+  if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_7)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_7);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (!__pyx_t_7) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_item); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 125; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 125; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
+    __Pyx_INCREF(__pyx_v_item);
+    __Pyx_GIVEREF(__pyx_v_item);
+    PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_item);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 125; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "ubjson/encoder.py":118
  * 
  * 
  * def __encode_bytes(fp_write, item):             # <<<<<<<<<<<<<<
- *     fp_write(ARRAY_START)
- *     fp_write(CONTAINER_TYPE)
+ *     fp_write(__BYTES_ARRAY_PREFIX)
+ *     length = len(item)
  */
 
   /* function exit code */
@@ -3262,12 +3049,13 @@ static void __pyx_f_6ubjson_7encoder___encode_bytes(PyObject *__pyx_v_fp_write, 
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_WriteUnraisable("ubjson.encoder.__encode_bytes", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_AddTraceback("ubjson.encoder.__encode_bytes", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
 }
 
-/* "ubjson/encoder.py":123
+/* "ubjson/encoder.py":129
  * 
  * 
  * def __encode_value(fp_write, item):             # <<<<<<<<<<<<<<
@@ -3289,30 +3077,30 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__encode_value", 0);
 
-  /* "ubjson/encoder.py":124
+  /* "ubjson/encoder.py":130
  * 
  * def __encode_value(fp_write, item):
  *     if isinstance(item, UNICODE_TYPE):             # <<<<<<<<<<<<<<
  *         __encode_string(fp_write, item)
  * 
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_UNICODE_TYPE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 124; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_UNICODE_TYPE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 130; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_IsInstance(__pyx_v_item, __pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 124; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_IsInstance(__pyx_v_item, __pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 130; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_3 = (__pyx_t_2 != 0);
   if (__pyx_t_3) {
 
-    /* "ubjson/encoder.py":125
+    /* "ubjson/encoder.py":131
  * def __encode_value(fp_write, item):
  *     if isinstance(item, UNICODE_TYPE):
  *         __encode_string(fp_write, item)             # <<<<<<<<<<<<<<
  * 
  *     elif item is None:
  */
-    __pyx_f_6ubjson_7encoder___encode_string(__pyx_v_fp_write, __pyx_v_item);
+    __pyx_f_6ubjson_7encoder___encode_string(__pyx_v_fp_write, __pyx_v_item); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-    /* "ubjson/encoder.py":124
+    /* "ubjson/encoder.py":130
  * 
  * def __encode_value(fp_write, item):
  *     if isinstance(item, UNICODE_TYPE):             # <<<<<<<<<<<<<<
@@ -3322,7 +3110,7 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":127
+  /* "ubjson/encoder.py":133
  *         __encode_string(fp_write, item)
  * 
  *     elif item is None:             # <<<<<<<<<<<<<<
@@ -3333,7 +3121,7 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
   __pyx_t_2 = (__pyx_t_3 != 0);
   if (__pyx_t_2) {
 
-    /* "ubjson/encoder.py":128
+    /* "ubjson/encoder.py":134
  * 
  *     elif item is None:
  *         fp_write(TYPE_NULL)             # <<<<<<<<<<<<<<
@@ -3352,23 +3140,23 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
       }
     }
     if (!__pyx_t_5) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_TYPE_NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_TYPE_NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 134; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
     } else {
-      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 134; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
       __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_NULL);
       __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_NULL);
       PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_TYPE_NULL);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 134; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "ubjson/encoder.py":127
+    /* "ubjson/encoder.py":133
  *         __encode_string(fp_write, item)
  * 
  *     elif item is None:             # <<<<<<<<<<<<<<
@@ -3378,7 +3166,7 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":130
+  /* "ubjson/encoder.py":136
  *         fp_write(TYPE_NULL)
  * 
  *     elif item is True:             # <<<<<<<<<<<<<<
@@ -3389,7 +3177,7 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
   __pyx_t_3 = (__pyx_t_2 != 0);
   if (__pyx_t_3) {
 
-    /* "ubjson/encoder.py":131
+    /* "ubjson/encoder.py":137
  * 
  *     elif item is True:
  *         fp_write(TYPE_BOOL_TRUE)             # <<<<<<<<<<<<<<
@@ -3408,23 +3196,23 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
       }
     }
     if (!__pyx_t_6) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_TYPE_BOOL_TRUE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_TYPE_BOOL_TRUE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 137; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
     } else {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 137; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
       __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_BOOL_TRUE);
       __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_BOOL_TRUE);
       PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_6ubjson_7markers_TYPE_BOOL_TRUE);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 137; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "ubjson/encoder.py":130
+    /* "ubjson/encoder.py":136
  *         fp_write(TYPE_NULL)
  * 
  *     elif item is True:             # <<<<<<<<<<<<<<
@@ -3434,7 +3222,7 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":133
+  /* "ubjson/encoder.py":139
  *         fp_write(TYPE_BOOL_TRUE)
  * 
  *     elif item is False:             # <<<<<<<<<<<<<<
@@ -3445,7 +3233,7 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
   __pyx_t_2 = (__pyx_t_3 != 0);
   if (__pyx_t_2) {
 
-    /* "ubjson/encoder.py":134
+    /* "ubjson/encoder.py":140
  * 
  *     elif item is False:
  *         fp_write(TYPE_BOOL_FALSE)             # <<<<<<<<<<<<<<
@@ -3464,23 +3252,23 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
       }
     }
     if (!__pyx_t_5) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_TYPE_BOOL_FALSE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 134; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_TYPE_BOOL_FALSE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 140; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
     } else {
-      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 134; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 140; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
       __Pyx_INCREF(__pyx_v_6ubjson_7markers_TYPE_BOOL_FALSE);
       __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_TYPE_BOOL_FALSE);
       PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_TYPE_BOOL_FALSE);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 134; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 140; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "ubjson/encoder.py":133
+    /* "ubjson/encoder.py":139
  *         fp_write(TYPE_BOOL_TRUE)
  * 
  *     elif item is False:             # <<<<<<<<<<<<<<
@@ -3490,30 +3278,30 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":136
+  /* "ubjson/encoder.py":142
  *         fp_write(TYPE_BOOL_FALSE)
  * 
  *     elif isinstance(item, INTEGER_TYPES):             # <<<<<<<<<<<<<<
  *         __encode_int(fp_write, item)
  * 
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_INTEGER_TYPES); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 136; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_INTEGER_TYPES); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 142; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_IsInstance(__pyx_v_item, __pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 136; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_IsInstance(__pyx_v_item, __pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 142; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_3 = (__pyx_t_2 != 0);
   if (__pyx_t_3) {
 
-    /* "ubjson/encoder.py":137
+    /* "ubjson/encoder.py":143
  * 
  *     elif isinstance(item, INTEGER_TYPES):
  *         __encode_int(fp_write, item)             # <<<<<<<<<<<<<<
  * 
  *     elif isinstance(item, float):
  */
-    __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_v_item);
+    __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_v_item); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 143; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-    /* "ubjson/encoder.py":136
+    /* "ubjson/encoder.py":142
  *         fp_write(TYPE_BOOL_FALSE)
  * 
  *     elif isinstance(item, INTEGER_TYPES):             # <<<<<<<<<<<<<<
@@ -3523,7 +3311,7 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":139
+  /* "ubjson/encoder.py":145
  *         __encode_int(fp_write, item)
  * 
  *     elif isinstance(item, float):             # <<<<<<<<<<<<<<
@@ -3534,16 +3322,16 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
   __pyx_t_2 = (__pyx_t_3 != 0);
   if (__pyx_t_2) {
 
-    /* "ubjson/encoder.py":140
+    /* "ubjson/encoder.py":146
  * 
  *     elif isinstance(item, float):
  *         __encode_float(fp_write, item)             # <<<<<<<<<<<<<<
  * 
  *     elif isinstance(item, Decimal):
  */
-    __pyx_f_6ubjson_7encoder___encode_float(__pyx_v_fp_write, __pyx_v_item);
+    __pyx_f_6ubjson_7encoder___encode_float(__pyx_v_fp_write, __pyx_v_item); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 146; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-    /* "ubjson/encoder.py":139
+    /* "ubjson/encoder.py":145
  *         __encode_int(fp_write, item)
  * 
  *     elif isinstance(item, float):             # <<<<<<<<<<<<<<
@@ -3553,30 +3341,30 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":142
+  /* "ubjson/encoder.py":148
  *         __encode_float(fp_write, item)
  * 
  *     elif isinstance(item, Decimal):             # <<<<<<<<<<<<<<
  *         __encode_decimal(fp_write, item)
  * 
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_Decimal); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 142; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_Decimal); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 148; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_IsInstance(__pyx_v_item, __pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 142; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_IsInstance(__pyx_v_item, __pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 148; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_3 = (__pyx_t_2 != 0);
   if (__pyx_t_3) {
 
-    /* "ubjson/encoder.py":143
+    /* "ubjson/encoder.py":149
  * 
  *     elif isinstance(item, Decimal):
  *         __encode_decimal(fp_write, item)             # <<<<<<<<<<<<<<
  * 
  *     elif isinstance(item, BYTES_TYPES):
  */
-    __pyx_f_6ubjson_7encoder___encode_decimal(__pyx_v_fp_write, __pyx_v_item);
+    __pyx_f_6ubjson_7encoder___encode_decimal(__pyx_v_fp_write, __pyx_v_item); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 149; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-    /* "ubjson/encoder.py":142
+    /* "ubjson/encoder.py":148
  *         __encode_float(fp_write, item)
  * 
  *     elif isinstance(item, Decimal):             # <<<<<<<<<<<<<<
@@ -3586,30 +3374,30 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":145
+  /* "ubjson/encoder.py":151
  *         __encode_decimal(fp_write, item)
  * 
  *     elif isinstance(item, BYTES_TYPES):             # <<<<<<<<<<<<<<
  *         __encode_bytes(fp_write, item)
  * 
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_BYTES_TYPES); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 145; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_BYTES_TYPES); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 151; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyObject_IsInstance(__pyx_v_item, __pyx_t_1); if (unlikely(__pyx_t_3 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 145; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyObject_IsInstance(__pyx_v_item, __pyx_t_1); if (unlikely(__pyx_t_3 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 151; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_2 = (__pyx_t_3 != 0);
   if (__pyx_t_2) {
 
-    /* "ubjson/encoder.py":146
+    /* "ubjson/encoder.py":152
  * 
  *     elif isinstance(item, BYTES_TYPES):
  *         __encode_bytes(fp_write, item)             # <<<<<<<<<<<<<<
  * 
  *     else:
  */
-    __pyx_f_6ubjson_7encoder___encode_bytes(__pyx_v_fp_write, __pyx_v_item);
+    __pyx_f_6ubjson_7encoder___encode_bytes(__pyx_v_fp_write, __pyx_v_item); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 152; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-    /* "ubjson/encoder.py":145
+    /* "ubjson/encoder.py":151
  *         __encode_decimal(fp_write, item)
  * 
  *     elif isinstance(item, BYTES_TYPES):             # <<<<<<<<<<<<<<
@@ -3619,7 +3407,7 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
     goto __pyx_L3;
   }
 
-  /* "ubjson/encoder.py":149
+  /* "ubjson/encoder.py":155
  * 
  *     else:
  *         return False             # <<<<<<<<<<<<<<
@@ -3632,7 +3420,7 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
   }
   __pyx_L3:;
 
-  /* "ubjson/encoder.py":151
+  /* "ubjson/encoder.py":157
  *         return False
  * 
  *     return True             # <<<<<<<<<<<<<<
@@ -3642,7 +3430,7 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
   __pyx_r = 1;
   goto __pyx_L0;
 
-  /* "ubjson/encoder.py":123
+  /* "ubjson/encoder.py":129
  * 
  * 
  * def __encode_value(fp_write, item):             # <<<<<<<<<<<<<<
@@ -3656,2165 +3444,1287 @@ static int __pyx_f_6ubjson_7encoder___encode_value(PyObject *__pyx_v_fp_write, P
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_WriteUnraisable("ubjson.encoder.__encode_value", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __Pyx_AddTraceback("ubjson.encoder.__encode_value", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "ubjson/encoder.py":155
+/* "ubjson/encoder.py":160
  * 
- * # pylint: disable=too-many-branches,too-many-statements
- * def __encode_container(fp_write, obj, in_mapping, seen_containers, container_count, sort_keys):  # noqa (complexity)             # <<<<<<<<<<<<<<
- *     """Performs encoding within an array or object"""
- *     # stack for keeping track of sequences and mappings without requiring recursion
+ * 
+ * def __encode_array(fp_write, item, seen_containers, container_count, sort_keys):             # <<<<<<<<<<<<<<
+ *     # circular reference check
+ *     container_id = id(item)
  */
 
-static int __pyx_f_6ubjson_7encoder___encode_container(PyObject *__pyx_v_fp_write, PyObject *__pyx_v_obj, int __pyx_v_in_mapping, PyObject *__pyx_v_seen_containers, int __pyx_v_container_count, int __pyx_v_sort_keys) {
+static void __pyx_f_6ubjson_7encoder___encode_array(PyObject *__pyx_v_fp_write, PyObject *__pyx_v_item, PyObject *__pyx_v_seen_containers, int __pyx_v_container_count, int __pyx_v_sort_keys) {
   unsigned PY_LONG_LONG __pyx_v_container_id;
-  PyObject *__pyx_v_stack = NULL;
-  PyObject *__pyx_v_current = NULL;
-  PyObject *__pyx_v_key = NULL;
-  PyObject *__pyx_v_item = NULL;
-  int __pyx_r;
+  PyObject *__pyx_v_value = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
+  unsigned PY_LONG_LONG __pyx_t_3;
   int __pyx_t_4;
-  PyObject *__pyx_t_5 = NULL;
+  int __pyx_t_5;
   PyObject *__pyx_t_6 = NULL;
   PyObject *__pyx_t_7 = NULL;
-  PyObject *__pyx_t_8 = NULL;
+  Py_ssize_t __pyx_t_8;
   PyObject *(*__pyx_t_9)(PyObject *);
-  int __pyx_t_10;
+  PyObject *__pyx_t_10 = NULL;
   PyObject *__pyx_t_11 = NULL;
-  PyObject *__pyx_t_12 = NULL;
-  PyObject *__pyx_t_13 = NULL;
-  PyObject *__pyx_t_14 = NULL;
-  PyObject *__pyx_t_15 = NULL;
-  PyObject *__pyx_t_16 = NULL;
-  PyObject *__pyx_t_17 = NULL;
-  unsigned PY_LONG_LONG __pyx_t_18;
-  int __pyx_t_19;
-  Py_ssize_t __pyx_t_20;
-  int __pyx_t_21;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("__encode_container", 0);
+  __Pyx_RefNannySetupContext("__encode_array", 0);
 
-  /* "ubjson/encoder.py":158
- *     """Performs encoding within an array or object"""
- *     # stack for keeping track of sequences and mappings without requiring recursion
- *     stack = deque()             # <<<<<<<<<<<<<<
- *     # current object being encoded
- *     current = obj
+  /* "ubjson/encoder.py":162
+ * def __encode_array(fp_write, item, seen_containers, container_count, sort_keys):
+ *     # circular reference check
+ *     container_id = id(item)             # <<<<<<<<<<<<<<
+ *     if container_id in seen_containers:
+ *         raise EncoderException('Circular reference detected')
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_deque); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 158; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 162; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_INCREF(__pyx_v_item);
+  __Pyx_GIVEREF(__pyx_v_item);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_item);
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_id, __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 162; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = NULL;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_3 = __Pyx_PyInt_As_unsigned_PY_LONG_LONG(__pyx_t_2); if (unlikely((__pyx_t_3 == (unsigned PY_LONG_LONG)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 162; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_container_id = __pyx_t_3;
+
+  /* "ubjson/encoder.py":163
+ *     # circular reference check
+ *     container_id = id(item)
+ *     if container_id in seen_containers:             # <<<<<<<<<<<<<<
+ *         raise EncoderException('Circular reference detected')
+ *     seen_containers[container_id] = item
+ */
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 163; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_2);
+  if (unlikely(__pyx_v_seen_containers == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 163; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  }
+  __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_t_2, __pyx_v_seen_containers, Py_EQ)); if (unlikely(__pyx_t_4 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 163; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_5 = (__pyx_t_4 != 0);
+  if (__pyx_t_5) {
+
+    /* "ubjson/encoder.py":164
+ *     container_id = id(item)
+ *     if container_id in seen_containers:
+ *         raise EncoderException('Circular reference detected')             # <<<<<<<<<<<<<<
+ *     seen_containers[container_id] = item
+ * 
+ */
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 164; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 164; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_Raise(__pyx_t_1, 0, 0, 0);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 164; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+
+    /* "ubjson/encoder.py":163
+ *     # circular reference check
+ *     container_id = id(item)
+ *     if container_id in seen_containers:             # <<<<<<<<<<<<<<
+ *         raise EncoderException('Circular reference detected')
+ *     seen_containers[container_id] = item
+ */
+  }
+
+  /* "ubjson/encoder.py":165
+ *     if container_id in seen_containers:
+ *         raise EncoderException('Circular reference detected')
+ *     seen_containers[container_id] = item             # <<<<<<<<<<<<<<
+ * 
+ *     fp_write(ARRAY_START)
+ */
+  if (unlikely(__pyx_v_seen_containers == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 165; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  }
+  __pyx_t_1 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 165; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  if (unlikely(PyDict_SetItem(__pyx_v_seen_containers, __pyx_t_1, __pyx_v_item) < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 165; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "ubjson/encoder.py":167
+ *     seen_containers[container_id] = item
+ * 
+ *     fp_write(ARRAY_START)             # <<<<<<<<<<<<<<
+ *     if container_count:
+ *         fp_write(CONTAINER_COUNT)
+ */
+  __Pyx_INCREF(__pyx_v_fp_write);
+  __pyx_t_2 = __pyx_v_fp_write; __pyx_t_6 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_3)) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_6)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_6);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_2, function);
     }
   }
-  if (__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 158; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (!__pyx_t_6) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_ARRAY_START); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 167; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 158; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 167; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6); __pyx_t_6 = NULL;
+    __Pyx_INCREF(__pyx_v_6ubjson_7markers_ARRAY_START);
+    __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_ARRAY_START);
+    PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_v_6ubjson_7markers_ARRAY_START);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 167; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   }
-  __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_v_stack = __pyx_t_1;
-  __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ubjson/encoder.py":160
- *     stack = deque()
- *     # current object being encoded
- *     current = obj             # <<<<<<<<<<<<<<
- *     container_id = 0
+  /* "ubjson/encoder.py":168
+ * 
+ *     fp_write(ARRAY_START)
+ *     if container_count:             # <<<<<<<<<<<<<<
+ *         fp_write(CONTAINER_COUNT)
+ *         __encode_int(fp_write, len(item))
+ */
+  __pyx_t_5 = (__pyx_v_container_count != 0);
+  if (__pyx_t_5) {
+
+    /* "ubjson/encoder.py":169
+ *     fp_write(ARRAY_START)
+ *     if container_count:
+ *         fp_write(CONTAINER_COUNT)             # <<<<<<<<<<<<<<
+ *         __encode_int(fp_write, len(item))
  * 
  */
-  __Pyx_INCREF(__pyx_v_obj);
-  __pyx_v_current = __pyx_v_obj;
+    __Pyx_INCREF(__pyx_v_fp_write);
+    __pyx_t_2 = __pyx_v_fp_write; __pyx_t_7 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
+      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_7)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+        __Pyx_INCREF(__pyx_t_7);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_2, function);
+      }
+    }
+    if (!__pyx_t_7) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_CONTAINER_COUNT); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 169; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 169; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_7); __pyx_t_7 = NULL;
+      __Pyx_INCREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
+      __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
+      PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_CONTAINER_COUNT);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 169; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ubjson/encoder.py":161
- *     # current object being encoded
- *     current = obj
- *     container_id = 0             # <<<<<<<<<<<<<<
+    /* "ubjson/encoder.py":170
+ *     if container_count:
+ *         fp_write(CONTAINER_COUNT)
+ *         __encode_int(fp_write, len(item))             # <<<<<<<<<<<<<<
  * 
- *     while True:
+ *     for value in item:
  */
-  __pyx_v_container_id = 0;
+    __pyx_t_8 = PyObject_Length(__pyx_v_item); if (unlikely(__pyx_t_8 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_8); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_1); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ubjson/encoder.py":163
- *     container_id = 0
+    /* "ubjson/encoder.py":168
  * 
- *     while True:             # <<<<<<<<<<<<<<
- *         # Get next item from container (or finish container and return to parent)
- *         if in_mapping:
+ *     fp_write(ARRAY_START)
+ *     if container_count:             # <<<<<<<<<<<<<<
+ *         fp_write(CONTAINER_COUNT)
+ *         __encode_int(fp_write, len(item))
  */
-  while (1) {
+  }
 
-    /* "ubjson/encoder.py":165
- *     while True:
- *         # Get next item from container (or finish container and return to parent)
- *         if in_mapping:             # <<<<<<<<<<<<<<
- *             try:
- *                 key, item = next(current)
+  /* "ubjson/encoder.py":172
+ *         __encode_int(fp_write, len(item))
+ * 
+ *     for value in item:             # <<<<<<<<<<<<<<
+ *         if not __encode_value(fp_write, value):
+ *             # order important since mappings could also be sequences
  */
-    __pyx_t_4 = (__pyx_v_in_mapping != 0);
+  if (likely(PyList_CheckExact(__pyx_v_item)) || PyTuple_CheckExact(__pyx_v_item)) {
+    __pyx_t_1 = __pyx_v_item; __Pyx_INCREF(__pyx_t_1); __pyx_t_8 = 0;
+    __pyx_t_9 = NULL;
+  } else {
+    __pyx_t_8 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_item); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 172; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_9 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 172; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  }
+  for (;;) {
+    if (likely(!__pyx_t_9)) {
+      if (likely(PyList_CheckExact(__pyx_t_1))) {
+        if (__pyx_t_8 >= PyList_GET_SIZE(__pyx_t_1)) break;
+        #if CYTHON_COMPILING_IN_CPYTHON
+        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_8); __Pyx_INCREF(__pyx_t_2); __pyx_t_8++; if (unlikely(0 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 172; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        #else
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 172; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_2);
+        #endif
+      } else {
+        if (__pyx_t_8 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
+        #if CYTHON_COMPILING_IN_CPYTHON
+        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_8); __Pyx_INCREF(__pyx_t_2); __pyx_t_8++; if (unlikely(0 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 172; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        #else
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 172; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_2);
+        #endif
+      }
+    } else {
+      __pyx_t_2 = __pyx_t_9(__pyx_t_1);
+      if (unlikely(!__pyx_t_2)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
+          else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 172; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        }
+        break;
+      }
+      __Pyx_GOTREF(__pyx_t_2);
+    }
+    __Pyx_XDECREF_SET(__pyx_v_value, __pyx_t_2);
+    __pyx_t_2 = 0;
+
+    /* "ubjson/encoder.py":173
+ * 
+ *     for value in item:
+ *         if not __encode_value(fp_write, value):             # <<<<<<<<<<<<<<
+ *             # order important since mappings could also be sequences
+ *             if isinstance(value, Mapping):
+ */
+    __pyx_t_5 = __pyx_f_6ubjson_7encoder___encode_value(__pyx_v_fp_write, __pyx_v_value); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 173; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = ((!(__pyx_t_5 != 0)) != 0);
     if (__pyx_t_4) {
 
-      /* "ubjson/encoder.py":166
- *         # Get next item from container (or finish container and return to parent)
- *         if in_mapping:
- *             try:             # <<<<<<<<<<<<<<
- *                 key, item = next(current)
- *             except StopIteration:
+      /* "ubjson/encoder.py":175
+ *         if not __encode_value(fp_write, value):
+ *             # order important since mappings could also be sequences
+ *             if isinstance(value, Mapping):             # <<<<<<<<<<<<<<
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+ *             elif isinstance(value, Sequence):
  */
-      {
-        __Pyx_ExceptionSave(&__pyx_t_5, &__pyx_t_6, &__pyx_t_7);
-        __Pyx_XGOTREF(__pyx_t_5);
-        __Pyx_XGOTREF(__pyx_t_6);
-        __Pyx_XGOTREF(__pyx_t_7);
-        /*try:*/ {
-
-          /* "ubjson/encoder.py":167
- *         if in_mapping:
- *             try:
- *                 key, item = next(current)             # <<<<<<<<<<<<<<
- *             except StopIteration:
- *                 try:
- */
-          __pyx_t_1 = __Pyx_PyIter_Next(__pyx_v_current); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 167; __pyx_clineno = __LINE__; goto __pyx_L6_error;}
-          __Pyx_GOTREF(__pyx_t_1);
-          if ((likely(PyTuple_CheckExact(__pyx_t_1))) || (PyList_CheckExact(__pyx_t_1))) {
-            PyObject* sequence = __pyx_t_1;
-            #if CYTHON_COMPILING_IN_CPYTHON
-            Py_ssize_t size = Py_SIZE(sequence);
-            #else
-            Py_ssize_t size = PySequence_Size(sequence);
-            #endif
-            if (unlikely(size != 2)) {
-              if (size > 2) __Pyx_RaiseTooManyValuesError(2);
-              else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-              {__pyx_filename = __pyx_f[0]; __pyx_lineno = 167; __pyx_clineno = __LINE__; goto __pyx_L6_error;}
-            }
-            #if CYTHON_COMPILING_IN_CPYTHON
-            if (likely(PyTuple_CheckExact(sequence))) {
-              __pyx_t_2 = PyTuple_GET_ITEM(sequence, 0); 
-              __pyx_t_3 = PyTuple_GET_ITEM(sequence, 1); 
-            } else {
-              __pyx_t_2 = PyList_GET_ITEM(sequence, 0); 
-              __pyx_t_3 = PyList_GET_ITEM(sequence, 1); 
-            }
-            __Pyx_INCREF(__pyx_t_2);
-            __Pyx_INCREF(__pyx_t_3);
-            #else
-            __pyx_t_2 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 167; __pyx_clineno = __LINE__; goto __pyx_L6_error;}
-            __Pyx_GOTREF(__pyx_t_2);
-            __pyx_t_3 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 167; __pyx_clineno = __LINE__; goto __pyx_L6_error;}
-            __Pyx_GOTREF(__pyx_t_3);
-            #endif
-            __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-          } else {
-            Py_ssize_t index = -1;
-            __pyx_t_8 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 167; __pyx_clineno = __LINE__; goto __pyx_L6_error;}
-            __Pyx_GOTREF(__pyx_t_8);
-            __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-            __pyx_t_9 = Py_TYPE(__pyx_t_8)->tp_iternext;
-            index = 0; __pyx_t_2 = __pyx_t_9(__pyx_t_8); if (unlikely(!__pyx_t_2)) goto __pyx_L14_unpacking_failed;
-            __Pyx_GOTREF(__pyx_t_2);
-            index = 1; __pyx_t_3 = __pyx_t_9(__pyx_t_8); if (unlikely(!__pyx_t_3)) goto __pyx_L14_unpacking_failed;
-            __Pyx_GOTREF(__pyx_t_3);
-            if (__Pyx_IternextUnpackEndCheck(__pyx_t_9(__pyx_t_8), 2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 167; __pyx_clineno = __LINE__; goto __pyx_L6_error;}
-            __pyx_t_9 = NULL;
-            __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-            goto __pyx_L15_unpacking_done;
-            __pyx_L14_unpacking_failed:;
-            __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-            __pyx_t_9 = NULL;
-            if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-            {__pyx_filename = __pyx_f[0]; __pyx_lineno = 167; __pyx_clineno = __LINE__; goto __pyx_L6_error;}
-            __pyx_L15_unpacking_done:;
-          }
-          __Pyx_XDECREF_SET(__pyx_v_key, __pyx_t_2);
-          __pyx_t_2 = 0;
-          __Pyx_XDECREF_SET(__pyx_v_item, __pyx_t_3);
-          __pyx_t_3 = 0;
-
-          /* "ubjson/encoder.py":166
- *         # Get next item from container (or finish container and return to parent)
- *         if in_mapping:
- *             try:             # <<<<<<<<<<<<<<
- *                 key, item = next(current)
- *             except StopIteration:
- */
-        }
-        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-        goto __pyx_L13_try_end;
-        __pyx_L6_error:;
-        __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-        __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-        /* "ubjson/encoder.py":168
- *             try:
- *                 key, item = next(current)
- *             except StopIteration:             # <<<<<<<<<<<<<<
- *                 try:
- *                     in_mapping, current, container_id = stack.pop()
- */
-        __pyx_t_10 = PyErr_ExceptionMatches(__pyx_builtin_StopIteration);
-        if (__pyx_t_10) {
-          __Pyx_AddTraceback("ubjson.encoder.__encode_container", __pyx_clineno, __pyx_lineno, __pyx_filename);
-          if (__Pyx_GetException(&__pyx_t_1, &__pyx_t_3, &__pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 168; __pyx_clineno = __LINE__; goto __pyx_L8_except_error;}
-          __Pyx_GOTREF(__pyx_t_1);
-          __Pyx_GOTREF(__pyx_t_3);
-          __Pyx_GOTREF(__pyx_t_2);
-
-          /* "ubjson/encoder.py":169
- *                 key, item = next(current)
- *             except StopIteration:
- *                 try:             # <<<<<<<<<<<<<<
- *                     in_mapping, current, container_id = stack.pop()
- *                 except IndexError:
- */
-          {
-            __Pyx_ExceptionSave(&__pyx_t_11, &__pyx_t_12, &__pyx_t_13);
-            __Pyx_XGOTREF(__pyx_t_11);
-            __Pyx_XGOTREF(__pyx_t_12);
-            __Pyx_XGOTREF(__pyx_t_13);
-            /*try:*/ {
-
-              /* "ubjson/encoder.py":170
- *             except StopIteration:
- *                 try:
- *                     in_mapping, current, container_id = stack.pop()             # <<<<<<<<<<<<<<
- *                 except IndexError:
- *                     # top-level container reached
- */
-              __pyx_t_8 = __Pyx_PyObject_Pop(__pyx_v_stack); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L18_error;}
-              __Pyx_GOTREF(__pyx_t_8);
-              if ((likely(PyTuple_CheckExact(__pyx_t_8))) || (PyList_CheckExact(__pyx_t_8))) {
-                PyObject* sequence = __pyx_t_8;
-                #if CYTHON_COMPILING_IN_CPYTHON
-                Py_ssize_t size = Py_SIZE(sequence);
-                #else
-                Py_ssize_t size = PySequence_Size(sequence);
-                #endif
-                if (unlikely(size != 3)) {
-                  if (size > 3) __Pyx_RaiseTooManyValuesError(3);
-                  else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-                  {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L18_error;}
-                }
-                #if CYTHON_COMPILING_IN_CPYTHON
-                if (likely(PyTuple_CheckExact(sequence))) {
-                  __pyx_t_14 = PyTuple_GET_ITEM(sequence, 0); 
-                  __pyx_t_15 = PyTuple_GET_ITEM(sequence, 1); 
-                  __pyx_t_16 = PyTuple_GET_ITEM(sequence, 2); 
-                } else {
-                  __pyx_t_14 = PyList_GET_ITEM(sequence, 0); 
-                  __pyx_t_15 = PyList_GET_ITEM(sequence, 1); 
-                  __pyx_t_16 = PyList_GET_ITEM(sequence, 2); 
-                }
-                __Pyx_INCREF(__pyx_t_14);
-                __Pyx_INCREF(__pyx_t_15);
-                __Pyx_INCREF(__pyx_t_16);
-                #else
-                __pyx_t_14 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_14)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L18_error;}
-                __Pyx_GOTREF(__pyx_t_14);
-                __pyx_t_15 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_15)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L18_error;}
-                __Pyx_GOTREF(__pyx_t_15);
-                __pyx_t_16 = PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L18_error;}
-                __Pyx_GOTREF(__pyx_t_16);
-                #endif
-                __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-              } else {
-                Py_ssize_t index = -1;
-                __pyx_t_17 = PyObject_GetIter(__pyx_t_8); if (unlikely(!__pyx_t_17)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L18_error;}
-                __Pyx_GOTREF(__pyx_t_17);
-                __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-                __pyx_t_9 = Py_TYPE(__pyx_t_17)->tp_iternext;
-                index = 0; __pyx_t_14 = __pyx_t_9(__pyx_t_17); if (unlikely(!__pyx_t_14)) goto __pyx_L26_unpacking_failed;
-                __Pyx_GOTREF(__pyx_t_14);
-                index = 1; __pyx_t_15 = __pyx_t_9(__pyx_t_17); if (unlikely(!__pyx_t_15)) goto __pyx_L26_unpacking_failed;
-                __Pyx_GOTREF(__pyx_t_15);
-                index = 2; __pyx_t_16 = __pyx_t_9(__pyx_t_17); if (unlikely(!__pyx_t_16)) goto __pyx_L26_unpacking_failed;
-                __Pyx_GOTREF(__pyx_t_16);
-                if (__Pyx_IternextUnpackEndCheck(__pyx_t_9(__pyx_t_17), 3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L18_error;}
-                __pyx_t_9 = NULL;
-                __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
-                goto __pyx_L27_unpacking_done;
-                __pyx_L26_unpacking_failed:;
-                __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
-                __pyx_t_9 = NULL;
-                if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-                {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L18_error;}
-                __pyx_L27_unpacking_done:;
-              }
-              __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_14); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L18_error;}
-              __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-              __pyx_t_18 = __Pyx_PyInt_As_unsigned_PY_LONG_LONG(__pyx_t_16); if (unlikely((__pyx_t_18 == (unsigned PY_LONG_LONG)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 170; __pyx_clineno = __LINE__; goto __pyx_L18_error;}
-              __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-              __pyx_v_in_mapping = __pyx_t_4;
-              __Pyx_DECREF_SET(__pyx_v_current, __pyx_t_15);
-              __pyx_t_15 = 0;
-              __pyx_v_container_id = __pyx_t_18;
-
-              /* "ubjson/encoder.py":169
- *                 key, item = next(current)
- *             except StopIteration:
- *                 try:             # <<<<<<<<<<<<<<
- *                     in_mapping, current, container_id = stack.pop()
- *                 except IndexError:
- */
-            }
-
-            /* "ubjson/encoder.py":175
- *                     break
- *                 else:
- *                     if not container_count:             # <<<<<<<<<<<<<<
- *                         fp_write(OBJECT_END)
- *                     # for circular reference checking
- */
-            /*else:*/ {
-              __pyx_t_4 = ((!(__pyx_v_container_count != 0)) != 0);
-              if (__pyx_t_4) {
-
-                /* "ubjson/encoder.py":176
- *                 else:
- *                     if not container_count:
- *                         fp_write(OBJECT_END)             # <<<<<<<<<<<<<<
- *                     # for circular reference checking
- *                     del seen_containers[container_id]
- */
-                __Pyx_INCREF(__pyx_v_fp_write);
-                __pyx_t_16 = __pyx_v_fp_write; __pyx_t_15 = NULL;
-                if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_16))) {
-                  __pyx_t_15 = PyMethod_GET_SELF(__pyx_t_16);
-                  if (likely(__pyx_t_15)) {
-                    PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_16);
-                    __Pyx_INCREF(__pyx_t_15);
-                    __Pyx_INCREF(function);
-                    __Pyx_DECREF_SET(__pyx_t_16, function);
-                  }
-                }
-                if (!__pyx_t_15) {
-                  __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_t_16, __pyx_v_6ubjson_7markers_OBJECT_END); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 176; __pyx_clineno = __LINE__; goto __pyx_L20_except_error;}
-                  __Pyx_GOTREF(__pyx_t_8);
-                } else {
-                  __pyx_t_14 = PyTuple_New(1+1); if (unlikely(!__pyx_t_14)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 176; __pyx_clineno = __LINE__; goto __pyx_L20_except_error;}
-                  __Pyx_GOTREF(__pyx_t_14);
-                  __Pyx_GIVEREF(__pyx_t_15); PyTuple_SET_ITEM(__pyx_t_14, 0, __pyx_t_15); __pyx_t_15 = NULL;
-                  __Pyx_INCREF(__pyx_v_6ubjson_7markers_OBJECT_END);
-                  __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_OBJECT_END);
-                  PyTuple_SET_ITEM(__pyx_t_14, 0+1, __pyx_v_6ubjson_7markers_OBJECT_END);
-                  __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_16, __pyx_t_14, NULL); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 176; __pyx_clineno = __LINE__; goto __pyx_L20_except_error;}
-                  __Pyx_GOTREF(__pyx_t_8);
-                  __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-                }
-                __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-                __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-
-                /* "ubjson/encoder.py":175
- *                     break
- *                 else:
- *                     if not container_count:             # <<<<<<<<<<<<<<
- *                         fp_write(OBJECT_END)
- *                     # for circular reference checking
- */
-              }
-
-              /* "ubjson/encoder.py":178
- *                         fp_write(OBJECT_END)
- *                     # for circular reference checking
- *                     del seen_containers[container_id]             # <<<<<<<<<<<<<<
- *                     continue
- *             # allow both str & unicode for Python 2
- */
-              if (unlikely(__pyx_v_seen_containers == Py_None)) {
-                PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-                {__pyx_filename = __pyx_f[0]; __pyx_lineno = 178; __pyx_clineno = __LINE__; goto __pyx_L20_except_error;}
-              }
-              __pyx_t_8 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 178; __pyx_clineno = __LINE__; goto __pyx_L20_except_error;}
-              __Pyx_GOTREF(__pyx_t_8);
-              if (PyDict_DelItem(__pyx_v_seen_containers, __pyx_t_8) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 178; __pyx_clineno = __LINE__; goto __pyx_L20_except_error;}
-              __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-
-              /* "ubjson/encoder.py":179
- *                     # for circular reference checking
- *                     del seen_containers[container_id]
- *                     continue             # <<<<<<<<<<<<<<
- *             # allow both str & unicode for Python 2
- *             if isinstance(key, TEXT_TYPES):
- */
-              goto __pyx_L24_try_continue;
-            }
-            __pyx_L18_error:;
-            __Pyx_XDECREF(__pyx_t_17); __pyx_t_17 = 0;
-            __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
-            __Pyx_XDECREF(__pyx_t_15); __pyx_t_15 = 0;
-            __Pyx_XDECREF(__pyx_t_16); __pyx_t_16 = 0;
-            __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-
-            /* "ubjson/encoder.py":171
- *                 try:
- *                     in_mapping, current, container_id = stack.pop()
- *                 except IndexError:             # <<<<<<<<<<<<<<
- *                     # top-level container reached
- *                     break
- */
-            __pyx_t_10 = PyErr_ExceptionMatches(__pyx_builtin_IndexError);
-            if (__pyx_t_10) {
-              __Pyx_AddTraceback("ubjson.encoder.__encode_container", __pyx_clineno, __pyx_lineno, __pyx_filename);
-              if (__Pyx_GetException(&__pyx_t_8, &__pyx_t_16, &__pyx_t_14) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 171; __pyx_clineno = __LINE__; goto __pyx_L20_except_error;}
-              __Pyx_GOTREF(__pyx_t_8);
-              __Pyx_GOTREF(__pyx_t_16);
-              __Pyx_GOTREF(__pyx_t_14);
-
-              /* "ubjson/encoder.py":173
- *                 except IndexError:
- *                     # top-level container reached
- *                     break             # <<<<<<<<<<<<<<
- *                 else:
- *                     if not container_count:
- */
-              goto __pyx_L29_except_break;
-              __pyx_L29_except_break:;
-              __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-              __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-              __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-              goto __pyx_L23_try_break;
-            }
-            goto __pyx_L20_except_error;
-            __pyx_L20_except_error:;
-
-            /* "ubjson/encoder.py":169
- *                 key, item = next(current)
- *             except StopIteration:
- *                 try:             # <<<<<<<<<<<<<<
- *                     in_mapping, current, container_id = stack.pop()
- *                 except IndexError:
- */
-            __Pyx_XGIVEREF(__pyx_t_11);
-            __Pyx_XGIVEREF(__pyx_t_12);
-            __Pyx_XGIVEREF(__pyx_t_13);
-            __Pyx_ExceptionReset(__pyx_t_11, __pyx_t_12, __pyx_t_13);
-            goto __pyx_L8_except_error;
-            __pyx_L23_try_break:;
-            __Pyx_XGIVEREF(__pyx_t_11);
-            __Pyx_XGIVEREF(__pyx_t_12);
-            __Pyx_XGIVEREF(__pyx_t_13);
-            __Pyx_ExceptionReset(__pyx_t_11, __pyx_t_12, __pyx_t_13);
-            goto __pyx_L16_except_break;
-            __pyx_L24_try_continue:;
-            __Pyx_XGIVEREF(__pyx_t_11);
-            __Pyx_XGIVEREF(__pyx_t_12);
-            __Pyx_XGIVEREF(__pyx_t_13);
-            __Pyx_ExceptionReset(__pyx_t_11, __pyx_t_12, __pyx_t_13);
-            goto __pyx_L17_except_continue;
-          }
-          __pyx_L16_except_break:;
-          __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-          goto __pyx_L11_try_break;
-          __pyx_L17_except_continue:;
-          __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-          goto __pyx_L12_try_continue;
-        }
-        goto __pyx_L8_except_error;
-        __pyx_L8_except_error:;
-
-        /* "ubjson/encoder.py":166
- *         # Get next item from container (or finish container and return to parent)
- *         if in_mapping:
- *             try:             # <<<<<<<<<<<<<<
- *                 key, item = next(current)
- *             except StopIteration:
- */
-        __Pyx_XGIVEREF(__pyx_t_5);
-        __Pyx_XGIVEREF(__pyx_t_6);
-        __Pyx_XGIVEREF(__pyx_t_7);
-        __Pyx_ExceptionReset(__pyx_t_5, __pyx_t_6, __pyx_t_7);
-        goto __pyx_L1_error;
-        __pyx_L11_try_break:;
-        __Pyx_XGIVEREF(__pyx_t_5);
-        __Pyx_XGIVEREF(__pyx_t_6);
-        __Pyx_XGIVEREF(__pyx_t_7);
-        __Pyx_ExceptionReset(__pyx_t_5, __pyx_t_6, __pyx_t_7);
-        goto __pyx_L4_break;
-        __pyx_L12_try_continue:;
-        __Pyx_XGIVEREF(__pyx_t_5);
-        __Pyx_XGIVEREF(__pyx_t_6);
-        __Pyx_XGIVEREF(__pyx_t_7);
-        __Pyx_ExceptionReset(__pyx_t_5, __pyx_t_6, __pyx_t_7);
-        goto __pyx_L3_continue;
-        __pyx_L13_try_end:;
-      }
-
-      /* "ubjson/encoder.py":181
- *                     continue
- *             # allow both str & unicode for Python 2
- *             if isinstance(key, TEXT_TYPES):             # <<<<<<<<<<<<<<
- *                 __encode_object_key(fp_write, key)
- *             else:
- */
-      __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_TEXT_TYPES); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 181; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_Mapping); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 175; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_4 = PyObject_IsInstance(__pyx_v_key, __pyx_t_2); if (unlikely(__pyx_t_4 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 181; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_4 = PyObject_IsInstance(__pyx_v_value, __pyx_t_2); if (unlikely(__pyx_t_4 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 175; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_19 = (__pyx_t_4 != 0);
-      if (__pyx_t_19) {
+      __pyx_t_5 = (__pyx_t_4 != 0);
+      if (__pyx_t_5) {
 
-        /* "ubjson/encoder.py":182
- *             # allow both str & unicode for Python 2
- *             if isinstance(key, TEXT_TYPES):
- *                 __encode_object_key(fp_write, key)             # <<<<<<<<<<<<<<
- *             else:
- *                 raise EncoderException('Mapping keys can only be strings')
- */
-        __pyx_f_6ubjson_7encoder___encode_object_key(__pyx_v_fp_write, __pyx_v_key);
-
-        /* "ubjson/encoder.py":181
- *                     continue
- *             # allow both str & unicode for Python 2
- *             if isinstance(key, TEXT_TYPES):             # <<<<<<<<<<<<<<
- *                 __encode_object_key(fp_write, key)
- *             else:
- */
-        goto __pyx_L31;
-      }
-
-      /* "ubjson/encoder.py":184
- *                 __encode_object_key(fp_write, key)
- *             else:
- *                 raise EncoderException('Mapping keys can only be strings')             # <<<<<<<<<<<<<<
- *         else:
- *             # sequence
- */
-      /*else*/ {
-        __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 184; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 184; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __Pyx_Raise(__pyx_t_3, 0, 0, 0);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 184; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      }
-      __pyx_L31:;
-
-      /* "ubjson/encoder.py":165
- *     while True:
- *         # Get next item from container (or finish container and return to parent)
- *         if in_mapping:             # <<<<<<<<<<<<<<
- *             try:
- *                 key, item = next(current)
- */
-      goto __pyx_L5;
-    }
-
-    /* "ubjson/encoder.py":187
- *         else:
- *             # sequence
- *             try:             # <<<<<<<<<<<<<<
- *                 item = next(current)
- *             except StopIteration:
- */
-    /*else*/ {
-      {
-        __Pyx_ExceptionSave(&__pyx_t_7, &__pyx_t_6, &__pyx_t_5);
-        __Pyx_XGOTREF(__pyx_t_7);
-        __Pyx_XGOTREF(__pyx_t_6);
-        __Pyx_XGOTREF(__pyx_t_5);
-        /*try:*/ {
-
-          /* "ubjson/encoder.py":188
- *             # sequence
- *             try:
- *                 item = next(current)             # <<<<<<<<<<<<<<
- *             except StopIteration:
- *                 try:
- */
-          __pyx_t_3 = __Pyx_PyIter_Next(__pyx_v_current); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 188; __pyx_clineno = __LINE__; goto __pyx_L32_error;}
-          __Pyx_GOTREF(__pyx_t_3);
-          __Pyx_XDECREF_SET(__pyx_v_item, __pyx_t_3);
-          __pyx_t_3 = 0;
-
-          /* "ubjson/encoder.py":187
- *         else:
- *             # sequence
- *             try:             # <<<<<<<<<<<<<<
- *                 item = next(current)
- *             except StopIteration:
- */
-        }
-        __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-        __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-        goto __pyx_L39_try_end;
-        __pyx_L32_error:;
-        __Pyx_XDECREF(__pyx_t_17); __pyx_t_17 = 0;
-        __Pyx_XDECREF(__pyx_t_15); __pyx_t_15 = 0;
-        __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-        __Pyx_XDECREF(__pyx_t_16); __pyx_t_16 = 0;
-        __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
-        __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-        /* "ubjson/encoder.py":189
- *             try:
- *                 item = next(current)
- *             except StopIteration:             # <<<<<<<<<<<<<<
- *                 try:
- *                     in_mapping, current, container_id = stack.pop()
- */
-        __pyx_t_10 = PyErr_ExceptionMatches(__pyx_builtin_StopIteration);
-        if (__pyx_t_10) {
-          __Pyx_AddTraceback("ubjson.encoder.__encode_container", __pyx_clineno, __pyx_lineno, __pyx_filename);
-          if (__Pyx_GetException(&__pyx_t_3, &__pyx_t_2, &__pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 189; __pyx_clineno = __LINE__; goto __pyx_L34_except_error;}
-          __Pyx_GOTREF(__pyx_t_3);
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_GOTREF(__pyx_t_1);
-
-          /* "ubjson/encoder.py":190
- *                 item = next(current)
- *             except StopIteration:
- *                 try:             # <<<<<<<<<<<<<<
- *                     in_mapping, current, container_id = stack.pop()
- *                 except IndexError:
- */
-          {
-            __Pyx_ExceptionSave(&__pyx_t_13, &__pyx_t_12, &__pyx_t_11);
-            __Pyx_XGOTREF(__pyx_t_13);
-            __Pyx_XGOTREF(__pyx_t_12);
-            __Pyx_XGOTREF(__pyx_t_11);
-            /*try:*/ {
-
-              /* "ubjson/encoder.py":191
- *             except StopIteration:
- *                 try:
- *                     in_mapping, current, container_id = stack.pop()             # <<<<<<<<<<<<<<
- *                 except IndexError:
- *                     # top-level container reached
- */
-              __pyx_t_14 = __Pyx_PyObject_Pop(__pyx_v_stack); if (unlikely(!__pyx_t_14)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L42_error;}
-              __Pyx_GOTREF(__pyx_t_14);
-              if ((likely(PyTuple_CheckExact(__pyx_t_14))) || (PyList_CheckExact(__pyx_t_14))) {
-                PyObject* sequence = __pyx_t_14;
-                #if CYTHON_COMPILING_IN_CPYTHON
-                Py_ssize_t size = Py_SIZE(sequence);
-                #else
-                Py_ssize_t size = PySequence_Size(sequence);
-                #endif
-                if (unlikely(size != 3)) {
-                  if (size > 3) __Pyx_RaiseTooManyValuesError(3);
-                  else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-                  {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L42_error;}
-                }
-                #if CYTHON_COMPILING_IN_CPYTHON
-                if (likely(PyTuple_CheckExact(sequence))) {
-                  __pyx_t_16 = PyTuple_GET_ITEM(sequence, 0); 
-                  __pyx_t_8 = PyTuple_GET_ITEM(sequence, 1); 
-                  __pyx_t_15 = PyTuple_GET_ITEM(sequence, 2); 
-                } else {
-                  __pyx_t_16 = PyList_GET_ITEM(sequence, 0); 
-                  __pyx_t_8 = PyList_GET_ITEM(sequence, 1); 
-                  __pyx_t_15 = PyList_GET_ITEM(sequence, 2); 
-                }
-                __Pyx_INCREF(__pyx_t_16);
-                __Pyx_INCREF(__pyx_t_8);
-                __Pyx_INCREF(__pyx_t_15);
-                #else
-                __pyx_t_16 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L42_error;}
-                __Pyx_GOTREF(__pyx_t_16);
-                __pyx_t_8 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L42_error;}
-                __Pyx_GOTREF(__pyx_t_8);
-                __pyx_t_15 = PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_15)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L42_error;}
-                __Pyx_GOTREF(__pyx_t_15);
-                #endif
-                __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-              } else {
-                Py_ssize_t index = -1;
-                __pyx_t_17 = PyObject_GetIter(__pyx_t_14); if (unlikely(!__pyx_t_17)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L42_error;}
-                __Pyx_GOTREF(__pyx_t_17);
-                __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-                __pyx_t_9 = Py_TYPE(__pyx_t_17)->tp_iternext;
-                index = 0; __pyx_t_16 = __pyx_t_9(__pyx_t_17); if (unlikely(!__pyx_t_16)) goto __pyx_L50_unpacking_failed;
-                __Pyx_GOTREF(__pyx_t_16);
-                index = 1; __pyx_t_8 = __pyx_t_9(__pyx_t_17); if (unlikely(!__pyx_t_8)) goto __pyx_L50_unpacking_failed;
-                __Pyx_GOTREF(__pyx_t_8);
-                index = 2; __pyx_t_15 = __pyx_t_9(__pyx_t_17); if (unlikely(!__pyx_t_15)) goto __pyx_L50_unpacking_failed;
-                __Pyx_GOTREF(__pyx_t_15);
-                if (__Pyx_IternextUnpackEndCheck(__pyx_t_9(__pyx_t_17), 3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L42_error;}
-                __pyx_t_9 = NULL;
-                __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
-                goto __pyx_L51_unpacking_done;
-                __pyx_L50_unpacking_failed:;
-                __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
-                __pyx_t_9 = NULL;
-                if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-                {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L42_error;}
-                __pyx_L51_unpacking_done:;
-              }
-              __pyx_t_19 = __Pyx_PyObject_IsTrue(__pyx_t_16); if (unlikely((__pyx_t_19 == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L42_error;}
-              __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-              __pyx_t_18 = __Pyx_PyInt_As_unsigned_PY_LONG_LONG(__pyx_t_15); if (unlikely((__pyx_t_18 == (unsigned PY_LONG_LONG)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L42_error;}
-              __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
-              __pyx_v_in_mapping = __pyx_t_19;
-              __Pyx_DECREF_SET(__pyx_v_current, __pyx_t_8);
-              __pyx_t_8 = 0;
-              __pyx_v_container_id = __pyx_t_18;
-
-              /* "ubjson/encoder.py":190
- *                 item = next(current)
- *             except StopIteration:
- *                 try:             # <<<<<<<<<<<<<<
- *                     in_mapping, current, container_id = stack.pop()
- *                 except IndexError:
- */
-            }
-
-            /* "ubjson/encoder.py":196
- *                     break
- *                 else:
- *                     if not container_count:             # <<<<<<<<<<<<<<
- *                         fp_write(ARRAY_END)
- *                     # for circular reference checking
- */
-            /*else:*/ {
-              __pyx_t_19 = ((!(__pyx_v_container_count != 0)) != 0);
-              if (__pyx_t_19) {
-
-                /* "ubjson/encoder.py":197
- *                 else:
- *                     if not container_count:
- *                         fp_write(ARRAY_END)             # <<<<<<<<<<<<<<
- *                     # for circular reference checking
- *                     del seen_containers[container_id]
- */
-                __Pyx_INCREF(__pyx_v_fp_write);
-                __pyx_t_15 = __pyx_v_fp_write; __pyx_t_8 = NULL;
-                if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_15))) {
-                  __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_15);
-                  if (likely(__pyx_t_8)) {
-                    PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_15);
-                    __Pyx_INCREF(__pyx_t_8);
-                    __Pyx_INCREF(function);
-                    __Pyx_DECREF_SET(__pyx_t_15, function);
-                  }
-                }
-                if (!__pyx_t_8) {
-                  __pyx_t_14 = __Pyx_PyObject_CallOneArg(__pyx_t_15, __pyx_v_6ubjson_7markers_ARRAY_END); if (unlikely(!__pyx_t_14)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 197; __pyx_clineno = __LINE__; goto __pyx_L44_except_error;}
-                  __Pyx_GOTREF(__pyx_t_14);
-                } else {
-                  __pyx_t_16 = PyTuple_New(1+1); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 197; __pyx_clineno = __LINE__; goto __pyx_L44_except_error;}
-                  __Pyx_GOTREF(__pyx_t_16);
-                  __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_16, 0, __pyx_t_8); __pyx_t_8 = NULL;
-                  __Pyx_INCREF(__pyx_v_6ubjson_7markers_ARRAY_END);
-                  __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_ARRAY_END);
-                  PyTuple_SET_ITEM(__pyx_t_16, 0+1, __pyx_v_6ubjson_7markers_ARRAY_END);
-                  __pyx_t_14 = __Pyx_PyObject_Call(__pyx_t_15, __pyx_t_16, NULL); if (unlikely(!__pyx_t_14)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 197; __pyx_clineno = __LINE__; goto __pyx_L44_except_error;}
-                  __Pyx_GOTREF(__pyx_t_14);
-                  __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-                }
-                __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
-                __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-
-                /* "ubjson/encoder.py":196
- *                     break
- *                 else:
- *                     if not container_count:             # <<<<<<<<<<<<<<
- *                         fp_write(ARRAY_END)
- *                     # for circular reference checking
- */
-              }
-
-              /* "ubjson/encoder.py":199
- *                         fp_write(ARRAY_END)
- *                     # for circular reference checking
- *                     del seen_containers[container_id]             # <<<<<<<<<<<<<<
- *                     continue
- * 
- */
-              if (unlikely(__pyx_v_seen_containers == Py_None)) {
-                PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-                {__pyx_filename = __pyx_f[0]; __pyx_lineno = 199; __pyx_clineno = __LINE__; goto __pyx_L44_except_error;}
-              }
-              __pyx_t_14 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_14)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 199; __pyx_clineno = __LINE__; goto __pyx_L44_except_error;}
-              __Pyx_GOTREF(__pyx_t_14);
-              if (PyDict_DelItem(__pyx_v_seen_containers, __pyx_t_14) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 199; __pyx_clineno = __LINE__; goto __pyx_L44_except_error;}
-              __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-
-              /* "ubjson/encoder.py":200
- *                     # for circular reference checking
- *                     del seen_containers[container_id]
- *                     continue             # <<<<<<<<<<<<<<
- * 
- *         if not __encode_value(fp_write, item):
- */
-              goto __pyx_L48_try_continue;
-            }
-            __pyx_L42_error:;
-            __Pyx_XDECREF(__pyx_t_17); __pyx_t_17 = 0;
-            __Pyx_XDECREF(__pyx_t_16); __pyx_t_16 = 0;
-            __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-            __Pyx_XDECREF(__pyx_t_15); __pyx_t_15 = 0;
-            __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
-
-            /* "ubjson/encoder.py":192
- *                 try:
- *                     in_mapping, current, container_id = stack.pop()
- *                 except IndexError:             # <<<<<<<<<<<<<<
- *                     # top-level container reached
- *                     break
- */
-            __pyx_t_10 = PyErr_ExceptionMatches(__pyx_builtin_IndexError);
-            if (__pyx_t_10) {
-              __Pyx_AddTraceback("ubjson.encoder.__encode_container", __pyx_clineno, __pyx_lineno, __pyx_filename);
-              if (__Pyx_GetException(&__pyx_t_14, &__pyx_t_15, &__pyx_t_16) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 192; __pyx_clineno = __LINE__; goto __pyx_L44_except_error;}
-              __Pyx_GOTREF(__pyx_t_14);
-              __Pyx_GOTREF(__pyx_t_15);
-              __Pyx_GOTREF(__pyx_t_16);
-
-              /* "ubjson/encoder.py":194
- *                 except IndexError:
- *                     # top-level container reached
- *                     break             # <<<<<<<<<<<<<<
- *                 else:
- *                     if not container_count:
- */
-              goto __pyx_L53_except_break;
-              __pyx_L53_except_break:;
-              __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-              __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
-              __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-              goto __pyx_L47_try_break;
-            }
-            goto __pyx_L44_except_error;
-            __pyx_L44_except_error:;
-
-            /* "ubjson/encoder.py":190
- *                 item = next(current)
- *             except StopIteration:
- *                 try:             # <<<<<<<<<<<<<<
- *                     in_mapping, current, container_id = stack.pop()
- *                 except IndexError:
- */
-            __Pyx_XGIVEREF(__pyx_t_13);
-            __Pyx_XGIVEREF(__pyx_t_12);
-            __Pyx_XGIVEREF(__pyx_t_11);
-            __Pyx_ExceptionReset(__pyx_t_13, __pyx_t_12, __pyx_t_11);
-            goto __pyx_L34_except_error;
-            __pyx_L47_try_break:;
-            __Pyx_XGIVEREF(__pyx_t_13);
-            __Pyx_XGIVEREF(__pyx_t_12);
-            __Pyx_XGIVEREF(__pyx_t_11);
-            __Pyx_ExceptionReset(__pyx_t_13, __pyx_t_12, __pyx_t_11);
-            goto __pyx_L40_except_break;
-            __pyx_L48_try_continue:;
-            __Pyx_XGIVEREF(__pyx_t_13);
-            __Pyx_XGIVEREF(__pyx_t_12);
-            __Pyx_XGIVEREF(__pyx_t_11);
-            __Pyx_ExceptionReset(__pyx_t_13, __pyx_t_12, __pyx_t_11);
-            goto __pyx_L41_except_continue;
-          }
-          __pyx_L40_except_break:;
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-          __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-          goto __pyx_L37_try_break;
-          __pyx_L41_except_continue:;
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-          __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-          goto __pyx_L38_try_continue;
-        }
-        goto __pyx_L34_except_error;
-        __pyx_L34_except_error:;
-
-        /* "ubjson/encoder.py":187
- *         else:
- *             # sequence
- *             try:             # <<<<<<<<<<<<<<
- *                 item = next(current)
- *             except StopIteration:
- */
-        __Pyx_XGIVEREF(__pyx_t_7);
-        __Pyx_XGIVEREF(__pyx_t_6);
-        __Pyx_XGIVEREF(__pyx_t_5);
-        __Pyx_ExceptionReset(__pyx_t_7, __pyx_t_6, __pyx_t_5);
-        goto __pyx_L1_error;
-        __pyx_L37_try_break:;
-        __Pyx_XGIVEREF(__pyx_t_7);
-        __Pyx_XGIVEREF(__pyx_t_6);
-        __Pyx_XGIVEREF(__pyx_t_5);
-        __Pyx_ExceptionReset(__pyx_t_7, __pyx_t_6, __pyx_t_5);
-        goto __pyx_L4_break;
-        __pyx_L38_try_continue:;
-        __Pyx_XGIVEREF(__pyx_t_7);
-        __Pyx_XGIVEREF(__pyx_t_6);
-        __Pyx_XGIVEREF(__pyx_t_5);
-        __Pyx_ExceptionReset(__pyx_t_7, __pyx_t_6, __pyx_t_5);
-        goto __pyx_L3_continue;
-        __pyx_L39_try_end:;
-      }
-    }
-    __pyx_L5:;
-
-    /* "ubjson/encoder.py":202
- *                     continue
- * 
- *         if not __encode_value(fp_write, item):             # <<<<<<<<<<<<<<
+        /* "ubjson/encoder.py":176
  *             # order important since mappings could also be sequences
- *             if isinstance(item, Mapping):
+ *             if isinstance(value, Mapping):
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)             # <<<<<<<<<<<<<<
+ *             elif isinstance(value, Sequence):
+ *                 __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
  */
-    __pyx_t_19 = ((!(__pyx_f_6ubjson_7encoder___encode_value(__pyx_v_fp_write, __pyx_v_item) != 0)) != 0);
-    if (__pyx_t_19) {
+        __pyx_f_6ubjson_7encoder___encode_object(__pyx_v_fp_write, __pyx_v_value, __pyx_v_seen_containers, __pyx_v_container_count, __pyx_v_sort_keys); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 176; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-      /* "ubjson/encoder.py":204
- *         if not __encode_value(fp_write, item):
+        /* "ubjson/encoder.py":175
+ *         if not __encode_value(fp_write, value):
  *             # order important since mappings could also be sequences
- *             if isinstance(item, Mapping):             # <<<<<<<<<<<<<<
- *                 # circular reference check
- *                 container_id = id(item)
+ *             if isinstance(value, Mapping):             # <<<<<<<<<<<<<<
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+ *             elif isinstance(value, Sequence):
  */
-      __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_Mapping); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 204; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_19 = PyObject_IsInstance(__pyx_v_item, __pyx_t_1); if (unlikely(__pyx_t_19 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 204; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __pyx_t_4 = (__pyx_t_19 != 0);
+        goto __pyx_L8;
+      }
+
+      /* "ubjson/encoder.py":177
+ *             if isinstance(value, Mapping):
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+ *             elif isinstance(value, Sequence):             # <<<<<<<<<<<<<<
+ *                 __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
+ *             else:
+ */
+      __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_Sequence); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 177; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      __pyx_t_5 = PyObject_IsInstance(__pyx_v_value, __pyx_t_2); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 177; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_4 = (__pyx_t_5 != 0);
       if (__pyx_t_4) {
 
-        /* "ubjson/encoder.py":206
- *             if isinstance(item, Mapping):
- *                 # circular reference check
- *                 container_id = id(item)             # <<<<<<<<<<<<<<
- *                 if container_id in seen_containers:
- *                     raise EncoderException('Circular reference detected')
+        /* "ubjson/encoder.py":178
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+ *             elif isinstance(value, Sequence):
+ *                 __encode_array(fp_write, value, seen_containers, container_count, sort_keys)             # <<<<<<<<<<<<<<
+ *             else:
+ *                 raise EncoderException('Cannot encode item of type %s' % type(value))
  */
-        __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 206; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_INCREF(__pyx_v_item);
-        __Pyx_GIVEREF(__pyx_v_item);
-        PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_item);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_id, __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 206; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __pyx_t_18 = __Pyx_PyInt_As_unsigned_PY_LONG_LONG(__pyx_t_2); if (unlikely((__pyx_t_18 == (unsigned PY_LONG_LONG)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 206; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __pyx_v_container_id = __pyx_t_18;
+        __pyx_f_6ubjson_7encoder___encode_array(__pyx_v_fp_write, __pyx_v_value, __pyx_v_seen_containers, __pyx_v_container_count, __pyx_v_sort_keys); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 178; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-        /* "ubjson/encoder.py":207
- *                 # circular reference check
- *                 container_id = id(item)
- *                 if container_id in seen_containers:             # <<<<<<<<<<<<<<
- *                     raise EncoderException('Circular reference detected')
- *                 seen_containers[container_id] = item
- */
-        __pyx_t_2 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        if (unlikely(__pyx_v_seen_containers == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-          {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        }
-        __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_t_2, __pyx_v_seen_containers, Py_EQ)); if (unlikely(__pyx_t_4 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __pyx_t_19 = (__pyx_t_4 != 0);
-        if (__pyx_t_19) {
-
-          /* "ubjson/encoder.py":208
- *                 container_id = id(item)
- *                 if container_id in seen_containers:
- *                     raise EncoderException('Circular reference detected')             # <<<<<<<<<<<<<<
- *                 seen_containers[container_id] = item
- * 
- */
-          __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 208; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 208; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_1);
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-          __Pyx_Raise(__pyx_t_1, 0, 0, 0);
-          __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-          {__pyx_filename = __pyx_f[0]; __pyx_lineno = 208; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-
-          /* "ubjson/encoder.py":207
- *                 # circular reference check
- *                 container_id = id(item)
- *                 if container_id in seen_containers:             # <<<<<<<<<<<<<<
- *                     raise EncoderException('Circular reference detected')
- *                 seen_containers[container_id] = item
- */
-        }
-
-        /* "ubjson/encoder.py":209
- *                 if container_id in seen_containers:
- *                     raise EncoderException('Circular reference detected')
- *                 seen_containers[container_id] = item             # <<<<<<<<<<<<<<
- * 
- *                 fp_write(OBJECT_START)
- */
-        if (unlikely(__pyx_v_seen_containers == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          {__pyx_filename = __pyx_f[0]; __pyx_lineno = 209; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        }
-        __pyx_t_1 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 209; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-        if (unlikely(PyDict_SetItem(__pyx_v_seen_containers, __pyx_t_1, __pyx_v_item) < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 209; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-        /* "ubjson/encoder.py":211
- *                 seen_containers[container_id] = item
- * 
- *                 fp_write(OBJECT_START)             # <<<<<<<<<<<<<<
- *                 if container_count:
- *                     fp_write(CONTAINER_COUNT)
- */
-        __Pyx_INCREF(__pyx_v_fp_write);
-        __pyx_t_2 = __pyx_v_fp_write; __pyx_t_3 = NULL;
-        if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-          __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
-          if (likely(__pyx_t_3)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-            __Pyx_INCREF(__pyx_t_3);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_2, function);
-          }
-        }
-        if (!__pyx_t_3) {
-          __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_OBJECT_START); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 211; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_1);
-        } else {
-          __pyx_t_16 = PyTuple_New(1+1); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 211; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_16);
-          __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_16, 0, __pyx_t_3); __pyx_t_3 = NULL;
-          __Pyx_INCREF(__pyx_v_6ubjson_7markers_OBJECT_START);
-          __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_OBJECT_START);
-          PyTuple_SET_ITEM(__pyx_t_16, 0+1, __pyx_v_6ubjson_7markers_OBJECT_START);
-          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_16, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 211; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_1);
-          __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-        }
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-        /* "ubjson/encoder.py":212
- * 
- *                 fp_write(OBJECT_START)
- *                 if container_count:             # <<<<<<<<<<<<<<
- *                     fp_write(CONTAINER_COUNT)
- *                     __encode_int(fp_write, len(item))
- */
-        __pyx_t_19 = (__pyx_v_container_count != 0);
-        if (__pyx_t_19) {
-
-          /* "ubjson/encoder.py":213
- *                 fp_write(OBJECT_START)
- *                 if container_count:
- *                     fp_write(CONTAINER_COUNT)             # <<<<<<<<<<<<<<
- *                     __encode_int(fp_write, len(item))
- *                 stack.append((in_mapping, current, container_id))
- */
-          __Pyx_INCREF(__pyx_v_fp_write);
-          __pyx_t_2 = __pyx_v_fp_write; __pyx_t_16 = NULL;
-          if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-            __pyx_t_16 = PyMethod_GET_SELF(__pyx_t_2);
-            if (likely(__pyx_t_16)) {
-              PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-              __Pyx_INCREF(__pyx_t_16);
-              __Pyx_INCREF(function);
-              __Pyx_DECREF_SET(__pyx_t_2, function);
-            }
-          }
-          if (!__pyx_t_16) {
-            __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_CONTAINER_COUNT); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 213; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-            __Pyx_GOTREF(__pyx_t_1);
-          } else {
-            __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 213; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-            __Pyx_GOTREF(__pyx_t_3);
-            __Pyx_GIVEREF(__pyx_t_16); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_16); __pyx_t_16 = NULL;
-            __Pyx_INCREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-            __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-            PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-            __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 213; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-            __Pyx_GOTREF(__pyx_t_1);
-            __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          }
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-          __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-          /* "ubjson/encoder.py":214
- *                 if container_count:
- *                     fp_write(CONTAINER_COUNT)
- *                     __encode_int(fp_write, len(item))             # <<<<<<<<<<<<<<
- *                 stack.append((in_mapping, current, container_id))
- *                 current = iter(sorted(item.items()) if sort_keys else item.items())
- */
-          __pyx_t_20 = PyObject_Length(__pyx_v_item); if (unlikely(__pyx_t_20 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 214; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_20); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 214; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_1);
-          __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_1);
-          __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-          /* "ubjson/encoder.py":212
- * 
- *                 fp_write(OBJECT_START)
- *                 if container_count:             # <<<<<<<<<<<<<<
- *                     fp_write(CONTAINER_COUNT)
- *                     __encode_int(fp_write, len(item))
- */
-        }
-
-        /* "ubjson/encoder.py":215
- *                     fp_write(CONTAINER_COUNT)
- *                     __encode_int(fp_write, len(item))
- *                 stack.append((in_mapping, current, container_id))             # <<<<<<<<<<<<<<
- *                 current = iter(sorted(item.items()) if sort_keys else item.items())
- *                 in_mapping = True
- */
-        __pyx_t_1 = __Pyx_PyBool_FromLong(__pyx_v_in_mapping); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 215; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_2 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 215; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 215; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_GIVEREF(__pyx_t_1);
-        PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
-        __Pyx_INCREF(__pyx_v_current);
-        __Pyx_GIVEREF(__pyx_v_current);
-        PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_current);
-        __Pyx_GIVEREF(__pyx_t_2);
-        PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_t_2);
-        __pyx_t_1 = 0;
-        __pyx_t_2 = 0;
-        __pyx_t_21 = __Pyx_PyObject_Append(__pyx_v_stack, __pyx_t_3); if (unlikely(__pyx_t_21 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 215; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-        /* "ubjson/encoder.py":216
- *                     __encode_int(fp_write, len(item))
- *                 stack.append((in_mapping, current, container_id))
- *                 current = iter(sorted(item.items()) if sort_keys else item.items())             # <<<<<<<<<<<<<<
- *                 in_mapping = True
- * 
- */
-        if ((__pyx_v_sort_keys != 0)) {
-          __pyx_t_16 = __Pyx_PyObject_GetAttrStr(__pyx_v_item, __pyx_n_s_items); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_16);
-          __pyx_t_15 = NULL;
-          if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_16))) {
-            __pyx_t_15 = PyMethod_GET_SELF(__pyx_t_16);
-            if (likely(__pyx_t_15)) {
-              PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_16);
-              __Pyx_INCREF(__pyx_t_15);
-              __Pyx_INCREF(function);
-              __Pyx_DECREF_SET(__pyx_t_16, function);
-            }
-          }
-          if (__pyx_t_15) {
-            __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_16, __pyx_t_15); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-            __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
-          } else {
-            __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_16); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          }
-          __Pyx_GOTREF(__pyx_t_1);
-          __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-          __pyx_t_16 = PySequence_List(__pyx_t_1); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_16);
-          __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-          __pyx_t_2 = ((PyObject*)__pyx_t_16);
-          __pyx_t_16 = 0;
-          __pyx_t_21 = PyList_Sort(__pyx_t_2); if (unlikely(__pyx_t_21 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __pyx_t_3 = __pyx_t_2;
-          __pyx_t_2 = 0;
-        } else {
-          __pyx_t_16 = __Pyx_PyObject_GetAttrStr(__pyx_v_item, __pyx_n_s_items); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_16);
-          __pyx_t_1 = NULL;
-          if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_16))) {
-            __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_16);
-            if (likely(__pyx_t_1)) {
-              PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_16);
-              __Pyx_INCREF(__pyx_t_1);
-              __Pyx_INCREF(function);
-              __Pyx_DECREF_SET(__pyx_t_16, function);
-            }
-          }
-          if (__pyx_t_1) {
-            __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_16, __pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-            __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-          } else {
-            __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_16); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          }
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-          __pyx_t_3 = __pyx_t_2;
-          __pyx_t_2 = 0;
-        }
-        __pyx_t_2 = PyObject_GetIter(__pyx_t_3); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __Pyx_DECREF_SET(__pyx_v_current, __pyx_t_2);
-        __pyx_t_2 = 0;
-
-        /* "ubjson/encoder.py":217
- *                 stack.append((in_mapping, current, container_id))
- *                 current = iter(sorted(item.items()) if sort_keys else item.items())
- *                 in_mapping = True             # <<<<<<<<<<<<<<
- * 
- *             elif isinstance(item, Sequence):
- */
-        __pyx_v_in_mapping = 1;
-
-        /* "ubjson/encoder.py":204
- *         if not __encode_value(fp_write, item):
- *             # order important since mappings could also be sequences
- *             if isinstance(item, Mapping):             # <<<<<<<<<<<<<<
- *                 # circular reference check
- *                 container_id = id(item)
- */
-        goto __pyx_L56;
-      }
-
-      /* "ubjson/encoder.py":219
- *                 in_mapping = True
- * 
- *             elif isinstance(item, Sequence):             # <<<<<<<<<<<<<<
- *                 # circular reference check
- *                 container_id = id(item)
- */
-      __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_Sequence); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 219; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_19 = PyObject_IsInstance(__pyx_v_item, __pyx_t_2); if (unlikely(__pyx_t_19 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 219; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_4 = (__pyx_t_19 != 0);
-      if (__pyx_t_4) {
-
-        /* "ubjson/encoder.py":221
- *             elif isinstance(item, Sequence):
- *                 # circular reference check
- *                 container_id = id(item)             # <<<<<<<<<<<<<<
- *                 if container_id in seen_containers:
- *                     raise EncoderException('Circular reference detected')
- */
-        __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 221; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_INCREF(__pyx_v_item);
-        __Pyx_GIVEREF(__pyx_v_item);
-        PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_item);
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_id, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 221; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __pyx_t_18 = __Pyx_PyInt_As_unsigned_PY_LONG_LONG(__pyx_t_3); if (unlikely((__pyx_t_18 == (unsigned PY_LONG_LONG)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 221; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __pyx_v_container_id = __pyx_t_18;
-
-        /* "ubjson/encoder.py":222
- *                 # circular reference check
- *                 container_id = id(item)
- *                 if container_id in seen_containers:             # <<<<<<<<<<<<<<
- *                     raise EncoderException('Circular reference detected')
- *                 seen_containers[container_id] = item
- */
-        __pyx_t_3 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 222; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_3);
-        if (unlikely(__pyx_v_seen_containers == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-          {__pyx_filename = __pyx_f[0]; __pyx_lineno = 222; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        }
-        __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_t_3, __pyx_v_seen_containers, Py_EQ)); if (unlikely(__pyx_t_4 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 222; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __pyx_t_19 = (__pyx_t_4 != 0);
-        if (__pyx_t_19) {
-
-          /* "ubjson/encoder.py":223
- *                 container_id = id(item)
- *                 if container_id in seen_containers:
- *                     raise EncoderException('Circular reference detected')             # <<<<<<<<<<<<<<
- *                 seen_containers[container_id] = item
- * 
- */
-          __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 223; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_3);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 223; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __Pyx_Raise(__pyx_t_2, 0, 0, 0);
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-          {__pyx_filename = __pyx_f[0]; __pyx_lineno = 223; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-
-          /* "ubjson/encoder.py":222
- *                 # circular reference check
- *                 container_id = id(item)
- *                 if container_id in seen_containers:             # <<<<<<<<<<<<<<
- *                     raise EncoderException('Circular reference detected')
- *                 seen_containers[container_id] = item
- */
-        }
-
-        /* "ubjson/encoder.py":224
- *                 if container_id in seen_containers:
- *                     raise EncoderException('Circular reference detected')
- *                 seen_containers[container_id] = item             # <<<<<<<<<<<<<<
- * 
- *                 fp_write(ARRAY_START)
- */
-        if (unlikely(__pyx_v_seen_containers == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        }
-        __pyx_t_2 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        if (unlikely(PyDict_SetItem(__pyx_v_seen_containers, __pyx_t_2, __pyx_v_item) < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-        /* "ubjson/encoder.py":226
- *                 seen_containers[container_id] = item
- * 
- *                 fp_write(ARRAY_START)             # <<<<<<<<<<<<<<
- *                 if container_count:
- *                     fp_write(CONTAINER_COUNT)
- */
-        __Pyx_INCREF(__pyx_v_fp_write);
-        __pyx_t_3 = __pyx_v_fp_write; __pyx_t_16 = NULL;
-        if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-          __pyx_t_16 = PyMethod_GET_SELF(__pyx_t_3);
-          if (likely(__pyx_t_16)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-            __Pyx_INCREF(__pyx_t_16);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_3, function);
-          }
-        }
-        if (!__pyx_t_16) {
-          __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_6ubjson_7markers_ARRAY_START); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 226; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-        } else {
-          __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 226; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_1);
-          __Pyx_GIVEREF(__pyx_t_16); PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_16); __pyx_t_16 = NULL;
-          __Pyx_INCREF(__pyx_v_6ubjson_7markers_ARRAY_START);
-          __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_ARRAY_START);
-          PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_v_6ubjson_7markers_ARRAY_START);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 226; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        }
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-        /* "ubjson/encoder.py":227
- * 
- *                 fp_write(ARRAY_START)
- *                 if container_count:             # <<<<<<<<<<<<<<
- *                     fp_write(CONTAINER_COUNT)
- *                     __encode_int(fp_write, len(item))
- */
-        __pyx_t_19 = (__pyx_v_container_count != 0);
-        if (__pyx_t_19) {
-
-          /* "ubjson/encoder.py":228
- *                 fp_write(ARRAY_START)
- *                 if container_count:
- *                     fp_write(CONTAINER_COUNT)             # <<<<<<<<<<<<<<
- *                     __encode_int(fp_write, len(item))
- *                 stack.append((in_mapping, current, container_id))
- */
-          __Pyx_INCREF(__pyx_v_fp_write);
-          __pyx_t_3 = __pyx_v_fp_write; __pyx_t_1 = NULL;
-          if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-            __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_3);
-            if (likely(__pyx_t_1)) {
-              PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-              __Pyx_INCREF(__pyx_t_1);
-              __Pyx_INCREF(function);
-              __Pyx_DECREF_SET(__pyx_t_3, function);
-            }
-          }
-          if (!__pyx_t_1) {
-            __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_6ubjson_7markers_CONTAINER_COUNT); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 228; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-            __Pyx_GOTREF(__pyx_t_2);
-          } else {
-            __pyx_t_16 = PyTuple_New(1+1); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 228; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-            __Pyx_GOTREF(__pyx_t_16);
-            __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_16, 0, __pyx_t_1); __pyx_t_1 = NULL;
-            __Pyx_INCREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-            __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-            PyTuple_SET_ITEM(__pyx_t_16, 0+1, __pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-            __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_16, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 228; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-            __Pyx_GOTREF(__pyx_t_2);
-            __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-          }
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-          /* "ubjson/encoder.py":229
- *                 if container_count:
- *                     fp_write(CONTAINER_COUNT)
- *                     __encode_int(fp_write, len(item))             # <<<<<<<<<<<<<<
- *                 stack.append((in_mapping, current, container_id))
- *                 current = iter(item)
- */
-          __pyx_t_20 = PyObject_Length(__pyx_v_item); if (unlikely(__pyx_t_20 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 229; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_20); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 229; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-          __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_2);
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-          /* "ubjson/encoder.py":227
- * 
- *                 fp_write(ARRAY_START)
- *                 if container_count:             # <<<<<<<<<<<<<<
- *                     fp_write(CONTAINER_COUNT)
- *                     __encode_int(fp_write, len(item))
- */
-        }
-
-        /* "ubjson/encoder.py":230
- *                     fp_write(CONTAINER_COUNT)
- *                     __encode_int(fp_write, len(item))
- *                 stack.append((in_mapping, current, container_id))             # <<<<<<<<<<<<<<
- *                 current = iter(item)
- *                 in_mapping = False
- */
-        __pyx_t_2 = __Pyx_PyBool_FromLong(__pyx_v_in_mapping); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 230; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_3 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 230; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_16 = PyTuple_New(3); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 230; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_16);
-        __Pyx_GIVEREF(__pyx_t_2);
-        PyTuple_SET_ITEM(__pyx_t_16, 0, __pyx_t_2);
-        __Pyx_INCREF(__pyx_v_current);
-        __Pyx_GIVEREF(__pyx_v_current);
-        PyTuple_SET_ITEM(__pyx_t_16, 1, __pyx_v_current);
-        __Pyx_GIVEREF(__pyx_t_3);
-        PyTuple_SET_ITEM(__pyx_t_16, 2, __pyx_t_3);
-        __pyx_t_2 = 0;
-        __pyx_t_3 = 0;
-        __pyx_t_21 = __Pyx_PyObject_Append(__pyx_v_stack, __pyx_t_16); if (unlikely(__pyx_t_21 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 230; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-
-        /* "ubjson/encoder.py":231
- *                     __encode_int(fp_write, len(item))
- *                 stack.append((in_mapping, current, container_id))
- *                 current = iter(item)             # <<<<<<<<<<<<<<
- *                 in_mapping = False
- * 
- */
-        __pyx_t_16 = PyObject_GetIter(__pyx_v_item); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 231; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_16);
-        __Pyx_DECREF_SET(__pyx_v_current, __pyx_t_16);
-        __pyx_t_16 = 0;
-
-        /* "ubjson/encoder.py":232
- *                 stack.append((in_mapping, current, container_id))
- *                 current = iter(item)
- *                 in_mapping = False             # <<<<<<<<<<<<<<
- * 
+        /* "ubjson/encoder.py":177
+ *             if isinstance(value, Mapping):
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+ *             elif isinstance(value, Sequence):             # <<<<<<<<<<<<<<
+ *                 __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
  *             else:
  */
-        __pyx_v_in_mapping = 0;
-
-        /* "ubjson/encoder.py":219
- *                 in_mapping = True
- * 
- *             elif isinstance(item, Sequence):             # <<<<<<<<<<<<<<
- *                 # circular reference check
- *                 container_id = id(item)
- */
-        goto __pyx_L56;
+        goto __pyx_L8;
       }
 
-      /* "ubjson/encoder.py":235
- * 
+      /* "ubjson/encoder.py":180
+ *                 __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
  *             else:
- *                 raise EncoderException('Cannot encode item of type %s' % type(item))             # <<<<<<<<<<<<<<
+ *                 raise EncoderException('Cannot encode item of type %s' % type(value))             # <<<<<<<<<<<<<<
  * 
- * 
+ *     if not container_count:
  */
       /*else*/ {
-        __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_2 = __Pyx_PyString_Format(__pyx_kp_s_Cannot_encode_item_of_type_s, ((PyObject *)Py_TYPE(__pyx_v_item))); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_1 = NULL;
-        if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-          __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_3);
-          if (likely(__pyx_t_1)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-            __Pyx_INCREF(__pyx_t_1);
+        __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 180; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_6);
+        __pyx_t_7 = __Pyx_PyString_Format(__pyx_kp_s_Cannot_encode_item_of_type_s, ((PyObject *)Py_TYPE(__pyx_v_value))); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 180; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_7);
+        __pyx_t_10 = NULL;
+        if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
+          __pyx_t_10 = PyMethod_GET_SELF(__pyx_t_6);
+          if (likely(__pyx_t_10)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+            __Pyx_INCREF(__pyx_t_10);
             __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_3, function);
+            __Pyx_DECREF_SET(__pyx_t_6, function);
           }
         }
-        if (!__pyx_t_1) {
-          __pyx_t_16 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-          __Pyx_GOTREF(__pyx_t_16);
+        if (!__pyx_t_10) {
+          __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 180; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+          __Pyx_GOTREF(__pyx_t_2);
         } else {
-          __pyx_t_15 = PyTuple_New(1+1); if (unlikely(!__pyx_t_15)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_15);
-          __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_15, 0, __pyx_t_1); __pyx_t_1 = NULL;
-          __Pyx_GIVEREF(__pyx_t_2);
-          PyTuple_SET_ITEM(__pyx_t_15, 0+1, __pyx_t_2);
-          __pyx_t_2 = 0;
-          __pyx_t_16 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_15, NULL); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_16);
-          __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+          __pyx_t_11 = PyTuple_New(1+1); if (unlikely(!__pyx_t_11)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 180; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          __Pyx_GOTREF(__pyx_t_11);
+          __Pyx_GIVEREF(__pyx_t_10); PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_t_10); __pyx_t_10 = NULL;
+          __Pyx_GIVEREF(__pyx_t_7);
+          PyTuple_SET_ITEM(__pyx_t_11, 0+1, __pyx_t_7);
+          __pyx_t_7 = 0;
+          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_11, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 180; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          __Pyx_GOTREF(__pyx_t_2);
+          __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
         }
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __Pyx_Raise(__pyx_t_16, 0, 0, 0);
-        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
-        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __Pyx_Raise(__pyx_t_2, 0, 0, 0);
+        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 180; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       }
-      __pyx_L56:;
+      __pyx_L8:;
 
-      /* "ubjson/encoder.py":202
- *                     continue
+      /* "ubjson/encoder.py":173
  * 
- *         if not __encode_value(fp_write, item):             # <<<<<<<<<<<<<<
+ *     for value in item:
+ *         if not __encode_value(fp_write, value):             # <<<<<<<<<<<<<<
  *             # order important since mappings could also be sequences
- *             if isinstance(item, Mapping):
+ *             if isinstance(value, Mapping):
  */
     }
-    __pyx_L3_continue:;
+
+    /* "ubjson/encoder.py":172
+ *         __encode_int(fp_write, len(item))
+ * 
+ *     for value in item:             # <<<<<<<<<<<<<<
+ *         if not __encode_value(fp_write, value):
+ *             # order important since mappings could also be sequences
+ */
   }
-  __pyx_L4_break:;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ubjson/encoder.py":155
+  /* "ubjson/encoder.py":182
+ *                 raise EncoderException('Cannot encode item of type %s' % type(value))
  * 
- * # pylint: disable=too-many-branches,too-many-statements
- * def __encode_container(fp_write, obj, in_mapping, seen_containers, container_count, sort_keys):  # noqa (complexity)             # <<<<<<<<<<<<<<
- *     """Performs encoding within an array or object"""
- *     # stack for keeping track of sequences and mappings without requiring recursion
+ *     if not container_count:             # <<<<<<<<<<<<<<
+ *         fp_write(ARRAY_END)
+ * 
+ */
+  __pyx_t_4 = ((!(__pyx_v_container_count != 0)) != 0);
+  if (__pyx_t_4) {
+
+    /* "ubjson/encoder.py":183
+ * 
+ *     if not container_count:
+ *         fp_write(ARRAY_END)             # <<<<<<<<<<<<<<
+ * 
+ *     del seen_containers[container_id]
+ */
+    __Pyx_INCREF(__pyx_v_fp_write);
+    __pyx_t_2 = __pyx_v_fp_write; __pyx_t_6 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
+      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_6)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+        __Pyx_INCREF(__pyx_t_6);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_2, function);
+      }
+    }
+    if (!__pyx_t_6) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_ARRAY_END); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 183; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      __pyx_t_11 = PyTuple_New(1+1); if (unlikely(!__pyx_t_11)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 183; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_11);
+      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_t_6); __pyx_t_6 = NULL;
+      __Pyx_INCREF(__pyx_v_6ubjson_7markers_ARRAY_END);
+      __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_ARRAY_END);
+      PyTuple_SET_ITEM(__pyx_t_11, 0+1, __pyx_v_6ubjson_7markers_ARRAY_END);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_11, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 183; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "ubjson/encoder.py":182
+ *                 raise EncoderException('Cannot encode item of type %s' % type(value))
+ * 
+ *     if not container_count:             # <<<<<<<<<<<<<<
+ *         fp_write(ARRAY_END)
+ * 
+ */
+  }
+
+  /* "ubjson/encoder.py":185
+ *         fp_write(ARRAY_END)
+ * 
+ *     del seen_containers[container_id]             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  if (unlikely(__pyx_v_seen_containers == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 185; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  }
+  __pyx_t_1 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 185; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_DelItem(__pyx_v_seen_containers, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 185; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "ubjson/encoder.py":160
+ * 
+ * 
+ * def __encode_array(fp_write, item, seen_containers, container_count, sort_keys):             # <<<<<<<<<<<<<<
+ *     # circular reference check
+ *     container_id = id(item)
  */
 
   /* function exit code */
-  __pyx_r = 0;
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_XDECREF(__pyx_t_14);
-  __Pyx_XDECREF(__pyx_t_15);
-  __Pyx_XDECREF(__pyx_t_16);
-  __Pyx_XDECREF(__pyx_t_17);
-  __Pyx_AddTraceback("ubjson.encoder.__encode_container", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = -1;
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_10);
+  __Pyx_XDECREF(__pyx_t_11);
+  __Pyx_AddTraceback("ubjson.encoder.__encode_array", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_stack);
-  __Pyx_XDECREF(__pyx_v_current);
-  __Pyx_XDECREF(__pyx_v_key);
-  __Pyx_XDECREF(__pyx_v_item);
+  __Pyx_XDECREF(__pyx_v_value);
   __Pyx_RefNannyFinishContext();
-  return __pyx_r;
 }
 
-/* "ubjson/encoder.py":238
+/* "ubjson/encoder.py":188
  * 
  * 
- * def __dump(obj, fp_write, container_count, sort_keys):  # noqa (complexity)             # <<<<<<<<<<<<<<
- *     if not __encode_value(fp_write, obj):
- *         # order important since mappings could also be sequences
+ * def __encode_object(fp_write, item, seen_containers, container_count, sort_keys):             # <<<<<<<<<<<<<<
+ *     # circular reference check
+ *     container_id = id(item)
  */
 
-static int __pyx_f_6ubjson_7encoder___dump(PyObject *__pyx_v_obj, PyObject *__pyx_v_fp_write, int __pyx_v_container_count, int __pyx_v_sort_keys) {
-  int __pyx_r;
+static void __pyx_f_6ubjson_7encoder___encode_object(PyObject *__pyx_v_fp_write, PyObject *__pyx_v_item, PyObject *__pyx_v_seen_containers, int __pyx_v_container_count, int __pyx_v_sort_keys) {
+  unsigned PY_LONG_LONG __pyx_v_container_id;
+  PyObject *__pyx_v_key = NULL;
+  PyObject *__pyx_v_value = NULL;
+  PyObject *__pyx_v_encoded_val = NULL;
+  Py_ssize_t __pyx_v_length;
   __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
+  PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
-  int __pyx_t_3;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
+  unsigned PY_LONG_LONG __pyx_t_3;
+  int __pyx_t_4;
+  int __pyx_t_5;
   PyObject *__pyx_t_6 = NULL;
-  Py_ssize_t __pyx_t_7;
-  PyObject *__pyx_t_8 = NULL;
-  int __pyx_t_9;
+  PyObject *__pyx_t_7 = NULL;
+  Py_ssize_t __pyx_t_8;
+  PyObject *__pyx_t_9 = NULL;
   int __pyx_t_10;
+  PyObject *(*__pyx_t_11)(PyObject *);
+  PyObject *(*__pyx_t_12)(PyObject *);
+  Py_ssize_t __pyx_t_13;
+  PyObject *__pyx_t_14 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("__dump", 0);
+  __Pyx_RefNannySetupContext("__encode_object", 0);
 
-  /* "ubjson/encoder.py":239
+  /* "ubjson/encoder.py":190
+ * def __encode_object(fp_write, item, seen_containers, container_count, sort_keys):
+ *     # circular reference check
+ *     container_id = id(item)             # <<<<<<<<<<<<<<
+ *     if container_id in seen_containers:
+ *         raise EncoderException('Circular reference detected')
+ */
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 190; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_INCREF(__pyx_v_item);
+  __Pyx_GIVEREF(__pyx_v_item);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_item);
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_id, __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 190; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_3 = __Pyx_PyInt_As_unsigned_PY_LONG_LONG(__pyx_t_2); if (unlikely((__pyx_t_3 == (unsigned PY_LONG_LONG)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 190; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_container_id = __pyx_t_3;
+
+  /* "ubjson/encoder.py":191
+ *     # circular reference check
+ *     container_id = id(item)
+ *     if container_id in seen_containers:             # <<<<<<<<<<<<<<
+ *         raise EncoderException('Circular reference detected')
+ *     seen_containers[container_id] = item
+ */
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_2);
+  if (unlikely(__pyx_v_seen_containers == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  }
+  __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_t_2, __pyx_v_seen_containers, Py_EQ)); if (unlikely(__pyx_t_4 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_5 = (__pyx_t_4 != 0);
+  if (__pyx_t_5) {
+
+    /* "ubjson/encoder.py":192
+ *     container_id = id(item)
+ *     if container_id in seen_containers:
+ *         raise EncoderException('Circular reference detected')             # <<<<<<<<<<<<<<
+ *     seen_containers[container_id] = item
  * 
- * def __dump(obj, fp_write, container_count, sort_keys):  # noqa (complexity)
- *     if not __encode_value(fp_write, obj):             # <<<<<<<<<<<<<<
- *         # order important since mappings could also be sequences
- *         if isinstance(obj, Mapping):
  */
-  __pyx_t_1 = ((!(__pyx_f_6ubjson_7encoder___encode_value(__pyx_v_fp_write, __pyx_v_obj) != 0)) != 0);
-  if (__pyx_t_1) {
-
-    /* "ubjson/encoder.py":241
- *     if not __encode_value(fp_write, obj):
- *         # order important since mappings could also be sequences
- *         if isinstance(obj, Mapping):             # <<<<<<<<<<<<<<
- *             fp_write(OBJECT_START)
- *             if container_count:
- */
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_Mapping); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 241; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 192; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_1 = PyObject_IsInstance(__pyx_v_obj, __pyx_t_2); if (unlikely(__pyx_t_1 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 241; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 192; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_3 = (__pyx_t_1 != 0);
-    if (__pyx_t_3) {
+    __Pyx_Raise(__pyx_t_1, 0, 0, 0);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 192; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-      /* "ubjson/encoder.py":242
- *         # order important since mappings could also be sequences
- *         if isinstance(obj, Mapping):
- *             fp_write(OBJECT_START)             # <<<<<<<<<<<<<<
- *             if container_count:
- *                 fp_write(CONTAINER_COUNT)
- */
-      __Pyx_INCREF(__pyx_v_fp_write);
-      __pyx_t_4 = __pyx_v_fp_write; __pyx_t_5 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
-        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
-        if (likely(__pyx_t_5)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-          __Pyx_INCREF(__pyx_t_5);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_4, function);
-        }
-      }
-      if (!__pyx_t_5) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_OBJECT_START); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-      } else {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_6);
-        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
-        __Pyx_INCREF(__pyx_v_6ubjson_7markers_OBJECT_START);
-        __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_OBJECT_START);
-        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_OBJECT_START);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-      /* "ubjson/encoder.py":243
- *         if isinstance(obj, Mapping):
- *             fp_write(OBJECT_START)
- *             if container_count:             # <<<<<<<<<<<<<<
- *                 fp_write(CONTAINER_COUNT)
- *                 __encode_int(fp_write, len(obj))
- */
-      __pyx_t_3 = (__pyx_v_container_count != 0);
-      if (__pyx_t_3) {
-
-        /* "ubjson/encoder.py":244
- *             fp_write(OBJECT_START)
- *             if container_count:
- *                 fp_write(CONTAINER_COUNT)             # <<<<<<<<<<<<<<
- *                 __encode_int(fp_write, len(obj))
- *             __encode_container(fp_write, iter(sorted(obj.items()) if sort_keys else obj.items()), True, {id(obj): obj},
- */
-        __Pyx_INCREF(__pyx_v_fp_write);
-        __pyx_t_4 = __pyx_v_fp_write; __pyx_t_6 = NULL;
-        if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
-          __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_4);
-          if (likely(__pyx_t_6)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-            __Pyx_INCREF(__pyx_t_6);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_4, function);
-          }
-        }
-        if (!__pyx_t_6) {
-          __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_CONTAINER_COUNT); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 244; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-        } else {
-          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 244; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_5);
-          __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
-          __Pyx_INCREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-          __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-          PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 244; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        }
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-        /* "ubjson/encoder.py":245
- *             if container_count:
- *                 fp_write(CONTAINER_COUNT)
- *                 __encode_int(fp_write, len(obj))             # <<<<<<<<<<<<<<
- *             __encode_container(fp_write, iter(sorted(obj.items()) if sort_keys else obj.items()), True, {id(obj): obj},
- *                                container_count, sort_keys)
- */
-        __pyx_t_7 = PyObject_Length(__pyx_v_obj); if (unlikely(__pyx_t_7 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 245; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_7); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 245; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_2);
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-        /* "ubjson/encoder.py":243
- *         if isinstance(obj, Mapping):
- *             fp_write(OBJECT_START)
- *             if container_count:             # <<<<<<<<<<<<<<
- *                 fp_write(CONTAINER_COUNT)
- *                 __encode_int(fp_write, len(obj))
- */
-      }
-
-      /* "ubjson/encoder.py":246
- *                 fp_write(CONTAINER_COUNT)
- *                 __encode_int(fp_write, len(obj))
- *             __encode_container(fp_write, iter(sorted(obj.items()) if sort_keys else obj.items()), True, {id(obj): obj},             # <<<<<<<<<<<<<<
- *                                container_count, sort_keys)
- *             if not container_count:
- */
-      if ((__pyx_v_sort_keys != 0)) {
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_obj, __pyx_n_s_items); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_8 = NULL;
-        if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_6))) {
-          __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_6);
-          if (likely(__pyx_t_8)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
-            __Pyx_INCREF(__pyx_t_8);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_6, function);
-          }
-        }
-        if (__pyx_t_8) {
-          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_8); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-        } else {
-          __pyx_t_5 = __Pyx_PyObject_CallNoArg(__pyx_t_6); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        }
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __pyx_t_6 = PySequence_List(__pyx_t_5); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_6);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __pyx_t_4 = ((PyObject*)__pyx_t_6);
-        __pyx_t_6 = 0;
-        __pyx_t_9 = PyList_Sort(__pyx_t_4); if (unlikely(__pyx_t_9 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __pyx_t_2 = __pyx_t_4;
-        __pyx_t_4 = 0;
-      } else {
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_obj, __pyx_n_s_items); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_5 = NULL;
-        if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_6))) {
-          __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_6);
-          if (likely(__pyx_t_5)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
-            __Pyx_INCREF(__pyx_t_5);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_6, function);
-          }
-        }
-        if (__pyx_t_5) {
-          __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        } else {
-          __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_6); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        }
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __pyx_t_2 = __pyx_t_4;
-        __pyx_t_4 = 0;
-      }
-      __pyx_t_4 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_INCREF(__pyx_v_obj);
-      __Pyx_GIVEREF(__pyx_v_obj);
-      PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_v_obj);
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin_id, __pyx_t_6, NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (PyDict_SetItem(__pyx_t_2, __pyx_t_5, __pyx_v_obj) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-
-      /* "ubjson/encoder.py":247
- *                 __encode_int(fp_write, len(obj))
- *             __encode_container(fp_write, iter(sorted(obj.items()) if sort_keys else obj.items()), True, {id(obj): obj},
- *                                container_count, sort_keys)             # <<<<<<<<<<<<<<
- *             if not container_count:
- *                 fp_write(OBJECT_END)
- */
-      __pyx_t_10 = __pyx_f_6ubjson_7encoder___encode_container(__pyx_v_fp_write, __pyx_t_4, 1, ((PyObject*)__pyx_t_2), __pyx_v_container_count, __pyx_v_sort_keys); if (unlikely(__pyx_t_10 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-      /* "ubjson/encoder.py":248
- *             __encode_container(fp_write, iter(sorted(obj.items()) if sort_keys else obj.items()), True, {id(obj): obj},
- *                                container_count, sort_keys)
- *             if not container_count:             # <<<<<<<<<<<<<<
- *                 fp_write(OBJECT_END)
- * 
- */
-      __pyx_t_3 = ((!(__pyx_v_container_count != 0)) != 0);
-      if (__pyx_t_3) {
-
-        /* "ubjson/encoder.py":249
- *                                container_count, sort_keys)
- *             if not container_count:
- *                 fp_write(OBJECT_END)             # <<<<<<<<<<<<<<
- * 
- *         elif isinstance(obj, Sequence):
- */
-        __Pyx_INCREF(__pyx_v_fp_write);
-        __pyx_t_4 = __pyx_v_fp_write; __pyx_t_5 = NULL;
-        if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
-          __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
-          if (likely(__pyx_t_5)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-            __Pyx_INCREF(__pyx_t_5);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_4, function);
-          }
-        }
-        if (!__pyx_t_5) {
-          __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_OBJECT_END); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 249; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-        } else {
-          __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 249; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_6);
-          __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
-          __Pyx_INCREF(__pyx_v_6ubjson_7markers_OBJECT_END);
-          __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_OBJECT_END);
-          PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_OBJECT_END);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 249; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        }
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-        /* "ubjson/encoder.py":248
- *             __encode_container(fp_write, iter(sorted(obj.items()) if sort_keys else obj.items()), True, {id(obj): obj},
- *                                container_count, sort_keys)
- *             if not container_count:             # <<<<<<<<<<<<<<
- *                 fp_write(OBJECT_END)
- * 
- */
-      }
-
-      /* "ubjson/encoder.py":241
- *     if not __encode_value(fp_write, obj):
- *         # order important since mappings could also be sequences
- *         if isinstance(obj, Mapping):             # <<<<<<<<<<<<<<
- *             fp_write(OBJECT_START)
- *             if container_count:
- */
-      goto __pyx_L4;
-    }
-
-    /* "ubjson/encoder.py":251
- *                 fp_write(OBJECT_END)
- * 
- *         elif isinstance(obj, Sequence):             # <<<<<<<<<<<<<<
- *             fp_write(ARRAY_START)
- *             if container_count:
- */
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_Sequence); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 251; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = PyObject_IsInstance(__pyx_v_obj, __pyx_t_2); if (unlikely(__pyx_t_3 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 251; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_1 = (__pyx_t_3 != 0);
-    if (__pyx_t_1) {
-
-      /* "ubjson/encoder.py":252
- * 
- *         elif isinstance(obj, Sequence):
- *             fp_write(ARRAY_START)             # <<<<<<<<<<<<<<
- *             if container_count:
- *                 fp_write(CONTAINER_COUNT)
- */
-      __Pyx_INCREF(__pyx_v_fp_write);
-      __pyx_t_4 = __pyx_v_fp_write; __pyx_t_6 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
-        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_4);
-        if (likely(__pyx_t_6)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-          __Pyx_INCREF(__pyx_t_6);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_4, function);
-        }
-      }
-      if (!__pyx_t_6) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_ARRAY_START); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 252; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-      } else {
-        __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 252; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
-        __Pyx_INCREF(__pyx_v_6ubjson_7markers_ARRAY_START);
-        __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_ARRAY_START);
-        PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_6ubjson_7markers_ARRAY_START);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 252; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-      /* "ubjson/encoder.py":253
- *         elif isinstance(obj, Sequence):
- *             fp_write(ARRAY_START)
- *             if container_count:             # <<<<<<<<<<<<<<
- *                 fp_write(CONTAINER_COUNT)
- *                 __encode_int(fp_write, len(obj))
- */
-      __pyx_t_1 = (__pyx_v_container_count != 0);
-      if (__pyx_t_1) {
-
-        /* "ubjson/encoder.py":254
- *             fp_write(ARRAY_START)
- *             if container_count:
- *                 fp_write(CONTAINER_COUNT)             # <<<<<<<<<<<<<<
- *                 __encode_int(fp_write, len(obj))
- *             __encode_container(fp_write, iter(obj), False, {id(obj): obj}, container_count, sort_keys)
- */
-        __Pyx_INCREF(__pyx_v_fp_write);
-        __pyx_t_4 = __pyx_v_fp_write; __pyx_t_5 = NULL;
-        if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
-          __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
-          if (likely(__pyx_t_5)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-            __Pyx_INCREF(__pyx_t_5);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_4, function);
-          }
-        }
-        if (!__pyx_t_5) {
-          __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_6ubjson_7markers_CONTAINER_COUNT); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 254; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-        } else {
-          __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 254; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_6);
-          __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
-          __Pyx_INCREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-          __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-          PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 254; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        }
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-        /* "ubjson/encoder.py":255
- *             if container_count:
- *                 fp_write(CONTAINER_COUNT)
- *                 __encode_int(fp_write, len(obj))             # <<<<<<<<<<<<<<
- *             __encode_container(fp_write, iter(obj), False, {id(obj): obj}, container_count, sort_keys)
- *             if not container_count:
- */
-        __pyx_t_7 = PyObject_Length(__pyx_v_obj); if (unlikely(__pyx_t_7 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 255; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_7); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 255; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_2);
-        __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_2);
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-        /* "ubjson/encoder.py":253
- *         elif isinstance(obj, Sequence):
- *             fp_write(ARRAY_START)
- *             if container_count:             # <<<<<<<<<<<<<<
- *                 fp_write(CONTAINER_COUNT)
- *                 __encode_int(fp_write, len(obj))
- */
-      }
-
-      /* "ubjson/encoder.py":256
- *                 fp_write(CONTAINER_COUNT)
- *                 __encode_int(fp_write, len(obj))
- *             __encode_container(fp_write, iter(obj), False, {id(obj): obj}, container_count, sort_keys)             # <<<<<<<<<<<<<<
- *             if not container_count:
- *                 fp_write(ARRAY_END)
- */
-      __pyx_t_2 = PyObject_GetIter(__pyx_v_obj); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_INCREF(__pyx_v_obj);
-      __Pyx_GIVEREF(__pyx_v_obj);
-      PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_v_obj);
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin_id, __pyx_t_6, NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (PyDict_SetItem(__pyx_t_4, __pyx_t_5, __pyx_v_obj) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_10 = __pyx_f_6ubjson_7encoder___encode_container(__pyx_v_fp_write, __pyx_t_2, 0, ((PyObject*)__pyx_t_4), __pyx_v_container_count, __pyx_v_sort_keys); if (unlikely(__pyx_t_10 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-      /* "ubjson/encoder.py":257
- *                 __encode_int(fp_write, len(obj))
- *             __encode_container(fp_write, iter(obj), False, {id(obj): obj}, container_count, sort_keys)
- *             if not container_count:             # <<<<<<<<<<<<<<
- *                 fp_write(ARRAY_END)
- * 
- */
-      __pyx_t_1 = ((!(__pyx_v_container_count != 0)) != 0);
-      if (__pyx_t_1) {
-
-        /* "ubjson/encoder.py":258
- *             __encode_container(fp_write, iter(obj), False, {id(obj): obj}, container_count, sort_keys)
- *             if not container_count:
- *                 fp_write(ARRAY_END)             # <<<<<<<<<<<<<<
- * 
- *         else:
- */
-        __Pyx_INCREF(__pyx_v_fp_write);
-        __pyx_t_2 = __pyx_v_fp_write; __pyx_t_5 = NULL;
-        if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-          __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_2);
-          if (likely(__pyx_t_5)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-            __Pyx_INCREF(__pyx_t_5);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_2, function);
-          }
-        }
-        if (!__pyx_t_5) {
-          __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_ARRAY_END); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 258; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_4);
-        } else {
-          __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 258; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_6);
-          __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
-          __Pyx_INCREF(__pyx_v_6ubjson_7markers_ARRAY_END);
-          __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_ARRAY_END);
-          PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_ARRAY_END);
-          __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 258; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-          __Pyx_GOTREF(__pyx_t_4);
-          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        }
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-        /* "ubjson/encoder.py":257
- *                 __encode_int(fp_write, len(obj))
- *             __encode_container(fp_write, iter(obj), False, {id(obj): obj}, container_count, sort_keys)
- *             if not container_count:             # <<<<<<<<<<<<<<
- *                 fp_write(ARRAY_END)
- * 
- */
-      }
-
-      /* "ubjson/encoder.py":251
- *                 fp_write(OBJECT_END)
- * 
- *         elif isinstance(obj, Sequence):             # <<<<<<<<<<<<<<
- *             fp_write(ARRAY_START)
- *             if container_count:
- */
-      goto __pyx_L4;
-    }
-
-    /* "ubjson/encoder.py":261
- * 
- *         else:
- *             raise EncoderException('Cannot encode item of type %s' % type(obj))             # <<<<<<<<<<<<<<
- * 
- * 
- */
-    /*else*/ {
-      __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 261; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_6 = __Pyx_PyString_Format(__pyx_kp_s_Cannot_encode_item_of_type_s, ((PyObject *)Py_TYPE(__pyx_v_obj))); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 261; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-      __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_5 = NULL;
-      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_2);
-        if (likely(__pyx_t_5)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-          __Pyx_INCREF(__pyx_t_5);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_2, function);
-        }
-      }
-      if (!__pyx_t_5) {
-        __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 261; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __Pyx_GOTREF(__pyx_t_4);
-      } else {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 261; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_8);
-        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_5); __pyx_t_5 = NULL;
-        __Pyx_GIVEREF(__pyx_t_6);
-        PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_6);
-        __pyx_t_6 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 261; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_Raise(__pyx_t_4, 0, 0, 0);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 261; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    }
-    __pyx_L4:;
-
-    /* "ubjson/encoder.py":239
- * 
- * def __dump(obj, fp_write, container_count, sort_keys):  # noqa (complexity)
- *     if not __encode_value(fp_write, obj):             # <<<<<<<<<<<<<<
- *         # order important since mappings could also be sequences
- *         if isinstance(obj, Mapping):
+    /* "ubjson/encoder.py":191
+ *     # circular reference check
+ *     container_id = id(item)
+ *     if container_id in seen_containers:             # <<<<<<<<<<<<<<
+ *         raise EncoderException('Circular reference detected')
+ *     seen_containers[container_id] = item
  */
   }
 
-  /* "ubjson/encoder.py":238
+  /* "ubjson/encoder.py":193
+ *     if container_id in seen_containers:
+ *         raise EncoderException('Circular reference detected')
+ *     seen_containers[container_id] = item             # <<<<<<<<<<<<<<
+ * 
+ *     fp_write(OBJECT_START)
+ */
+  if (unlikely(__pyx_v_seen_containers == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 193; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  }
+  __pyx_t_1 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 193; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  if (unlikely(PyDict_SetItem(__pyx_v_seen_containers, __pyx_t_1, __pyx_v_item) < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 193; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "ubjson/encoder.py":195
+ *     seen_containers[container_id] = item
+ * 
+ *     fp_write(OBJECT_START)             # <<<<<<<<<<<<<<
+ *     if container_count:
+ *         fp_write(CONTAINER_COUNT)
+ */
+  __Pyx_INCREF(__pyx_v_fp_write);
+  __pyx_t_2 = __pyx_v_fp_write; __pyx_t_6 = NULL;
+  if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_6)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (!__pyx_t_6) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_OBJECT_START); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 195; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 195; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6); __pyx_t_6 = NULL;
+    __Pyx_INCREF(__pyx_v_6ubjson_7markers_OBJECT_START);
+    __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_OBJECT_START);
+    PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_v_6ubjson_7markers_OBJECT_START);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 195; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "ubjson/encoder.py":196
+ * 
+ *     fp_write(OBJECT_START)
+ *     if container_count:             # <<<<<<<<<<<<<<
+ *         fp_write(CONTAINER_COUNT)
+ *         __encode_int(fp_write, len(item))
+ */
+  __pyx_t_5 = (__pyx_v_container_count != 0);
+  if (__pyx_t_5) {
+
+    /* "ubjson/encoder.py":197
+ *     fp_write(OBJECT_START)
+ *     if container_count:
+ *         fp_write(CONTAINER_COUNT)             # <<<<<<<<<<<<<<
+ *         __encode_int(fp_write, len(item))
+ * 
+ */
+    __Pyx_INCREF(__pyx_v_fp_write);
+    __pyx_t_2 = __pyx_v_fp_write; __pyx_t_7 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
+      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_7)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+        __Pyx_INCREF(__pyx_t_7);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_2, function);
+      }
+    }
+    if (!__pyx_t_7) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_6ubjson_7markers_CONTAINER_COUNT); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 197; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 197; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_7); __pyx_t_7 = NULL;
+      __Pyx_INCREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
+      __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
+      PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_6ubjson_7markers_CONTAINER_COUNT);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 197; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "ubjson/encoder.py":198
+ *     if container_count:
+ *         fp_write(CONTAINER_COUNT)
+ *         __encode_int(fp_write, len(item))             # <<<<<<<<<<<<<<
+ * 
+ *     for key, value in sorted(item.items()) if sort_keys else item.items():
+ */
+    __pyx_t_8 = PyObject_Length(__pyx_v_item); if (unlikely(__pyx_t_8 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 198; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_8); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 198; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_1); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 198; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "ubjson/encoder.py":196
+ * 
+ *     fp_write(OBJECT_START)
+ *     if container_count:             # <<<<<<<<<<<<<<
+ *         fp_write(CONTAINER_COUNT)
+ *         __encode_int(fp_write, len(item))
+ */
+  }
+
+  /* "ubjson/encoder.py":200
+ *         __encode_int(fp_write, len(item))
+ * 
+ *     for key, value in sorted(item.items()) if sort_keys else item.items():             # <<<<<<<<<<<<<<
+ *         # allow both str & unicode for Python 2
+ *         if not isinstance(key, TEXT_TYPES):
+ */
+  if ((__pyx_v_sort_keys != 0)) {
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_item, __pyx_n_s_items); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_7);
+    __pyx_t_9 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_7))) {
+      __pyx_t_9 = PyMethod_GET_SELF(__pyx_t_7);
+      if (likely(__pyx_t_9)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
+        __Pyx_INCREF(__pyx_t_9);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_7, function);
+      }
+    }
+    if (__pyx_t_9) {
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_9); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+    } else {
+      __pyx_t_6 = __Pyx_PyObject_CallNoArg(__pyx_t_7); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    }
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __pyx_t_7 = PySequence_List(__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_2 = ((PyObject*)__pyx_t_7);
+    __pyx_t_7 = 0;
+    __pyx_t_10 = PyList_Sort(__pyx_t_2); if (unlikely(__pyx_t_10 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __pyx_t_2;
+    __pyx_t_2 = 0;
+  } else {
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_item, __pyx_n_s_items); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_7);
+    __pyx_t_6 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_7))) {
+      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_7);
+      if (likely(__pyx_t_6)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
+        __Pyx_INCREF(__pyx_t_6);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_7, function);
+      }
+    }
+    if (__pyx_t_6) {
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_6); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    } else {
+      __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_7); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    }
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __pyx_t_1 = __pyx_t_2;
+    __pyx_t_2 = 0;
+  }
+  if (likely(PyList_CheckExact(__pyx_t_1)) || PyTuple_CheckExact(__pyx_t_1)) {
+    __pyx_t_2 = __pyx_t_1; __Pyx_INCREF(__pyx_t_2); __pyx_t_8 = 0;
+    __pyx_t_11 = NULL;
+  } else {
+    __pyx_t_8 = -1; __pyx_t_2 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_11 = Py_TYPE(__pyx_t_2)->tp_iternext; if (unlikely(!__pyx_t_11)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  }
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  for (;;) {
+    if (likely(!__pyx_t_11)) {
+      if (likely(PyList_CheckExact(__pyx_t_2))) {
+        if (__pyx_t_8 >= PyList_GET_SIZE(__pyx_t_2)) break;
+        #if CYTHON_COMPILING_IN_CPYTHON
+        __pyx_t_1 = PyList_GET_ITEM(__pyx_t_2, __pyx_t_8); __Pyx_INCREF(__pyx_t_1); __pyx_t_8++; if (unlikely(0 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        #else
+        __pyx_t_1 = PySequence_ITEM(__pyx_t_2, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+        #endif
+      } else {
+        if (__pyx_t_8 >= PyTuple_GET_SIZE(__pyx_t_2)) break;
+        #if CYTHON_COMPILING_IN_CPYTHON
+        __pyx_t_1 = PyTuple_GET_ITEM(__pyx_t_2, __pyx_t_8); __Pyx_INCREF(__pyx_t_1); __pyx_t_8++; if (unlikely(0 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        #else
+        __pyx_t_1 = PySequence_ITEM(__pyx_t_2, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+        #endif
+      }
+    } else {
+      __pyx_t_1 = __pyx_t_11(__pyx_t_2);
+      if (unlikely(!__pyx_t_1)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
+          else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        }
+        break;
+      }
+      __Pyx_GOTREF(__pyx_t_1);
+    }
+    if ((likely(PyTuple_CheckExact(__pyx_t_1))) || (PyList_CheckExact(__pyx_t_1))) {
+      PyObject* sequence = __pyx_t_1;
+      #if CYTHON_COMPILING_IN_CPYTHON
+      Py_ssize_t size = Py_SIZE(sequence);
+      #else
+      Py_ssize_t size = PySequence_Size(sequence);
+      #endif
+      if (unlikely(size != 2)) {
+        if (size > 2) __Pyx_RaiseTooManyValuesError(2);
+        else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      }
+      #if CYTHON_COMPILING_IN_CPYTHON
+      if (likely(PyTuple_CheckExact(sequence))) {
+        __pyx_t_7 = PyTuple_GET_ITEM(sequence, 0); 
+        __pyx_t_6 = PyTuple_GET_ITEM(sequence, 1); 
+      } else {
+        __pyx_t_7 = PyList_GET_ITEM(sequence, 0); 
+        __pyx_t_6 = PyList_GET_ITEM(sequence, 1); 
+      }
+      __Pyx_INCREF(__pyx_t_7);
+      __Pyx_INCREF(__pyx_t_6);
+      #else
+      __pyx_t_7 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_7);
+      __pyx_t_6 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_6);
+      #endif
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    } else {
+      Py_ssize_t index = -1;
+      __pyx_t_9 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_9);
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __pyx_t_12 = Py_TYPE(__pyx_t_9)->tp_iternext;
+      index = 0; __pyx_t_7 = __pyx_t_12(__pyx_t_9); if (unlikely(!__pyx_t_7)) goto __pyx_L7_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_7);
+      index = 1; __pyx_t_6 = __pyx_t_12(__pyx_t_9); if (unlikely(!__pyx_t_6)) goto __pyx_L7_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_6);
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_12(__pyx_t_9), 2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_12 = NULL;
+      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      goto __pyx_L8_unpacking_done;
+      __pyx_L7_unpacking_failed:;
+      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __pyx_t_12 = NULL;
+      if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 200; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_L8_unpacking_done:;
+    }
+    __Pyx_XDECREF_SET(__pyx_v_key, __pyx_t_7);
+    __pyx_t_7 = 0;
+    __Pyx_XDECREF_SET(__pyx_v_value, __pyx_t_6);
+    __pyx_t_6 = 0;
+
+    /* "ubjson/encoder.py":202
+ *     for key, value in sorted(item.items()) if sort_keys else item.items():
+ *         # allow both str & unicode for Python 2
+ *         if not isinstance(key, TEXT_TYPES):             # <<<<<<<<<<<<<<
+ *             raise EncoderException('Mapping keys can only be strings')
+ *         encoded_val = key.encode('utf-8')
+ */
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_TEXT_TYPES); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 202; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_5 = PyObject_IsInstance(__pyx_v_key, __pyx_t_1); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 202; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_4 = ((!(__pyx_t_5 != 0)) != 0);
+    if (__pyx_t_4) {
+
+      /* "ubjson/encoder.py":203
+ *         # allow both str & unicode for Python 2
+ *         if not isinstance(key, TEXT_TYPES):
+ *             raise EncoderException('Mapping keys can only be strings')             # <<<<<<<<<<<<<<
+ *         encoded_val = key.encode('utf-8')
+ *         length = len(encoded_val)
+ */
+      __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 203; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 203; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __Pyx_Raise(__pyx_t_6, 0, 0, 0);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 203; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+
+      /* "ubjson/encoder.py":202
+ *     for key, value in sorted(item.items()) if sort_keys else item.items():
+ *         # allow both str & unicode for Python 2
+ *         if not isinstance(key, TEXT_TYPES):             # <<<<<<<<<<<<<<
+ *             raise EncoderException('Mapping keys can only be strings')
+ *         encoded_val = key.encode('utf-8')
+ */
+    }
+
+    /* "ubjson/encoder.py":204
+ *         if not isinstance(key, TEXT_TYPES):
+ *             raise EncoderException('Mapping keys can only be strings')
+ *         encoded_val = key.encode('utf-8')             # <<<<<<<<<<<<<<
+ *         length = len(encoded_val)
+ *         if length < 2 ** 8:
+ */
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_key, __pyx_n_s_encode); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 204; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 204; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_XDECREF_SET(__pyx_v_encoded_val, __pyx_t_1);
+    __pyx_t_1 = 0;
+
+    /* "ubjson/encoder.py":205
+ *             raise EncoderException('Mapping keys can only be strings')
+ *         encoded_val = key.encode('utf-8')
+ *         length = len(encoded_val)             # <<<<<<<<<<<<<<
+ *         if length < 2 ** 8:
+ *             fp_write(__SMALL_UINTS_ENCODED[length])
+ */
+    __pyx_t_13 = PyObject_Length(__pyx_v_encoded_val); if (unlikely(__pyx_t_13 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 205; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_v_length = __pyx_t_13;
+
+    /* "ubjson/encoder.py":206
+ *         encoded_val = key.encode('utf-8')
+ *         length = len(encoded_val)
+ *         if length < 2 ** 8:             # <<<<<<<<<<<<<<
+ *             fp_write(__SMALL_UINTS_ENCODED[length])
+ *         else:
+ */
+    __pyx_t_4 = ((__pyx_v_length < 0x100) != 0);
+    if (__pyx_t_4) {
+
+      /* "ubjson/encoder.py":207
+ *         length = len(encoded_val)
+ *         if length < 2 ** 8:
+ *             fp_write(__SMALL_UINTS_ENCODED[length])             # <<<<<<<<<<<<<<
+ *         else:
+ *             __encode_int(fp_write, length)
+ */
+      if (unlikely(__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED == Py_None)) {
+        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      }
+      __pyx_t_6 = PyInt_FromSsize_t(__pyx_v_length); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_7 = __Pyx_PyDict_GetItem(__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED, __pyx_t_6); if (unlikely(__pyx_t_7 == NULL)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;};
+      __Pyx_GOTREF(__pyx_t_7);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_INCREF(__pyx_v_fp_write);
+      __pyx_t_6 = __pyx_v_fp_write; __pyx_t_9 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
+        __pyx_t_9 = PyMethod_GET_SELF(__pyx_t_6);
+        if (likely(__pyx_t_9)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+          __Pyx_INCREF(__pyx_t_9);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_6, function);
+        }
+      }
+      if (!__pyx_t_9) {
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+      } else {
+        __pyx_t_14 = PyTuple_New(1+1); if (unlikely(!__pyx_t_14)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_14);
+        __Pyx_GIVEREF(__pyx_t_9); PyTuple_SET_ITEM(__pyx_t_14, 0, __pyx_t_9); __pyx_t_9 = NULL;
+        __Pyx_GIVEREF(__pyx_t_7);
+        PyTuple_SET_ITEM(__pyx_t_14, 0+1, __pyx_t_7);
+        __pyx_t_7 = 0;
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_14, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+      /* "ubjson/encoder.py":206
+ *         encoded_val = key.encode('utf-8')
+ *         length = len(encoded_val)
+ *         if length < 2 ** 8:             # <<<<<<<<<<<<<<
+ *             fp_write(__SMALL_UINTS_ENCODED[length])
+ *         else:
+ */
+      goto __pyx_L10;
+    }
+
+    /* "ubjson/encoder.py":209
+ *             fp_write(__SMALL_UINTS_ENCODED[length])
+ *         else:
+ *             __encode_int(fp_write, length)             # <<<<<<<<<<<<<<
+ *         fp_write(encoded_val)
+ * 
+ */
+    /*else*/ {
+      __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_length); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 209; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __pyx_f_6ubjson_7encoder___encode_int(__pyx_v_fp_write, __pyx_t_1); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 209; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    }
+    __pyx_L10:;
+
+    /* "ubjson/encoder.py":210
+ *         else:
+ *             __encode_int(fp_write, length)
+ *         fp_write(encoded_val)             # <<<<<<<<<<<<<<
+ * 
+ *         if not __encode_value(fp_write, value):
+ */
+    __Pyx_INCREF(__pyx_v_fp_write);
+    __pyx_t_6 = __pyx_v_fp_write; __pyx_t_14 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
+      __pyx_t_14 = PyMethod_GET_SELF(__pyx_t_6);
+      if (likely(__pyx_t_14)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+        __Pyx_INCREF(__pyx_t_14);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_6, function);
+      }
+    }
+    if (!__pyx_t_14) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_encoded_val); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 210; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 210; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_7);
+      __Pyx_GIVEREF(__pyx_t_14); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_14); __pyx_t_14 = NULL;
+      __Pyx_INCREF(__pyx_v_encoded_val);
+      __Pyx_GIVEREF(__pyx_v_encoded_val);
+      PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_v_encoded_val);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 210; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "ubjson/encoder.py":212
+ *         fp_write(encoded_val)
+ * 
+ *         if not __encode_value(fp_write, value):             # <<<<<<<<<<<<<<
+ *             # order important since mappings could also be sequences
+ *             if isinstance(value, Mapping):
+ */
+    __pyx_t_4 = __pyx_f_6ubjson_7encoder___encode_value(__pyx_v_fp_write, __pyx_v_value); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 212; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_5 = ((!(__pyx_t_4 != 0)) != 0);
+    if (__pyx_t_5) {
+
+      /* "ubjson/encoder.py":214
+ *         if not __encode_value(fp_write, value):
+ *             # order important since mappings could also be sequences
+ *             if isinstance(value, Mapping):             # <<<<<<<<<<<<<<
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+ *             elif isinstance(value, Sequence):
+ */
+      __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_Mapping); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 214; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __pyx_t_5 = PyObject_IsInstance(__pyx_v_value, __pyx_t_1); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 214; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __pyx_t_4 = (__pyx_t_5 != 0);
+      if (__pyx_t_4) {
+
+        /* "ubjson/encoder.py":215
+ *             # order important since mappings could also be sequences
+ *             if isinstance(value, Mapping):
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)             # <<<<<<<<<<<<<<
+ *             elif isinstance(value, Sequence):
+ *                 __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
+ */
+        __pyx_f_6ubjson_7encoder___encode_object(__pyx_v_fp_write, __pyx_v_value, __pyx_v_seen_containers, __pyx_v_container_count, __pyx_v_sort_keys); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 215; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+
+        /* "ubjson/encoder.py":214
+ *         if not __encode_value(fp_write, value):
+ *             # order important since mappings could also be sequences
+ *             if isinstance(value, Mapping):             # <<<<<<<<<<<<<<
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+ *             elif isinstance(value, Sequence):
+ */
+        goto __pyx_L12;
+      }
+
+      /* "ubjson/encoder.py":216
+ *             if isinstance(value, Mapping):
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+ *             elif isinstance(value, Sequence):             # <<<<<<<<<<<<<<
+ *                 __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
+ *             else:
+ */
+      __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_Sequence); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __pyx_t_4 = PyObject_IsInstance(__pyx_v_value, __pyx_t_1); if (unlikely(__pyx_t_4 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 216; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __pyx_t_5 = (__pyx_t_4 != 0);
+      if (__pyx_t_5) {
+
+        /* "ubjson/encoder.py":217
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+ *             elif isinstance(value, Sequence):
+ *                 __encode_array(fp_write, value, seen_containers, container_count, sort_keys)             # <<<<<<<<<<<<<<
+ *             else:
+ *                 raise EncoderException('Cannot encode item of type %s' % type(value))
+ */
+        __pyx_f_6ubjson_7encoder___encode_array(__pyx_v_fp_write, __pyx_v_value, __pyx_v_seen_containers, __pyx_v_container_count, __pyx_v_sort_keys); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 217; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+
+        /* "ubjson/encoder.py":216
+ *             if isinstance(value, Mapping):
+ *                 __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+ *             elif isinstance(value, Sequence):             # <<<<<<<<<<<<<<
+ *                 __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
+ *             else:
+ */
+        goto __pyx_L12;
+      }
+
+      /* "ubjson/encoder.py":219
+ *                 __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
+ *             else:
+ *                 raise EncoderException('Cannot encode item of type %s' % type(value))             # <<<<<<<<<<<<<<
+ * 
+ *     if not container_count:
+ */
+      /*else*/ {
+        __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 219; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_6);
+        __pyx_t_7 = __Pyx_PyString_Format(__pyx_kp_s_Cannot_encode_item_of_type_s, ((PyObject *)Py_TYPE(__pyx_v_value))); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 219; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_7);
+        __pyx_t_14 = NULL;
+        if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
+          __pyx_t_14 = PyMethod_GET_SELF(__pyx_t_6);
+          if (likely(__pyx_t_14)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+            __Pyx_INCREF(__pyx_t_14);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_6, function);
+          }
+        }
+        if (!__pyx_t_14) {
+          __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 219; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+          __Pyx_GOTREF(__pyx_t_1);
+        } else {
+          __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 219; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          __Pyx_GOTREF(__pyx_t_9);
+          __Pyx_GIVEREF(__pyx_t_14); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_14); __pyx_t_14 = NULL;
+          __Pyx_GIVEREF(__pyx_t_7);
+          PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_t_7);
+          __pyx_t_7 = 0;
+          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_9, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 219; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          __Pyx_GOTREF(__pyx_t_1);
+          __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+        }
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __Pyx_Raise(__pyx_t_1, 0, 0, 0);
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 219; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      }
+      __pyx_L12:;
+
+      /* "ubjson/encoder.py":212
+ *         fp_write(encoded_val)
+ * 
+ *         if not __encode_value(fp_write, value):             # <<<<<<<<<<<<<<
+ *             # order important since mappings could also be sequences
+ *             if isinstance(value, Mapping):
+ */
+    }
+
+    /* "ubjson/encoder.py":200
+ *         __encode_int(fp_write, len(item))
+ * 
+ *     for key, value in sorted(item.items()) if sort_keys else item.items():             # <<<<<<<<<<<<<<
+ *         # allow both str & unicode for Python 2
+ *         if not isinstance(key, TEXT_TYPES):
+ */
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "ubjson/encoder.py":221
+ *                 raise EncoderException('Cannot encode item of type %s' % type(value))
+ * 
+ *     if not container_count:             # <<<<<<<<<<<<<<
+ *         fp_write(OBJECT_END)
+ * 
+ */
+  __pyx_t_5 = ((!(__pyx_v_container_count != 0)) != 0);
+  if (__pyx_t_5) {
+
+    /* "ubjson/encoder.py":222
+ * 
+ *     if not container_count:
+ *         fp_write(OBJECT_END)             # <<<<<<<<<<<<<<
+ * 
+ *     del seen_containers[container_id]
+ */
+    __Pyx_INCREF(__pyx_v_fp_write);
+    __pyx_t_1 = __pyx_v_fp_write; __pyx_t_6 = NULL;
+    if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_1))) {
+      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_1);
+      if (likely(__pyx_t_6)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
+        __Pyx_INCREF(__pyx_t_6);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_1, function);
+      }
+    }
+    if (!__pyx_t_6) {
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_6ubjson_7markers_OBJECT_END); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 222; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+    } else {
+      __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 222; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_9);
+      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_6); __pyx_t_6 = NULL;
+      __Pyx_INCREF(__pyx_v_6ubjson_7markers_OBJECT_END);
+      __Pyx_GIVEREF(__pyx_v_6ubjson_7markers_OBJECT_END);
+      PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_v_6ubjson_7markers_OBJECT_END);
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_9, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 222; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+    /* "ubjson/encoder.py":221
+ *                 raise EncoderException('Cannot encode item of type %s' % type(value))
+ * 
+ *     if not container_count:             # <<<<<<<<<<<<<<
+ *         fp_write(OBJECT_END)
+ * 
+ */
+  }
+
+  /* "ubjson/encoder.py":224
+ *         fp_write(OBJECT_END)
+ * 
+ *     del seen_containers[container_id]             # <<<<<<<<<<<<<<
  * 
  * 
- * def __dump(obj, fp_write, container_count, sort_keys):  # noqa (complexity)             # <<<<<<<<<<<<<<
- *     if not __encode_value(fp_write, obj):
- *         # order important since mappings could also be sequences
+ */
+  if (unlikely(__pyx_v_seen_containers == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  }
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_PY_LONG_LONG(__pyx_v_container_id); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_DelItem(__pyx_v_seen_containers, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "ubjson/encoder.py":188
+ * 
+ * 
+ * def __encode_object(fp_write, item, seen_containers, container_count, sort_keys):             # <<<<<<<<<<<<<<
+ *     # circular reference check
+ *     container_id = id(item)
  */
 
   /* function exit code */
-  __pyx_r = 0;
   goto __pyx_L0;
   __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_AddTraceback("ubjson.encoder.__dump", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = -1;
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_9);
+  __Pyx_XDECREF(__pyx_t_14);
+  __Pyx_AddTraceback("ubjson.encoder.__encode_object", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_key);
+  __Pyx_XDECREF(__pyx_v_value);
+  __Pyx_XDECREF(__pyx_v_encoded_val);
   __Pyx_RefNannyFinishContext();
-  return __pyx_r;
 }
 
-/* "ubjson/encoder.py":264
+/* "ubjson/encoder.py":227
  * 
  * 
  * def dump(obj, fp, container_count=False, sort_keys=False):             # <<<<<<<<<<<<<<
@@ -5823,13 +4733,18 @@ static int __pyx_f_6ubjson_7encoder___dump(PyObject *__pyx_v_obj, PyObject *__py
  */
 
 static PyObject *__pyx_pw_6ubjson_7encoder_1dump(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static int __pyx_f_6ubjson_7encoder_dump(PyObject *__pyx_v_obj, PyObject *__pyx_v_fp, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_6ubjson_7encoder_dump *__pyx_optional_args) {
+static void __pyx_f_6ubjson_7encoder_dump(PyObject *__pyx_v_obj, PyObject *__pyx_v_fp, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_6ubjson_7encoder_dump *__pyx_optional_args) {
   int __pyx_v_container_count = ((int)0);
   int __pyx_v_sort_keys = ((int)0);
-  int __pyx_r;
+  PyObject *__pyx_v_fp_write = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   int __pyx_t_2;
+  int __pyx_t_3;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -5843,19 +4758,155 @@ static int __pyx_f_6ubjson_7encoder_dump(PyObject *__pyx_v_obj, PyObject *__pyx_
     }
   }
 
-  /* "ubjson/encoder.py":322
+  /* "ubjson/encoder.py":285
  *       Python 2.
  *     """
- *     __dump(obj, fp.write, container_count=container_count, sort_keys=sort_keys)             # <<<<<<<<<<<<<<
+ *     fp_write = fp.write             # <<<<<<<<<<<<<<
+ *     if not __encode_value(fp_write, obj):
+ *         # order important since mappings could also be sequences
+ */
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_fp, __pyx_n_s_write); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 285; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v_fp_write = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "ubjson/encoder.py":286
+ *     """
+ *     fp_write = fp.write
+ *     if not __encode_value(fp_write, obj):             # <<<<<<<<<<<<<<
+ *         # order important since mappings could also be sequences
+ *         if isinstance(obj, Mapping):
+ */
+  __pyx_t_2 = __pyx_f_6ubjson_7encoder___encode_value(__pyx_v_fp_write, __pyx_v_obj); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 286; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = ((!(__pyx_t_2 != 0)) != 0);
+  if (__pyx_t_3) {
+
+    /* "ubjson/encoder.py":288
+ *     if not __encode_value(fp_write, obj):
+ *         # order important since mappings could also be sequences
+ *         if isinstance(obj, Mapping):             # <<<<<<<<<<<<<<
+ *             __encode_object(fp_write, obj, {}, container_count, sort_keys)
+ *         elif isinstance(obj, Sequence):
+ */
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_Mapping); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 288; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_3 = PyObject_IsInstance(__pyx_v_obj, __pyx_t_1); if (unlikely(__pyx_t_3 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 288; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_2 = (__pyx_t_3 != 0);
+    if (__pyx_t_2) {
+
+      /* "ubjson/encoder.py":289
+ *         # order important since mappings could also be sequences
+ *         if isinstance(obj, Mapping):
+ *             __encode_object(fp_write, obj, {}, container_count, sort_keys)             # <<<<<<<<<<<<<<
+ *         elif isinstance(obj, Sequence):
+ *             __encode_array(fp_write, obj, {}, container_count, sort_keys)
+ */
+      __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 289; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __pyx_f_6ubjson_7encoder___encode_object(__pyx_v_fp_write, __pyx_v_obj, ((PyObject*)__pyx_t_1), __pyx_v_container_count, __pyx_v_sort_keys); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 289; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+      /* "ubjson/encoder.py":288
+ *     if not __encode_value(fp_write, obj):
+ *         # order important since mappings could also be sequences
+ *         if isinstance(obj, Mapping):             # <<<<<<<<<<<<<<
+ *             __encode_object(fp_write, obj, {}, container_count, sort_keys)
+ *         elif isinstance(obj, Sequence):
+ */
+      goto __pyx_L4;
+    }
+
+    /* "ubjson/encoder.py":290
+ *         if isinstance(obj, Mapping):
+ *             __encode_object(fp_write, obj, {}, container_count, sort_keys)
+ *         elif isinstance(obj, Sequence):             # <<<<<<<<<<<<<<
+ *             __encode_array(fp_write, obj, {}, container_count, sort_keys)
+ *         else:
+ */
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_Sequence); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 290; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_2 = PyObject_IsInstance(__pyx_v_obj, __pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 290; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_3 = (__pyx_t_2 != 0);
+    if (__pyx_t_3) {
+
+      /* "ubjson/encoder.py":291
+ *             __encode_object(fp_write, obj, {}, container_count, sort_keys)
+ *         elif isinstance(obj, Sequence):
+ *             __encode_array(fp_write, obj, {}, container_count, sort_keys)             # <<<<<<<<<<<<<<
+ *         else:
+ *             raise EncoderException('Cannot encode item of type %s' % type(obj))
+ */
+      __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 291; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_1);
+      __pyx_f_6ubjson_7encoder___encode_array(__pyx_v_fp_write, __pyx_v_obj, ((PyObject*)__pyx_t_1), __pyx_v_container_count, __pyx_v_sort_keys); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 291; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+      /* "ubjson/encoder.py":290
+ *         if isinstance(obj, Mapping):
+ *             __encode_object(fp_write, obj, {}, container_count, sort_keys)
+ *         elif isinstance(obj, Sequence):             # <<<<<<<<<<<<<<
+ *             __encode_array(fp_write, obj, {}, container_count, sort_keys)
+ *         else:
+ */
+      goto __pyx_L4;
+    }
+
+    /* "ubjson/encoder.py":293
+ *             __encode_array(fp_write, obj, {}, container_count, sort_keys)
+ *         else:
+ *             raise EncoderException('Cannot encode item of type %s' % type(obj))             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_fp, __pyx_n_s_write); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 322; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __pyx_f_6ubjson_7encoder___dump(__pyx_v_obj, __pyx_t_1, __pyx_v_container_count, __pyx_v_sort_keys); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 322; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    /*else*/ {
+      __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_EncoderException); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 293; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_5 = __Pyx_PyString_Format(__pyx_kp_s_Cannot_encode_item_of_type_s, ((PyObject *)Py_TYPE(__pyx_v_obj))); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 293; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_5);
+      __pyx_t_6 = NULL;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
+        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_4);
+        if (likely(__pyx_t_6)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+          __Pyx_INCREF(__pyx_t_6);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_4, function);
+        }
+      }
+      if (!__pyx_t_6) {
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 293; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+      } else {
+        __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 293; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_7);
+        __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6); __pyx_t_6 = NULL;
+        __Pyx_GIVEREF(__pyx_t_5);
+        PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_5);
+        __pyx_t_5 = 0;
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 293; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_Raise(__pyx_t_1, 0, 0, 0);
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 293; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    }
+    __pyx_L4:;
 
-  /* "ubjson/encoder.py":264
+    /* "ubjson/encoder.py":286
+ *     """
+ *     fp_write = fp.write
+ *     if not __encode_value(fp_write, obj):             # <<<<<<<<<<<<<<
+ *         # order important since mappings could also be sequences
+ *         if isinstance(obj, Mapping):
+ */
+  }
+
+  /* "ubjson/encoder.py":227
  * 
  * 
  * def dump(obj, fp, container_count=False, sort_keys=False):             # <<<<<<<<<<<<<<
@@ -5864,15 +4915,17 @@ static int __pyx_f_6ubjson_7encoder_dump(PyObject *__pyx_v_obj, PyObject *__pyx_
  */
 
   /* function exit code */
-  __pyx_r = 0;
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
   __Pyx_AddTraceback("ubjson.encoder.dump", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = -1;
   __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_fp_write);
   __Pyx_RefNannyFinishContext();
-  return __pyx_r;
 }
 
 /* Python wrapper */
@@ -5911,7 +4964,7 @@ static PyObject *__pyx_pw_6ubjson_7encoder_1dump(PyObject *__pyx_self, PyObject 
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_fp)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("dump", 0, 2, 4, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 264; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("dump", 0, 2, 4, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 227; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (kw_args > 0) {
@@ -5925,7 +4978,7 @@ static PyObject *__pyx_pw_6ubjson_7encoder_1dump(PyObject *__pyx_self, PyObject 
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "dump") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 264; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "dump") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 227; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -5940,19 +4993,19 @@ static PyObject *__pyx_pw_6ubjson_7encoder_1dump(PyObject *__pyx_self, PyObject 
     __pyx_v_obj = values[0];
     __pyx_v_fp = values[1];
     if (values[2]) {
-      __pyx_v_container_count = __Pyx_PyObject_IsTrue(values[2]); if (unlikely((__pyx_v_container_count == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 264; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_container_count = __Pyx_PyObject_IsTrue(values[2]); if (unlikely((__pyx_v_container_count == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 227; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_container_count = ((int)0);
     }
     if (values[3]) {
-      __pyx_v_sort_keys = __Pyx_PyObject_IsTrue(values[3]); if (unlikely((__pyx_v_sort_keys == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 264; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_sort_keys = __Pyx_PyObject_IsTrue(values[3]); if (unlikely((__pyx_v_sort_keys == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 227; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_sort_keys = ((int)0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("dump", 0, 2, 4, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 264; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("dump", 0, 2, 4, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 227; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("ubjson.encoder.dump", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -5968,27 +5021,26 @@ static PyObject *__pyx_pw_6ubjson_7encoder_1dump(PyObject *__pyx_self, PyObject 
 static PyObject *__pyx_pf_6ubjson_7encoder_dump(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_obj, PyObject *__pyx_v_fp, int __pyx_v_container_count, int __pyx_v_sort_keys) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  struct __pyx_opt_args_6ubjson_7encoder_dump __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
+  struct __pyx_opt_args_6ubjson_7encoder_dump __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("dump", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2.__pyx_n = 2;
-  __pyx_t_2.container_count = __pyx_v_container_count;
-  __pyx_t_2.sort_keys = __pyx_v_sort_keys;
-  __pyx_t_1 = __pyx_f_6ubjson_7encoder_dump(__pyx_v_obj, __pyx_v_fp, 0, &__pyx_t_2); if (unlikely(__pyx_t_1 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 264; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 264; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_r = __pyx_t_3;
-  __pyx_t_3 = 0;
+  __pyx_t_1.__pyx_n = 2;
+  __pyx_t_1.container_count = __pyx_v_container_count;
+  __pyx_t_1.sort_keys = __pyx_v_sort_keys;
+  __pyx_f_6ubjson_7encoder_dump(__pyx_v_obj, __pyx_v_fp, 0, &__pyx_t_1); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 227; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 227; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
   goto __pyx_L0;
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_2);
   __Pyx_AddTraceback("ubjson.encoder.dump", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -5997,7 +5049,7 @@ static PyObject *__pyx_pf_6ubjson_7encoder_dump(CYTHON_UNUSED PyObject *__pyx_se
   return __pyx_r;
 }
 
-/* "ubjson/encoder.py":325
+/* "ubjson/encoder.py":296
  * 
  * 
  * def dumpb(obj, container_count=False, sort_keys=False):             # <<<<<<<<<<<<<<
@@ -6020,7 +5072,7 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
   PyObject *__pyx_t_6 = NULL;
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
-  int __pyx_t_9;
+  struct __pyx_opt_args_6ubjson_7encoder_dump __pyx_t_9;
   PyObject *__pyx_t_10 = NULL;
   int __pyx_t_11;
   int __pyx_t_12;
@@ -6037,15 +5089,15 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
     }
   }
 
-  /* "ubjson/encoder.py":328
+  /* "ubjson/encoder.py":299
  *     """Returns the given object as UBJSON in a bytes instance. See dump() for
  *        available arguments."""
  *     with BytesIO() as fp:             # <<<<<<<<<<<<<<
- *         __dump(obj, fp.write, container_count=container_count, sort_keys=sort_keys)
+ *         dump(obj, fp, container_count=container_count, sort_keys=sort_keys)
  *         return fp.getvalue()
  */
   /*with:*/ {
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_BytesIO); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_BytesIO); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_3 = NULL;
     if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -6058,16 +5110,16 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
       }
     }
     if (__pyx_t_3) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     } else {
-      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_4 = __Pyx_PyObject_LookupSpecial(__pyx_t_1, __pyx_n_s_exit); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = __Pyx_PyObject_LookupSpecial(__pyx_t_1, __pyx_n_s_exit); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_3 = __Pyx_PyObject_LookupSpecial(__pyx_t_1, __pyx_n_s_enter); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_t_3 = __Pyx_PyObject_LookupSpecial(__pyx_t_1, __pyx_n_s_enter); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_5 = NULL;
     if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_3))) {
@@ -6080,10 +5132,10 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
       }
     }
     if (__pyx_t_5) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     } else {
-      __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     }
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -6100,24 +5152,24 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
           __pyx_v_fp = __pyx_t_3;
           __pyx_t_3 = 0;
 
-          /* "ubjson/encoder.py":329
+          /* "ubjson/encoder.py":300
  *        available arguments."""
  *     with BytesIO() as fp:
- *         __dump(obj, fp.write, container_count=container_count, sort_keys=sort_keys)             # <<<<<<<<<<<<<<
+ *         dump(obj, fp, container_count=container_count, sort_keys=sort_keys)             # <<<<<<<<<<<<<<
  *         return fp.getvalue()
  */
-          __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_fp, __pyx_n_s_write); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 329; __pyx_clineno = __LINE__; goto __pyx_L7_error;}
-          __Pyx_GOTREF(__pyx_t_3);
-          __pyx_t_9 = __pyx_f_6ubjson_7encoder___dump(__pyx_v_obj, __pyx_t_3, __pyx_v_container_count, __pyx_v_sort_keys); if (unlikely(__pyx_t_9 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 329; __pyx_clineno = __LINE__; goto __pyx_L7_error;}
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+          __pyx_t_9.__pyx_n = 2;
+          __pyx_t_9.container_count = __pyx_v_container_count;
+          __pyx_t_9.sort_keys = __pyx_v_sort_keys;
+          __pyx_f_6ubjson_7encoder_dump(__pyx_v_obj, __pyx_v_fp, 0, &__pyx_t_9); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 300; __pyx_clineno = __LINE__; goto __pyx_L7_error;}
 
-          /* "ubjson/encoder.py":330
+          /* "ubjson/encoder.py":301
  *     with BytesIO() as fp:
- *         __dump(obj, fp.write, container_count=container_count, sort_keys=sort_keys)
+ *         dump(obj, fp, container_count=container_count, sort_keys=sort_keys)
  *         return fp.getvalue()             # <<<<<<<<<<<<<<
  */
           __Pyx_XDECREF(__pyx_r);
-          __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_fp, __pyx_n_s_getvalue); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 330; __pyx_clineno = __LINE__; goto __pyx_L7_error;}
+          __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_fp, __pyx_n_s_getvalue); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 301; __pyx_clineno = __LINE__; goto __pyx_L7_error;}
           __Pyx_GOTREF(__pyx_t_1);
           __pyx_t_2 = NULL;
           if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_1))) {
@@ -6130,10 +5182,10 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
             }
           }
           if (__pyx_t_2) {
-            __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 330; __pyx_clineno = __LINE__; goto __pyx_L7_error;}
+            __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 301; __pyx_clineno = __LINE__; goto __pyx_L7_error;}
             __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
           } else {
-            __pyx_t_3 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 330; __pyx_clineno = __LINE__; goto __pyx_L7_error;}
+            __pyx_t_3 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 301; __pyx_clineno = __LINE__; goto __pyx_L7_error;}
           }
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -6141,11 +5193,11 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
           __pyx_t_3 = 0;
           goto __pyx_L11_try_return;
 
-          /* "ubjson/encoder.py":328
+          /* "ubjson/encoder.py":299
  *     """Returns the given object as UBJSON in a bytes instance. See dump() for
  *        available arguments."""
  *     with BytesIO() as fp:             # <<<<<<<<<<<<<<
- *         __dump(obj, fp.write, container_count=container_count, sort_keys=sort_keys)
+ *         dump(obj, fp, container_count=container_count, sort_keys=sort_keys)
  *         return fp.getvalue()
  */
         }
@@ -6156,20 +5208,20 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
         /*except:*/ {
           __Pyx_AddTraceback("ubjson.encoder.dumpb", __pyx_clineno, __pyx_lineno, __pyx_filename);
-          if (__Pyx_GetException(&__pyx_t_3, &__pyx_t_1, &__pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L9_except_error;}
+          if (__Pyx_GetException(&__pyx_t_3, &__pyx_t_1, &__pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L9_except_error;}
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_GOTREF(__pyx_t_2);
-          __pyx_t_5 = PyTuple_Pack(3, __pyx_t_3, __pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L9_except_error;}
+          __pyx_t_5 = PyTuple_Pack(3, __pyx_t_3, __pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L9_except_error;}
           __Pyx_GOTREF(__pyx_t_5);
           __pyx_t_10 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL);
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-          if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L9_except_error;}
+          if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L9_except_error;}
           __Pyx_GOTREF(__pyx_t_10);
           __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_10);
           __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-          if (__pyx_t_11 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L9_except_error;}
+          if (__pyx_t_11 < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L9_except_error;}
           __pyx_t_12 = ((!(__pyx_t_11 != 0)) != 0);
           if (__pyx_t_12) {
             __Pyx_GIVEREF(__pyx_t_3);
@@ -6177,7 +5229,7 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
             __Pyx_XGIVEREF(__pyx_t_2);
             __Pyx_ErrRestore(__pyx_t_3, __pyx_t_1, __pyx_t_2);
             __pyx_t_3 = 0; __pyx_t_1 = 0; __pyx_t_2 = 0; 
-            {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L9_except_error;}
+            {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L9_except_error;}
           }
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -6208,7 +5260,7 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
         if (__pyx_t_4) {
           __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__8, NULL);
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
           __Pyx_GOTREF(__pyx_t_8);
           __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
         }
@@ -6220,7 +5272,7 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
         if (__pyx_t_4) {
           __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__9, NULL);
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
           __Pyx_GOTREF(__pyx_t_7);
           __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
         }
@@ -6237,7 +5289,7 @@ static PyObject *__pyx_f_6ubjson_7encoder_dumpb(PyObject *__pyx_v_obj, CYTHON_UN
     __pyx_L18:;
   }
 
-  /* "ubjson/encoder.py":325
+  /* "ubjson/encoder.py":296
  * 
  * 
  * def dumpb(obj, container_count=False, sort_keys=False):             # <<<<<<<<<<<<<<
@@ -6305,7 +5357,7 @@ static PyObject *__pyx_pw_6ubjson_7encoder_3dumpb(PyObject *__pyx_self, PyObject
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "dumpb") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 325; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "dumpb") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 296; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -6318,19 +5370,19 @@ static PyObject *__pyx_pw_6ubjson_7encoder_3dumpb(PyObject *__pyx_self, PyObject
     }
     __pyx_v_obj = values[0];
     if (values[1]) {
-      __pyx_v_container_count = __Pyx_PyObject_IsTrue(values[1]); if (unlikely((__pyx_v_container_count == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 325; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_container_count = __Pyx_PyObject_IsTrue(values[1]); if (unlikely((__pyx_v_container_count == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 296; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_container_count = ((int)0);
     }
     if (values[2]) {
-      __pyx_v_sort_keys = __Pyx_PyObject_IsTrue(values[2]); if (unlikely((__pyx_v_sort_keys == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 325; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_sort_keys = __Pyx_PyObject_IsTrue(values[2]); if (unlikely((__pyx_v_sort_keys == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 296; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_sort_keys = ((int)0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("dumpb", 0, 1, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 325; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("dumpb", 0, 1, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 296; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("ubjson.encoder.dumpb", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -6356,7 +5408,7 @@ static PyObject *__pyx_pf_6ubjson_7encoder_2dumpb(CYTHON_UNUSED PyObject *__pyx_
   __pyx_t_2.__pyx_n = 2;
   __pyx_t_2.container_count = __pyx_v_container_count;
   __pyx_t_2.sort_keys = __pyx_v_sort_keys;
-  __pyx_t_1 = __pyx_f_6ubjson_7encoder_dumpb(__pyx_v_obj, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 325; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __pyx_f_6ubjson_7encoder_dumpb(__pyx_v_obj, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 296; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -6387,7 +5439,7 @@ static struct PyModuleDef __pyx_moduledef = {
     PyModuleDef_HEAD_INIT,
   #endif
     "encoder",
-    __pyx_k_Non_resursive_UBJSON_encoder, /* m_doc */
+    __pyx_k_UBJSON_draft_v12_encoder, /* m_doc */
     -1, /* m_size */
     __pyx_methods /* m_methods */,
     NULL, /* m_reload */
@@ -6401,6 +5453,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_ARRAY_END, __pyx_k_ARRAY_END, sizeof(__pyx_k_ARRAY_END), 0, 0, 1, 1},
   {&__pyx_n_s_ARRAY_START, __pyx_k_ARRAY_START, sizeof(__pyx_k_ARRAY_START), 0, 0, 1, 1},
   {&__pyx_kp_s_B, __pyx_k_B, sizeof(__pyx_k_B), 0, 0, 1, 0},
+  {&__pyx_n_s_BYTES_ARRAY_PREFIX, __pyx_k_BYTES_ARRAY_PREFIX, sizeof(__pyx_k_BYTES_ARRAY_PREFIX), 0, 0, 1, 1},
   {&__pyx_n_s_BYTES_TYPES, __pyx_k_BYTES_TYPES, sizeof(__pyx_k_BYTES_TYPES), 0, 0, 1, 1},
   {&__pyx_n_s_BytesIO, __pyx_k_BytesIO, sizeof(__pyx_k_BytesIO), 0, 0, 1, 1},
   {&__pyx_n_s_CONTAINER_COUNT, __pyx_k_CONTAINER_COUNT, sizeof(__pyx_k_CONTAINER_COUNT), 0, 0, 1, 1},
@@ -6411,14 +5464,20 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_EncoderException, __pyx_k_EncoderException, sizeof(__pyx_k_EncoderException), 0, 0, 1, 1},
   {&__pyx_n_s_INTEGER_TYPES, __pyx_k_INTEGER_TYPES, sizeof(__pyx_k_INTEGER_TYPES), 0, 0, 1, 1},
   {&__pyx_n_s_ImportError, __pyx_k_ImportError, sizeof(__pyx_k_ImportError), 0, 0, 1, 1},
-  {&__pyx_n_s_IndexError, __pyx_k_IndexError, sizeof(__pyx_k_IndexError), 0, 0, 1, 1},
   {&__pyx_n_s_Mapping, __pyx_k_Mapping, sizeof(__pyx_k_Mapping), 0, 0, 1, 1},
   {&__pyx_kp_s_Mapping_keys_can_only_be_strings, __pyx_k_Mapping_keys_can_only_be_strings, sizeof(__pyx_k_Mapping_keys_can_only_be_strings), 0, 0, 1, 0},
   {&__pyx_n_s_OBJECT_END, __pyx_k_OBJECT_END, sizeof(__pyx_k_OBJECT_END), 0, 0, 1, 1},
   {&__pyx_n_s_OBJECT_START, __pyx_k_OBJECT_START, sizeof(__pyx_k_OBJECT_START), 0, 0, 1, 1},
+  {&__pyx_n_s_PACK_FLOAT32, __pyx_k_PACK_FLOAT32, sizeof(__pyx_k_PACK_FLOAT32), 0, 0, 1, 1},
+  {&__pyx_n_s_PACK_FLOAT64, __pyx_k_PACK_FLOAT64, sizeof(__pyx_k_PACK_FLOAT64), 0, 0, 1, 1},
+  {&__pyx_n_s_PACK_INT16, __pyx_k_PACK_INT16, sizeof(__pyx_k_PACK_INT16), 0, 0, 1, 1},
+  {&__pyx_n_s_PACK_INT32, __pyx_k_PACK_INT32, sizeof(__pyx_k_PACK_INT32), 0, 0, 1, 1},
+  {&__pyx_n_s_PACK_INT64, __pyx_k_PACK_INT64, sizeof(__pyx_k_PACK_INT64), 0, 0, 1, 1},
   {&__pyx_kp_s_Raised_when_encoding_of_an_objec, __pyx_k_Raised_when_encoding_of_an_objec, sizeof(__pyx_k_Raised_when_encoding_of_an_objec), 0, 0, 1, 0},
+  {&__pyx_n_s_SMALL_INTS_ENCODED, __pyx_k_SMALL_INTS_ENCODED, sizeof(__pyx_k_SMALL_INTS_ENCODED), 0, 0, 1, 1},
+  {&__pyx_n_s_SMALL_UINTS_ENCODED, __pyx_k_SMALL_UINTS_ENCODED, sizeof(__pyx_k_SMALL_UINTS_ENCODED), 0, 0, 1, 1},
   {&__pyx_n_s_Sequence, __pyx_k_Sequence, sizeof(__pyx_k_Sequence), 0, 0, 1, 1},
-  {&__pyx_n_s_StopIteration, __pyx_k_StopIteration, sizeof(__pyx_k_StopIteration), 0, 0, 1, 1},
+  {&__pyx_n_s_Struct, __pyx_k_Struct, sizeof(__pyx_k_Struct), 0, 0, 1, 1},
   {&__pyx_n_s_TEXT_TYPES, __pyx_k_TEXT_TYPES, sizeof(__pyx_k_TEXT_TYPES), 0, 0, 1, 1},
   {&__pyx_n_s_TYPE_BOOL_FALSE, __pyx_k_TYPE_BOOL_FALSE, sizeof(__pyx_k_TYPE_BOOL_FALSE), 0, 0, 1, 1},
   {&__pyx_n_s_TYPE_BOOL_TRUE, __pyx_k_TYPE_BOOL_TRUE, sizeof(__pyx_k_TYPE_BOOL_TRUE), 0, 0, 1, 1},
@@ -6435,14 +5494,11 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_TYPE_UINT8, __pyx_k_TYPE_UINT8, sizeof(__pyx_k_TYPE_UINT8), 0, 0, 1, 1},
   {&__pyx_n_s_TypeError, __pyx_k_TypeError, sizeof(__pyx_k_TypeError), 0, 0, 1, 1},
   {&__pyx_n_s_UNICODE_TYPE, __pyx_k_UNICODE_TYPE, sizeof(__pyx_k_UNICODE_TYPE), 0, 0, 1, 1},
-  {&__pyx_n_s_append, __pyx_k_append, sizeof(__pyx_k_append), 0, 0, 1, 1},
   {&__pyx_kp_s_b, __pyx_k_b, sizeof(__pyx_k_b), 0, 0, 1, 0},
-  {&__pyx_n_s_collections, __pyx_k_collections, sizeof(__pyx_k_collections), 0, 0, 1, 1},
   {&__pyx_n_s_compat, __pyx_k_compat, sizeof(__pyx_k_compat), 0, 0, 1, 1},
   {&__pyx_n_s_container_count, __pyx_k_container_count, sizeof(__pyx_k_container_count), 0, 0, 1, 1},
   {&__pyx_kp_s_d, __pyx_k_d, sizeof(__pyx_k_d), 0, 0, 1, 0},
   {&__pyx_n_s_decimal, __pyx_k_decimal, sizeof(__pyx_k_decimal), 0, 0, 1, 1},
-  {&__pyx_n_s_deque, __pyx_k_deque, sizeof(__pyx_k_deque), 0, 0, 1, 1},
   {&__pyx_n_s_doc, __pyx_k_doc, sizeof(__pyx_k_doc), 0, 0, 1, 1},
   {&__pyx_n_s_encode, __pyx_k_encode, sizeof(__pyx_k_encode), 0, 0, 1, 1},
   {&__pyx_n_s_enter, __pyx_k_enter, sizeof(__pyx_k_enter), 0, 0, 1, 1},
@@ -6462,10 +5518,11 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_module, __pyx_k_module, sizeof(__pyx_k_module), 0, 0, 1, 1},
   {&__pyx_n_s_obj, __pyx_k_obj, sizeof(__pyx_k_obj), 0, 0, 1, 1},
   {&__pyx_n_s_pack, __pyx_k_pack, sizeof(__pyx_k_pack), 0, 0, 1, 1},
-  {&__pyx_n_s_pop, __pyx_k_pop, sizeof(__pyx_k_pop), 0, 0, 1, 1},
   {&__pyx_n_s_prepare, __pyx_k_prepare, sizeof(__pyx_k_prepare), 0, 0, 1, 1},
+  {&__pyx_n_s_pyx_capi, __pyx_k_pyx_capi, sizeof(__pyx_k_pyx_capi), 0, 0, 1, 1},
   {&__pyx_kp_s_q, __pyx_k_q, sizeof(__pyx_k_q), 0, 0, 1, 0},
   {&__pyx_n_s_qualname, __pyx_k_qualname, sizeof(__pyx_k_qualname), 0, 0, 1, 1},
+  {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
   {&__pyx_n_s_sort_keys, __pyx_k_sort_keys, sizeof(__pyx_k_sort_keys), 0, 0, 1, 1},
   {&__pyx_n_s_struct, __pyx_k_struct, sizeof(__pyx_k_struct), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
@@ -6475,11 +5532,10 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 29; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_builtin_StopIteration = __Pyx_GetBuiltinName(__pyx_n_s_StopIteration); if (!__pyx_builtin_StopIteration) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 168; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_builtin_IndexError = __Pyx_GetBuiltinName(__pyx_n_s_IndexError); if (!__pyx_builtin_IndexError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 171; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_builtin_id = __Pyx_GetBuiltinName(__pyx_n_s_id); if (!__pyx_builtin_id) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 206; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 28; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 44; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_builtin_id = __Pyx_GetBuiltinName(__pyx_n_s_id); if (!__pyx_builtin_id) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 162; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -6489,96 +5545,151 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "ubjson/encoder.py":40
+  /* "ubjson/encoder.py":51
  * def __encode_high_prec(fp_write, item):
  *     fp_write(TYPE_HIGH_PREC)
  *     encoded_val = str(Decimal(item)).encode('utf-8')             # <<<<<<<<<<<<<<
  *     __encode_int(fp_write, len(encoded_val))
  *     fp_write(encoded_val)
  */
-  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple_)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple_)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
 
-  /* "ubjson/encoder.py":47
+  /* "ubjson/encoder.py":58
  * def __encode_decimal(fp_write, item):
  *     fp_write(TYPE_HIGH_PREC)
  *     encoded_val = str(item).encode('utf-8')             # <<<<<<<<<<<<<<
  *     __encode_int(fp_write, len(encoded_val))
  *     fp_write(encoded_val)
  */
-  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple__2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 47; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple__2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__2);
   __Pyx_GIVEREF(__pyx_tuple__2);
 
-  /* "ubjson/encoder.py":96
+  /* "ubjson/encoder.py":105
  * 
  * def __encode_string(fp_write, item):
  *     encoded_val = item.encode('utf-8')             # <<<<<<<<<<<<<<
  *     length = len(encoded_val)
  *     if length == 1:
  */
-  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple__3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple__3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 105; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
 
-  /* "ubjson/encoder.py":108
- * # similar to encode_string, except 'S' marker is not added
- * def __encode_object_key(fp_write, key):
- *     encoded_val = key.encode('utf-8') if isinstance(key, UNICODE_TYPE) else key             # <<<<<<<<<<<<<<
- *     __encode_int(fp_write, len(encoded_val))
- *     fp_write(encoded_val)
+  /* "ubjson/encoder.py":164
+ *     container_id = id(item)
+ *     if container_id in seen_containers:
+ *         raise EncoderException('Circular reference detected')             # <<<<<<<<<<<<<<
+ *     seen_containers[container_id] = item
+ * 
  */
-  __pyx_tuple__4 = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple__4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 108; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__4 = PyTuple_Pack(1, __pyx_kp_s_Circular_reference_detected); if (unlikely(!__pyx_tuple__4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 164; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__4);
   __Pyx_GIVEREF(__pyx_tuple__4);
 
-  /* "ubjson/encoder.py":184
- *                 __encode_object_key(fp_write, key)
- *             else:
- *                 raise EncoderException('Mapping keys can only be strings')             # <<<<<<<<<<<<<<
- *         else:
- *             # sequence
+  /* "ubjson/encoder.py":192
+ *     container_id = id(item)
+ *     if container_id in seen_containers:
+ *         raise EncoderException('Circular reference detected')             # <<<<<<<<<<<<<<
+ *     seen_containers[container_id] = item
+ * 
  */
-  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_kp_s_Mapping_keys_can_only_be_strings); if (unlikely(!__pyx_tuple__5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 184; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_kp_s_Circular_reference_detected); if (unlikely(!__pyx_tuple__5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 192; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__5);
   __Pyx_GIVEREF(__pyx_tuple__5);
 
-  /* "ubjson/encoder.py":208
- *                 container_id = id(item)
- *                 if container_id in seen_containers:
- *                     raise EncoderException('Circular reference detected')             # <<<<<<<<<<<<<<
- *                 seen_containers[container_id] = item
- * 
+  /* "ubjson/encoder.py":203
+ *         # allow both str & unicode for Python 2
+ *         if not isinstance(key, TEXT_TYPES):
+ *             raise EncoderException('Mapping keys can only be strings')             # <<<<<<<<<<<<<<
+ *         encoded_val = key.encode('utf-8')
+ *         length = len(encoded_val)
  */
-  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_kp_s_Circular_reference_detected); if (unlikely(!__pyx_tuple__6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 208; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_kp_s_Mapping_keys_can_only_be_strings); if (unlikely(!__pyx_tuple__6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 203; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
-  /* "ubjson/encoder.py":223
- *                 container_id = id(item)
- *                 if container_id in seen_containers:
- *                     raise EncoderException('Circular reference detected')             # <<<<<<<<<<<<<<
- *                 seen_containers[container_id] = item
- * 
+  /* "ubjson/encoder.py":204
+ *         if not isinstance(key, TEXT_TYPES):
+ *             raise EncoderException('Mapping keys can only be strings')
+ *         encoded_val = key.encode('utf-8')             # <<<<<<<<<<<<<<
+ *         length = len(encoded_val)
+ *         if length < 2 ** 8:
  */
-  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_s_Circular_reference_detected); if (unlikely(!__pyx_tuple__7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 223; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple__7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 204; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
 
-  /* "ubjson/encoder.py":328
+  /* "ubjson/encoder.py":299
  *     """Returns the given object as UBJSON in a bytes instance. See dump() for
  *        available arguments."""
  *     with BytesIO() as fp:             # <<<<<<<<<<<<<<
- *         __dump(obj, fp.write, container_count=container_count, sort_keys=sort_keys)
+ *         dump(obj, fp, container_count=container_count, sort_keys=sort_keys)
  *         return fp.getvalue()
  */
-  __pyx_tuple__8 = PyTuple_Pack(3, Py_None, Py_None, Py_None); if (unlikely(!__pyx_tuple__8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__8 = PyTuple_Pack(3, Py_None, Py_None, Py_None); if (unlikely(!__pyx_tuple__8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
-  __pyx_tuple__9 = PyTuple_Pack(3, Py_None, Py_None, Py_None); if (unlikely(!__pyx_tuple__9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 328; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__9 = PyTuple_Pack(3, Py_None, Py_None, Py_None); if (unlikely(!__pyx_tuple__9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 299; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
+
+  /* "ubjson/encoder.py":34
+ * __SMALL_INTS_ENCODED = {i: TYPE_INT8 + pack('>b', i) for i in range(-128, 128)}
+ * __SMALL_UINTS_ENCODED = {i: TYPE_UINT8 + pack('>B', i) for i in range(256)}
+ * __PACK_INT16 = Struct('>h').pack             # <<<<<<<<<<<<<<
+ * __PACK_INT32 = Struct('>i').pack
+ * __PACK_INT64 = Struct('>q').pack
+ */
+  __pyx_tuple__10 = PyTuple_Pack(1, __pyx_kp_s_h); if (unlikely(!__pyx_tuple__10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 34; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_tuple__10);
+  __Pyx_GIVEREF(__pyx_tuple__10);
+
+  /* "ubjson/encoder.py":35
+ * __SMALL_UINTS_ENCODED = {i: TYPE_UINT8 + pack('>B', i) for i in range(256)}
+ * __PACK_INT16 = Struct('>h').pack
+ * __PACK_INT32 = Struct('>i').pack             # <<<<<<<<<<<<<<
+ * __PACK_INT64 = Struct('>q').pack
+ * __PACK_FLOAT32 = Struct('>f').pack
+ */
+  __pyx_tuple__11 = PyTuple_Pack(1, __pyx_kp_s_i); if (unlikely(!__pyx_tuple__11)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 35; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_tuple__11);
+  __Pyx_GIVEREF(__pyx_tuple__11);
+
+  /* "ubjson/encoder.py":36
+ * __PACK_INT16 = Struct('>h').pack
+ * __PACK_INT32 = Struct('>i').pack
+ * __PACK_INT64 = Struct('>q').pack             # <<<<<<<<<<<<<<
+ * __PACK_FLOAT32 = Struct('>f').pack
+ * __PACK_FLOAT64 = Struct('>d').pack
+ */
+  __pyx_tuple__12 = PyTuple_Pack(1, __pyx_kp_s_q); if (unlikely(!__pyx_tuple__12)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 36; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_tuple__12);
+  __Pyx_GIVEREF(__pyx_tuple__12);
+
+  /* "ubjson/encoder.py":37
+ * __PACK_INT32 = Struct('>i').pack
+ * __PACK_INT64 = Struct('>q').pack
+ * __PACK_FLOAT32 = Struct('>f').pack             # <<<<<<<<<<<<<<
+ * __PACK_FLOAT64 = Struct('>d').pack
+ * 
+ */
+  __pyx_tuple__13 = PyTuple_Pack(1, __pyx_kp_s_f); if (unlikely(!__pyx_tuple__13)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 37; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_tuple__13);
+  __Pyx_GIVEREF(__pyx_tuple__13);
+
+  /* "ubjson/encoder.py":38
+ * __PACK_INT64 = Struct('>q').pack
+ * __PACK_FLOAT32 = Struct('>f').pack
+ * __PACK_FLOAT64 = Struct('>d').pack             # <<<<<<<<<<<<<<
+ * 
+ * # Prefix applicable to specialised byte array container
+ */
+  __pyx_tuple__14 = PyTuple_Pack(1, __pyx_kp_s_d); if (unlikely(!__pyx_tuple__14)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 38; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_tuple__14);
+  __Pyx_GIVEREF(__pyx_tuple__14);
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -6587,17 +5698,16 @@ static int __Pyx_InitCachedConstants(void) {
 }
 
 static int __Pyx_InitGlobals(void) {
-  __pyx_umethod_PyList_Type_pop.type = (PyObject*)&PyList_Type;
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;};
   __pyx_float_3_4e38 = PyFloat_FromDouble(3.4e38); if (unlikely(!__pyx_float_3_4e38)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_float_1_8e308 = PyFloat_FromDouble(Py_HUGE_VAL); if (unlikely(!__pyx_float_1_8e308)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_float_1_18eneg_38 = PyFloat_FromDouble(1.18e-38); if (unlikely(!__pyx_float_1_18eneg_38)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_float_2_23eneg_308 = PyFloat_FromDouble(2.23e-308); if (unlikely(!__pyx_float_2_23eneg_308)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_int_255 = PyInt_FromLong(255); if (unlikely(!__pyx_int_255)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_int_32767 = PyInt_FromLong(32767L); if (unlikely(!__pyx_int_32767)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_int_2147483647 = PyInt_FromLong(2147483647L); if (unlikely(!__pyx_int_2147483647)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_int_9223372036854775807 = PyInt_FromString((char *)"9223372036854775807", 0, 0); if (unlikely(!__pyx_int_9223372036854775807)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_int_256 = PyInt_FromLong(256); if (unlikely(!__pyx_int_256)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_int_32768 = PyInt_FromLong(32768L); if (unlikely(!__pyx_int_32768)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_int_2147483648 = PyInt_FromString((char *)"2147483648", 0, 0); if (unlikely(!__pyx_int_2147483648)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_int_9223372036854775808 = PyInt_FromString((char *)"9223372036854775808", 0, 0); if (unlikely(!__pyx_int_9223372036854775808)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_int_neg_128 = PyInt_FromLong(-128); if (unlikely(!__pyx_int_neg_128)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_int_neg_32768 = PyInt_FromLong(-32768L); if (unlikely(!__pyx_int_neg_32768)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_int_neg_2147483648 = PyInt_FromLong(-2147483648L); if (unlikely(!__pyx_int_neg_2147483648)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -6641,8 +5751,13 @@ PyMODINIT_FUNC PyInit_encoder(void)
   PyObject *__pyx_t_24 = NULL;
   PyObject *__pyx_t_25 = NULL;
   int __pyx_t_26;
-  PyObject *__pyx_t_27 = NULL;
+  long __pyx_t_27;
   PyObject *__pyx_t_28 = NULL;
+  PyObject *__pyx_t_29 = NULL;
+  PyObject *__pyx_t_30 = NULL;
+  PyObject *__pyx_t_31 = NULL;
+  Py_ssize_t __pyx_t_32;
+  PyObject *__pyx_t_33 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -6684,7 +5799,7 @@ PyMODINIT_FUNC PyInit_encoder(void)
   #endif
   /*--- Module creation code ---*/
   #if PY_MAJOR_VERSION < 3
-  __pyx_m = Py_InitModule4("encoder", __pyx_methods, __pyx_k_Non_resursive_UBJSON_encoder, 0, PYTHON_API_VERSION); Py_XINCREF(__pyx_m);
+  __pyx_m = Py_InitModule4("encoder", __pyx_methods, __pyx_k_UBJSON_draft_v12_encoder, 0, PYTHON_API_VERSION); Py_XINCREF(__pyx_m);
   #else
   __pyx_m = PyModule_Create(&__pyx_moduledef);
   #endif
@@ -6717,19 +5832,24 @@ PyMODINIT_FUNC PyInit_encoder(void)
   /*--- Constants init code ---*/
   if (__Pyx_InitCachedConstants() < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   /*--- Global init code ---*/
+  __pyx_v_6ubjson_7encoder___SMALL_INTS_ENCODED = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  __pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  __pyx_v_6ubjson_7encoder___BYTES_ARRAY_PREFIX = ((PyObject*)Py_None); Py_INCREF(Py_None);
   /*--- Variable export code ---*/
+  if (__Pyx_ExportVoidPtr(__pyx_n_s_SMALL_INTS_ENCODED, (void *)&__pyx_v_6ubjson_7encoder___SMALL_INTS_ENCODED, "PyObject *") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_ExportVoidPtr(__pyx_n_s_SMALL_UINTS_ENCODED, (void *)&__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED, "PyObject *") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_ExportVoidPtr(__pyx_n_s_BYTES_ARRAY_PREFIX, (void *)&__pyx_v_6ubjson_7encoder___BYTES_ARRAY_PREFIX, "PyObject *") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   /*--- Function export code ---*/
   if (__Pyx_ExportFunction("__encode_high_prec", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_high_prec, "void (PyObject *, PyObject *)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__Pyx_ExportFunction("__encode_decimal", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_decimal, "void (PyObject *, PyObject *)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__Pyx_ExportFunction("__encode_int", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_int, "void (PyObject *, PyObject *)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__Pyx_ExportFunction("__encode_float", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_float, "void (PyObject *, PyObject *)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__Pyx_ExportFunction("__encode_string", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_string, "void (PyObject *, PyObject *)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (__Pyx_ExportFunction("__encode_object_key", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_object_key, "void (PyObject *, PyObject *)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__Pyx_ExportFunction("__encode_bytes", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_bytes, "void (PyObject *, PyObject *)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__Pyx_ExportFunction("__encode_value", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_value, "int (PyObject *, PyObject *)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (__Pyx_ExportFunction("__encode_container", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_container, "int (PyObject *, PyObject *, int, PyObject *, int, int)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (__Pyx_ExportFunction("__dump", (void (*)(void))__pyx_f_6ubjson_7encoder___dump, "int (PyObject *, PyObject *, int, int)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (__Pyx_ExportFunction("dump", (void (*)(void))__pyx_f_6ubjson_7encoder_dump, "int (PyObject *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_6ubjson_7encoder_dump *__pyx_optional_args)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_ExportFunction("__encode_array", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_array, "void (PyObject *, PyObject *, PyObject *, int, int)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_ExportFunction("__encode_object", (void (*)(void))__pyx_f_6ubjson_7encoder___encode_object, "void (PyObject *, PyObject *, PyObject *, int, int)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_ExportFunction("dump", (void (*)(void))__pyx_f_6ubjson_7encoder_dump, "void (PyObject *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_6ubjson_7encoder_dump *__pyx_optional_args)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__Pyx_ExportFunction("dumpb", (void (*)(void))__pyx_f_6ubjson_7encoder_dumpb, "PyObject *(PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_6ubjson_7encoder_dumpb *__pyx_optional_args)") < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   /*--- Type init code ---*/
   /*--- Type import code ---*/
@@ -6763,146 +5883,132 @@ PyMODINIT_FUNC PyInit_encoder(void)
   #endif
 
   /* "ubjson/encoder.py":18
- * """Non-resursive UBJSON encoder"""
+ * """UBJSON draft v12 encoder"""
  * 
- * from collections import deque             # <<<<<<<<<<<<<<
- * from struct import pack
+ * from struct import pack, Struct             # <<<<<<<<<<<<<<
  * from decimal import Decimal
+ * from io import BytesIO
  */
-  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyList_New(2); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_INCREF(__pyx_n_s_deque);
-  __Pyx_GIVEREF(__pyx_n_s_deque);
-  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_deque);
-  __pyx_t_3 = __Pyx_Import(__pyx_n_s_collections, __pyx_t_2, -1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_INCREF(__pyx_n_s_pack);
+  __Pyx_GIVEREF(__pyx_n_s_pack);
+  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_pack);
+  __Pyx_INCREF(__pyx_n_s_Struct);
+  __Pyx_GIVEREF(__pyx_n_s_Struct);
+  PyList_SET_ITEM(__pyx_t_2, 1, __pyx_n_s_Struct);
+  __pyx_t_3 = __Pyx_Import(__pyx_n_s_struct, __pyx_t_2, -1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_deque); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_pack); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_deque, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pack, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_Struct); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Struct, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "ubjson/encoder.py":19
  * 
- * from collections import deque
- * from struct import pack             # <<<<<<<<<<<<<<
- * from decimal import Decimal
- * from io import BytesIO
- */
-  __pyx_t_3 = PyList_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 19; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_INCREF(__pyx_n_s_pack);
-  __Pyx_GIVEREF(__pyx_n_s_pack);
-  PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_pack);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_struct, __pyx_t_3, -1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 19; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_pack); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 19; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pack, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 19; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "ubjson/encoder.py":20
- * from collections import deque
- * from struct import pack
+ * from struct import pack, Struct
  * from decimal import Decimal             # <<<<<<<<<<<<<<
  * from io import BytesIO
  * 
  */
-  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 20; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyList_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 19; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_INCREF(__pyx_n_s_Decimal);
   __Pyx_GIVEREF(__pyx_n_s_Decimal);
-  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_Decimal);
-  __pyx_t_3 = __Pyx_Import(__pyx_n_s_decimal, __pyx_t_2, -1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 20; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_Decimal); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 20; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_Decimal);
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_decimal, __pyx_t_3, -1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 19; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Decimal, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 20; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_Decimal); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 19; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Decimal, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 19; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "ubjson/encoder.py":21
- * from struct import pack
+  /* "ubjson/encoder.py":20
+ * from struct import pack, Struct
  * from decimal import Decimal
  * from io import BytesIO             # <<<<<<<<<<<<<<
  * 
  * from .compat import Mapping, Sequence, INTEGER_TYPES, UNICODE_TYPE, TEXT_TYPES, BYTES_TYPES
  */
-  __pyx_t_3 = PyList_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 21; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 20; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_n_s_BytesIO);
   __Pyx_GIVEREF(__pyx_n_s_BytesIO);
-  PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_BytesIO);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_io, __pyx_t_3, -1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 21; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_BytesIO); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 21; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_BytesIO);
+  __pyx_t_3 = __Pyx_Import(__pyx_n_s_io, __pyx_t_2, -1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 20; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_BytesIO, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 21; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_BytesIO); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 20; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_BytesIO, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 20; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "ubjson/encoder.py":23
+  /* "ubjson/encoder.py":22
  * from io import BytesIO
  * 
  * from .compat import Mapping, Sequence, INTEGER_TYPES, UNICODE_TYPE, TEXT_TYPES, BYTES_TYPES             # <<<<<<<<<<<<<<
  * try:
  *     from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
  */
-  __pyx_t_2 = PyList_New(6); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyList_New(6); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_INCREF(__pyx_n_s_Mapping);
   __Pyx_GIVEREF(__pyx_n_s_Mapping);
-  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_Mapping);
+  PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_Mapping);
   __Pyx_INCREF(__pyx_n_s_Sequence);
   __Pyx_GIVEREF(__pyx_n_s_Sequence);
-  PyList_SET_ITEM(__pyx_t_2, 1, __pyx_n_s_Sequence);
+  PyList_SET_ITEM(__pyx_t_3, 1, __pyx_n_s_Sequence);
   __Pyx_INCREF(__pyx_n_s_INTEGER_TYPES);
   __Pyx_GIVEREF(__pyx_n_s_INTEGER_TYPES);
-  PyList_SET_ITEM(__pyx_t_2, 2, __pyx_n_s_INTEGER_TYPES);
+  PyList_SET_ITEM(__pyx_t_3, 2, __pyx_n_s_INTEGER_TYPES);
   __Pyx_INCREF(__pyx_n_s_UNICODE_TYPE);
   __Pyx_GIVEREF(__pyx_n_s_UNICODE_TYPE);
-  PyList_SET_ITEM(__pyx_t_2, 3, __pyx_n_s_UNICODE_TYPE);
+  PyList_SET_ITEM(__pyx_t_3, 3, __pyx_n_s_UNICODE_TYPE);
   __Pyx_INCREF(__pyx_n_s_TEXT_TYPES);
   __Pyx_GIVEREF(__pyx_n_s_TEXT_TYPES);
-  PyList_SET_ITEM(__pyx_t_2, 4, __pyx_n_s_TEXT_TYPES);
+  PyList_SET_ITEM(__pyx_t_3, 4, __pyx_n_s_TEXT_TYPES);
   __Pyx_INCREF(__pyx_n_s_BYTES_TYPES);
   __Pyx_GIVEREF(__pyx_n_s_BYTES_TYPES);
-  PyList_SET_ITEM(__pyx_t_2, 5, __pyx_n_s_BYTES_TYPES);
-  __pyx_t_3 = __Pyx_Import(__pyx_n_s_compat, __pyx_t_2, 1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_Mapping); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  PyList_SET_ITEM(__pyx_t_3, 5, __pyx_n_s_BYTES_TYPES);
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_compat, __pyx_t_3, 1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Mapping, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_Sequence); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Sequence, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_INTEGER_TYPES); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_INTEGER_TYPES, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_UNICODE_TYPE); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_UNICODE_TYPE, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TEXT_TYPES); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_TEXT_TYPES, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_BYTES_TYPES); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_BYTES_TYPES, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 23; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_Mapping); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Mapping, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_Sequence); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Sequence, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_INTEGER_TYPES); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_INTEGER_TYPES, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_UNICODE_TYPE); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_UNICODE_TYPE, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TEXT_TYPES); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_TEXT_TYPES, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_BYTES_TYPES); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_BYTES_TYPES, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 22; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "ubjson/encoder.py":24
+  /* "ubjson/encoder.py":23
  * 
  * from .compat import Mapping, Sequence, INTEGER_TYPES, UNICODE_TYPE, TEXT_TYPES, BYTES_TYPES
  * try:             # <<<<<<<<<<<<<<
@@ -6916,230 +6022,230 @@ PyMODINIT_FUNC PyInit_encoder(void)
     __Pyx_XGOTREF(__pyx_t_6);
     /*try:*/ {
 
-      /* "ubjson/encoder.py":25
+      /* "ubjson/encoder.py":24
  * from .compat import Mapping, Sequence, INTEGER_TYPES, UNICODE_TYPE, TEXT_TYPES, BYTES_TYPES
  * try:
  *     from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,             # <<<<<<<<<<<<<<
  *                           TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
  *                           OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
  */
-      __pyx_t_3 = PyList_New(19); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_2 = PyList_New(19); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
       __Pyx_INCREF(__pyx_n_s_TYPE_NULL);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_NULL);
-      PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_TYPE_NULL);
+      PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_TYPE_NULL);
       __Pyx_INCREF(__pyx_n_s_TYPE_BOOL_TRUE);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_BOOL_TRUE);
-      PyList_SET_ITEM(__pyx_t_3, 1, __pyx_n_s_TYPE_BOOL_TRUE);
+      PyList_SET_ITEM(__pyx_t_2, 1, __pyx_n_s_TYPE_BOOL_TRUE);
       __Pyx_INCREF(__pyx_n_s_TYPE_BOOL_FALSE);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_BOOL_FALSE);
-      PyList_SET_ITEM(__pyx_t_3, 2, __pyx_n_s_TYPE_BOOL_FALSE);
+      PyList_SET_ITEM(__pyx_t_2, 2, __pyx_n_s_TYPE_BOOL_FALSE);
       __Pyx_INCREF(__pyx_n_s_TYPE_INT8);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_INT8);
-      PyList_SET_ITEM(__pyx_t_3, 3, __pyx_n_s_TYPE_INT8);
+      PyList_SET_ITEM(__pyx_t_2, 3, __pyx_n_s_TYPE_INT8);
       __Pyx_INCREF(__pyx_n_s_TYPE_UINT8);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_UINT8);
-      PyList_SET_ITEM(__pyx_t_3, 4, __pyx_n_s_TYPE_UINT8);
+      PyList_SET_ITEM(__pyx_t_2, 4, __pyx_n_s_TYPE_UINT8);
       __Pyx_INCREF(__pyx_n_s_TYPE_INT16);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_INT16);
-      PyList_SET_ITEM(__pyx_t_3, 5, __pyx_n_s_TYPE_INT16);
+      PyList_SET_ITEM(__pyx_t_2, 5, __pyx_n_s_TYPE_INT16);
       __Pyx_INCREF(__pyx_n_s_TYPE_INT32);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_INT32);
-      PyList_SET_ITEM(__pyx_t_3, 6, __pyx_n_s_TYPE_INT32);
+      PyList_SET_ITEM(__pyx_t_2, 6, __pyx_n_s_TYPE_INT32);
       __Pyx_INCREF(__pyx_n_s_TYPE_INT64);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_INT64);
-      PyList_SET_ITEM(__pyx_t_3, 7, __pyx_n_s_TYPE_INT64);
+      PyList_SET_ITEM(__pyx_t_2, 7, __pyx_n_s_TYPE_INT64);
       __Pyx_INCREF(__pyx_n_s_TYPE_FLOAT32);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_FLOAT32);
-      PyList_SET_ITEM(__pyx_t_3, 8, __pyx_n_s_TYPE_FLOAT32);
+      PyList_SET_ITEM(__pyx_t_2, 8, __pyx_n_s_TYPE_FLOAT32);
       __Pyx_INCREF(__pyx_n_s_TYPE_FLOAT64);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_FLOAT64);
-      PyList_SET_ITEM(__pyx_t_3, 9, __pyx_n_s_TYPE_FLOAT64);
+      PyList_SET_ITEM(__pyx_t_2, 9, __pyx_n_s_TYPE_FLOAT64);
       __Pyx_INCREF(__pyx_n_s_TYPE_HIGH_PREC);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_HIGH_PREC);
-      PyList_SET_ITEM(__pyx_t_3, 10, __pyx_n_s_TYPE_HIGH_PREC);
+      PyList_SET_ITEM(__pyx_t_2, 10, __pyx_n_s_TYPE_HIGH_PREC);
       __Pyx_INCREF(__pyx_n_s_TYPE_CHAR);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_CHAR);
-      PyList_SET_ITEM(__pyx_t_3, 11, __pyx_n_s_TYPE_CHAR);
+      PyList_SET_ITEM(__pyx_t_2, 11, __pyx_n_s_TYPE_CHAR);
       __Pyx_INCREF(__pyx_n_s_TYPE_STRING);
       __Pyx_GIVEREF(__pyx_n_s_TYPE_STRING);
-      PyList_SET_ITEM(__pyx_t_3, 12, __pyx_n_s_TYPE_STRING);
+      PyList_SET_ITEM(__pyx_t_2, 12, __pyx_n_s_TYPE_STRING);
       __Pyx_INCREF(__pyx_n_s_OBJECT_START);
       __Pyx_GIVEREF(__pyx_n_s_OBJECT_START);
-      PyList_SET_ITEM(__pyx_t_3, 13, __pyx_n_s_OBJECT_START);
+      PyList_SET_ITEM(__pyx_t_2, 13, __pyx_n_s_OBJECT_START);
       __Pyx_INCREF(__pyx_n_s_OBJECT_END);
       __Pyx_GIVEREF(__pyx_n_s_OBJECT_END);
-      PyList_SET_ITEM(__pyx_t_3, 14, __pyx_n_s_OBJECT_END);
+      PyList_SET_ITEM(__pyx_t_2, 14, __pyx_n_s_OBJECT_END);
       __Pyx_INCREF(__pyx_n_s_ARRAY_START);
       __Pyx_GIVEREF(__pyx_n_s_ARRAY_START);
-      PyList_SET_ITEM(__pyx_t_3, 15, __pyx_n_s_ARRAY_START);
+      PyList_SET_ITEM(__pyx_t_2, 15, __pyx_n_s_ARRAY_START);
       __Pyx_INCREF(__pyx_n_s_ARRAY_END);
       __Pyx_GIVEREF(__pyx_n_s_ARRAY_END);
-      PyList_SET_ITEM(__pyx_t_3, 16, __pyx_n_s_ARRAY_END);
+      PyList_SET_ITEM(__pyx_t_2, 16, __pyx_n_s_ARRAY_END);
       __Pyx_INCREF(__pyx_n_s_CONTAINER_TYPE);
       __Pyx_GIVEREF(__pyx_n_s_CONTAINER_TYPE);
-      PyList_SET_ITEM(__pyx_t_3, 17, __pyx_n_s_CONTAINER_TYPE);
+      PyList_SET_ITEM(__pyx_t_2, 17, __pyx_n_s_CONTAINER_TYPE);
       __Pyx_INCREF(__pyx_n_s_CONTAINER_COUNT);
       __Pyx_GIVEREF(__pyx_n_s_CONTAINER_COUNT);
-      PyList_SET_ITEM(__pyx_t_3, 18, __pyx_n_s_CONTAINER_COUNT);
-      __pyx_t_2 = __Pyx_Import(__pyx_n_s_markers, __pyx_t_3, 1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      PyList_SET_ITEM(__pyx_t_2, 18, __pyx_n_s_CONTAINER_COUNT);
+      __pyx_t_3 = __Pyx_Import(__pyx_n_s_markers, __pyx_t_2, 1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
       __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_NULL);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_NULL, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_BOOL_TRUE); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_BOOL_TRUE);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_BOOL_TRUE, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_BOOL_FALSE); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_BOOL_FALSE);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_BOOL_FALSE, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_INT8); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_INT8);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT8, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_UINT8); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_UINT8);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_UINT8, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_INT16); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_INT16);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT16, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_INT32); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_INT32);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT32, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_INT64); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_INT64);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT64, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_FLOAT32); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_FLOAT32);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_FLOAT32, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_FLOAT64); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_FLOAT64);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_FLOAT64, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_HIGH_PREC); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_HIGH_PREC);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_HIGH_PREC, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_CHAR); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_CHAR);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_CHAR, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TYPE_STRING); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_STRING);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_STRING, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_OBJECT_START); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_OBJECT_START);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_OBJECT_START, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_OBJECT_END); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_OBJECT_END);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_OBJECT_END, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_ARRAY_START); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_ARRAY_START);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_ARRAY_START, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_ARRAY_END); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_ARRAY_END);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_ARRAY_END, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_CONTAINER_TYPE); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_CONTAINER_TYPE);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_CONTAINER_TYPE, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_CONTAINER_COUNT); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_GOTREF(__pyx_t_3);
-      if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
-      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_CONTAINER_COUNT, ((PyObject*)__pyx_t_3));
-      __Pyx_GIVEREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_NULL);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_NULL, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_BOOL_TRUE); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_BOOL_TRUE);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_BOOL_TRUE, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_BOOL_FALSE); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_BOOL_FALSE);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_BOOL_FALSE, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_INT8); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_INT8);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT8, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_UINT8); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_UINT8);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_UINT8, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_INT16); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_INT16);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT16, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_INT32); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_INT32);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT32, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_INT64); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_INT64);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_INT64, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_FLOAT32); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_FLOAT32);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_FLOAT32, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_FLOAT64); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_FLOAT64);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_FLOAT64, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_HIGH_PREC); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_HIGH_PREC);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_HIGH_PREC, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_CHAR); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_CHAR);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_CHAR, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_TYPE_STRING); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_TYPE_STRING);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_TYPE_STRING, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_OBJECT_START); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_OBJECT_START);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_OBJECT_START, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_OBJECT_END); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_OBJECT_END);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_OBJECT_END, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_ARRAY_START); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_ARRAY_START);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_ARRAY_START, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_ARRAY_END); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_ARRAY_END);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_ARRAY_END, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_CONTAINER_TYPE); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_CONTAINER_TYPE);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_CONTAINER_TYPE, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_CONTAINER_COUNT); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 24; __pyx_clineno = __LINE__; goto __pyx_L2_error;}
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_XGOTREF(__pyx_v_6ubjson_7markers_CONTAINER_COUNT);
+      __Pyx_DECREF_SET(__pyx_v_6ubjson_7markers_CONTAINER_COUNT, ((PyObject*)__pyx_t_2));
+      __Pyx_GIVEREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-      /* "ubjson/encoder.py":24
+      /* "ubjson/encoder.py":23
  * 
  * from .compat import Mapping, Sequence, INTEGER_TYPES, UNICODE_TYPE, TEXT_TYPES, BYTES_TYPES
  * try:             # <<<<<<<<<<<<<<
@@ -7152,10 +6258,10 @@ PyMODINIT_FUNC PyInit_encoder(void)
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     goto __pyx_L9_try_end;
     __pyx_L2_error:;
-    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "ubjson/encoder.py":29
+    /* "ubjson/encoder.py":28
  *                           OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
  *     # encoder.pxd defines these when C extension is enabled
  * except ImportError:  # pragma: no cover             # <<<<<<<<<<<<<<
@@ -7170,7 +6276,7 @@ PyMODINIT_FUNC PyInit_encoder(void)
     goto __pyx_L4_except_error;
     __pyx_L4_except_error:;
 
-    /* "ubjson/encoder.py":24
+    /* "ubjson/encoder.py":23
  * 
  * from .compat import Mapping, Sequence, INTEGER_TYPES, UNICODE_TYPE, TEXT_TYPES, BYTES_TYPES
  * try:             # <<<<<<<<<<<<<<
@@ -7190,39 +6296,267 @@ PyMODINIT_FUNC PyInit_encoder(void)
     __pyx_L9_try_end:;
   }
 
+  /* "ubjson/encoder.py":32
+ * 
+ * # Lookup tables for encoding small intergers, pre-initialised larger integer & float packers
+ * __SMALL_INTS_ENCODED = {i: TYPE_INT8 + pack('>b', i) for i in range(-128, 128)}             # <<<<<<<<<<<<<<
+ * __SMALL_UINTS_ENCODED = {i: TYPE_UINT8 + pack('>B', i) for i in range(256)}
+ * __PACK_INT16 = Struct('>h').pack
+ */
+  { /* enter inner scope */
+    long __pyx_7genexpr__pyx_v_6ubjson_7encoder_i;
+    __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_3);
+    for (__pyx_t_27 = -128L; __pyx_t_27 < 0x80; __pyx_t_27+=1) {
+      __pyx_7genexpr__pyx_v_6ubjson_7encoder_i = __pyx_t_27;
+      __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_7genexpr__pyx_v_6ubjson_7encoder_i); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      __pyx_t_29 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_29)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_29);
+      __pyx_t_30 = __Pyx_PyInt_From_long(__pyx_7genexpr__pyx_v_6ubjson_7encoder_i); if (unlikely(!__pyx_t_30)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_30);
+      __pyx_t_31 = NULL;
+      __pyx_t_32 = 0;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_29))) {
+        __pyx_t_31 = PyMethod_GET_SELF(__pyx_t_29);
+        if (likely(__pyx_t_31)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_29);
+          __Pyx_INCREF(__pyx_t_31);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_29, function);
+          __pyx_t_32 = 1;
+        }
+      }
+      __pyx_t_33 = PyTuple_New(2+__pyx_t_32); if (unlikely(!__pyx_t_33)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_33);
+      if (__pyx_t_31) {
+        __Pyx_GIVEREF(__pyx_t_31); PyTuple_SET_ITEM(__pyx_t_33, 0, __pyx_t_31); __pyx_t_31 = NULL;
+      }
+      __Pyx_INCREF(__pyx_kp_s_b);
+      __Pyx_GIVEREF(__pyx_kp_s_b);
+      PyTuple_SET_ITEM(__pyx_t_33, 0+__pyx_t_32, __pyx_kp_s_b);
+      __Pyx_GIVEREF(__pyx_t_30);
+      PyTuple_SET_ITEM(__pyx_t_33, 1+__pyx_t_32, __pyx_t_30);
+      __pyx_t_30 = 0;
+      __pyx_t_28 = __Pyx_PyObject_Call(__pyx_t_29, __pyx_t_33, NULL); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_28);
+      __Pyx_DECREF(__pyx_t_33); __pyx_t_33 = 0;
+      __Pyx_DECREF(__pyx_t_29); __pyx_t_29 = 0;
+      __pyx_t_29 = PyNumber_Add(__pyx_v_6ubjson_7markers_TYPE_INT8, __pyx_t_28); if (unlikely(!__pyx_t_29)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_29);
+      __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
+      if (unlikely(PyDict_SetItem(__pyx_t_3, (PyObject*)__pyx_t_2, (PyObject*)__pyx_t_29))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_DECREF(__pyx_t_29); __pyx_t_29 = 0;
+    }
+  } /* exit inner scope */
+  __Pyx_XGOTREF(__pyx_v_6ubjson_7encoder___SMALL_INTS_ENCODED);
+  __Pyx_DECREF_SET(__pyx_v_6ubjson_7encoder___SMALL_INTS_ENCODED, ((PyObject*)__pyx_t_3));
+  __Pyx_GIVEREF(__pyx_t_3);
+  __pyx_t_3 = 0;
+
   /* "ubjson/encoder.py":33
+ * # Lookup tables for encoding small intergers, pre-initialised larger integer & float packers
+ * __SMALL_INTS_ENCODED = {i: TYPE_INT8 + pack('>b', i) for i in range(-128, 128)}
+ * __SMALL_UINTS_ENCODED = {i: TYPE_UINT8 + pack('>B', i) for i in range(256)}             # <<<<<<<<<<<<<<
+ * __PACK_INT16 = Struct('>h').pack
+ * __PACK_INT32 = Struct('>i').pack
+ */
+  { /* enter inner scope */
+    long __pyx_8genexpr1__pyx_v_6ubjson_7encoder_i;
+    __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_3);
+    for (__pyx_t_27 = 0; __pyx_t_27 < 0x100; __pyx_t_27+=1) {
+      __pyx_8genexpr1__pyx_v_6ubjson_7encoder_i = __pyx_t_27;
+      __pyx_t_29 = __Pyx_PyInt_From_long(__pyx_8genexpr1__pyx_v_6ubjson_7encoder_i); if (unlikely(!__pyx_t_29)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_29);
+      __pyx_t_28 = __Pyx_GetModuleGlobalName(__pyx_n_s_pack); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_28);
+      __pyx_t_33 = __Pyx_PyInt_From_long(__pyx_8genexpr1__pyx_v_6ubjson_7encoder_i); if (unlikely(!__pyx_t_33)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_33);
+      __pyx_t_30 = NULL;
+      __pyx_t_32 = 0;
+      if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_28))) {
+        __pyx_t_30 = PyMethod_GET_SELF(__pyx_t_28);
+        if (likely(__pyx_t_30)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_28);
+          __Pyx_INCREF(__pyx_t_30);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_28, function);
+          __pyx_t_32 = 1;
+        }
+      }
+      __pyx_t_31 = PyTuple_New(2+__pyx_t_32); if (unlikely(!__pyx_t_31)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_31);
+      if (__pyx_t_30) {
+        __Pyx_GIVEREF(__pyx_t_30); PyTuple_SET_ITEM(__pyx_t_31, 0, __pyx_t_30); __pyx_t_30 = NULL;
+      }
+      __Pyx_INCREF(__pyx_kp_s_B);
+      __Pyx_GIVEREF(__pyx_kp_s_B);
+      PyTuple_SET_ITEM(__pyx_t_31, 0+__pyx_t_32, __pyx_kp_s_B);
+      __Pyx_GIVEREF(__pyx_t_33);
+      PyTuple_SET_ITEM(__pyx_t_31, 1+__pyx_t_32, __pyx_t_33);
+      __pyx_t_33 = 0;
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_28, __pyx_t_31, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_31); __pyx_t_31 = 0;
+      __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
+      __pyx_t_28 = PyNumber_Add(__pyx_v_6ubjson_7markers_TYPE_UINT8, __pyx_t_2); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_GOTREF(__pyx_t_28);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      if (unlikely(PyDict_SetItem(__pyx_t_3, (PyObject*)__pyx_t_29, (PyObject*)__pyx_t_28))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __Pyx_DECREF(__pyx_t_29); __pyx_t_29 = 0;
+      __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
+    }
+  } /* exit inner scope */
+  __Pyx_XGOTREF(__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED);
+  __Pyx_DECREF_SET(__pyx_v_6ubjson_7encoder___SMALL_UINTS_ENCODED, ((PyObject*)__pyx_t_3));
+  __Pyx_GIVEREF(__pyx_t_3);
+  __pyx_t_3 = 0;
+
+  /* "ubjson/encoder.py":34
+ * __SMALL_INTS_ENCODED = {i: TYPE_INT8 + pack('>b', i) for i in range(-128, 128)}
+ * __SMALL_UINTS_ENCODED = {i: TYPE_UINT8 + pack('>B', i) for i in range(256)}
+ * __PACK_INT16 = Struct('>h').pack             # <<<<<<<<<<<<<<
+ * __PACK_INT32 = Struct('>i').pack
+ * __PACK_INT64 = Struct('>q').pack
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_Struct); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 34; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_28 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__10, NULL); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 34; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_28);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_28, __pyx_n_s_pack); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 34; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_PACK_INT16, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 34; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "ubjson/encoder.py":35
+ * __SMALL_UINTS_ENCODED = {i: TYPE_UINT8 + pack('>B', i) for i in range(256)}
+ * __PACK_INT16 = Struct('>h').pack
+ * __PACK_INT32 = Struct('>i').pack             # <<<<<<<<<<<<<<
+ * __PACK_INT64 = Struct('>q').pack
+ * __PACK_FLOAT32 = Struct('>f').pack
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_Struct); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 35; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_28 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__11, NULL); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 35; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_28);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_28, __pyx_n_s_pack); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 35; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_PACK_INT32, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 35; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "ubjson/encoder.py":36
+ * __PACK_INT16 = Struct('>h').pack
+ * __PACK_INT32 = Struct('>i').pack
+ * __PACK_INT64 = Struct('>q').pack             # <<<<<<<<<<<<<<
+ * __PACK_FLOAT32 = Struct('>f').pack
+ * __PACK_FLOAT64 = Struct('>d').pack
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_Struct); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 36; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_28 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__12, NULL); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 36; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_28);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_28, __pyx_n_s_pack); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 36; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_PACK_INT64, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 36; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "ubjson/encoder.py":37
+ * __PACK_INT32 = Struct('>i').pack
+ * __PACK_INT64 = Struct('>q').pack
+ * __PACK_FLOAT32 = Struct('>f').pack             # <<<<<<<<<<<<<<
+ * __PACK_FLOAT64 = Struct('>d').pack
+ * 
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_Struct); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 37; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_28 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__13, NULL); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 37; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_28);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_28, __pyx_n_s_pack); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 37; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_PACK_FLOAT32, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 37; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "ubjson/encoder.py":38
+ * __PACK_INT64 = Struct('>q').pack
+ * __PACK_FLOAT32 = Struct('>f').pack
+ * __PACK_FLOAT64 = Struct('>d').pack             # <<<<<<<<<<<<<<
+ * 
+ * # Prefix applicable to specialised byte array container
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_Struct); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 38; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_28 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__14, NULL); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 38; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_28);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_28, __pyx_n_s_pack); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 38; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_PACK_FLOAT64, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 38; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "ubjson/encoder.py":41
+ * 
+ * # Prefix applicable to specialised byte array container
+ * __BYTES_ARRAY_PREFIX = ARRAY_START + CONTAINER_TYPE + TYPE_UINT8 + CONTAINER_COUNT             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_t_3 = PyNumber_Add(__pyx_v_6ubjson_7markers_ARRAY_START, __pyx_v_6ubjson_7markers_CONTAINER_TYPE); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 41; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_28 = PyNumber_Add(__pyx_t_3, __pyx_v_6ubjson_7markers_TYPE_UINT8); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 41; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_28);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = PyNumber_Add(__pyx_t_28, __pyx_v_6ubjson_7markers_CONTAINER_COUNT); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 41; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
+  __Pyx_XGOTREF(__pyx_v_6ubjson_7encoder___BYTES_ARRAY_PREFIX);
+  __Pyx_DECREF_SET(__pyx_v_6ubjson_7encoder___BYTES_ARRAY_PREFIX, ((PyObject*)__pyx_t_3));
+  __Pyx_GIVEREF(__pyx_t_3);
+  __pyx_t_3 = 0;
+
+  /* "ubjson/encoder.py":44
  * 
  * 
  * class EncoderException(TypeError):             # <<<<<<<<<<<<<<
  *     """Raised when encoding of an object fails."""
  *     pass
  */
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 44; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_INCREF(__pyx_builtin_TypeError);
   __Pyx_GIVEREF(__pyx_builtin_TypeError);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_builtin_TypeError);
-  __pyx_t_3 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_27 = __Pyx_Py3MetaclassPrepare(__pyx_t_3, __pyx_t_2, __pyx_n_s_EncoderException, __pyx_n_s_EncoderException, (PyObject *) NULL, __pyx_n_s_ubjson_encoder, __pyx_kp_s_Raised_when_encoding_of_an_objec); if (unlikely(!__pyx_t_27)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_27);
-  __pyx_t_28 = __Pyx_Py3ClassCreate(__pyx_t_3, __pyx_n_s_EncoderException, __pyx_t_2, __pyx_t_27, NULL, 0, 1); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_builtin_TypeError);
+  __pyx_t_28 = __Pyx_CalculateMetaclass(NULL, __pyx_t_3); if (unlikely(!__pyx_t_28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 44; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_28);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_EncoderException, __pyx_t_28) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 33; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
-  __Pyx_DECREF(__pyx_t_27); __pyx_t_27 = 0;
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_29 = __Pyx_Py3MetaclassPrepare(__pyx_t_28, __pyx_t_3, __pyx_n_s_EncoderException, __pyx_n_s_EncoderException, (PyObject *) NULL, __pyx_n_s_ubjson_encoder, __pyx_kp_s_Raised_when_encoding_of_an_objec); if (unlikely(!__pyx_t_29)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 44; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_29);
+  __pyx_t_2 = __Pyx_Py3ClassCreate(__pyx_t_28, __pyx_n_s_EncoderException, __pyx_t_3, __pyx_t_29, NULL, 0, 1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 44; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_EncoderException, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 44; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_29); __pyx_t_29 = 0;
+  __Pyx_DECREF(__pyx_t_28); __pyx_t_28 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "ubjson/encoder.py":1
  * # Copyright 2015 Iotic Labs Ltd             # <<<<<<<<<<<<<<
  * #
  * # Licensed under the Apache License, Version 2.0 (the "License");
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /*--- Wrapped vars code ---*/
 
@@ -7250,8 +6584,11 @@ PyMODINIT_FUNC PyInit_encoder(void)
   __Pyx_XDECREF(__pyx_t_23);
   __Pyx_XDECREF(__pyx_t_24);
   __Pyx_XDECREF(__pyx_t_25);
-  __Pyx_XDECREF(__pyx_t_27);
   __Pyx_XDECREF(__pyx_t_28);
+  __Pyx_XDECREF(__pyx_t_29);
+  __Pyx_XDECREF(__pyx_t_30);
+  __Pyx_XDECREF(__pyx_t_31);
+  __Pyx_XDECREF(__pyx_t_33);
   if (__pyx_m) {
     if (__pyx_d) {
       __Pyx_AddTraceback("init ubjson.encoder", __pyx_clineno, __pyx_lineno, __pyx_filename);
@@ -7388,73 +6725,6 @@ static CYTHON_INLINE PyObject *__Pyx_GetModuleGlobalName(PyObject *name) {
     return result;
 }
 
-static CYTHON_INLINE void __Pyx_ErrRestore(PyObject *type, PyObject *value, PyObject *tb) {
-#if CYTHON_COMPILING_IN_CPYTHON
-    PyObject *tmp_type, *tmp_value, *tmp_tb;
-    PyThreadState *tstate = PyThreadState_GET();
-    tmp_type = tstate->curexc_type;
-    tmp_value = tstate->curexc_value;
-    tmp_tb = tstate->curexc_traceback;
-    tstate->curexc_type = type;
-    tstate->curexc_value = value;
-    tstate->curexc_traceback = tb;
-    Py_XDECREF(tmp_type);
-    Py_XDECREF(tmp_value);
-    Py_XDECREF(tmp_tb);
-#else
-    PyErr_Restore(type, value, tb);
-#endif
-}
-static CYTHON_INLINE void __Pyx_ErrFetch(PyObject **type, PyObject **value, PyObject **tb) {
-#if CYTHON_COMPILING_IN_CPYTHON
-    PyThreadState *tstate = PyThreadState_GET();
-    *type = tstate->curexc_type;
-    *value = tstate->curexc_value;
-    *tb = tstate->curexc_traceback;
-    tstate->curexc_type = 0;
-    tstate->curexc_value = 0;
-    tstate->curexc_traceback = 0;
-#else
-    PyErr_Fetch(type, value, tb);
-#endif
-}
-
-static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
-                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
-                                  int full_traceback, CYTHON_UNUSED int nogil) {
-    PyObject *old_exc, *old_val, *old_tb;
-    PyObject *ctx;
-#ifdef WITH_THREAD
-    PyGILState_STATE state;
-    if (nogil)
-        state = PyGILState_Ensure();
-#endif
-    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
-    if (full_traceback) {
-        Py_XINCREF(old_exc);
-        Py_XINCREF(old_val);
-        Py_XINCREF(old_tb);
-        __Pyx_ErrRestore(old_exc, old_val, old_tb);
-        PyErr_PrintEx(1);
-    }
-    #if PY_MAJOR_VERSION < 3
-    ctx = PyString_FromString(name);
-    #else
-    ctx = PyUnicode_FromString(name);
-    #endif
-    __Pyx_ErrRestore(old_exc, old_val, old_tb);
-    if (!ctx) {
-        PyErr_WriteUnraisable(Py_None);
-    } else {
-        PyErr_WriteUnraisable(ctx);
-        Py_DECREF(ctx);
-    }
-#ifdef WITH_THREAD
-    if (nogil)
-        PyGILState_Release(state);
-#endif
-}
-
 #if CYTHON_USE_PYLONG_INTERNALS
   #include "longintrepr.h"
 #endif
@@ -7543,277 +6813,36 @@ static PyObject* __Pyx_PyInt_EqObjC(PyObject *op1, PyObject *op2, CYTHON_UNUSED 
 }
 #endif
 
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func) {
-#ifdef __Pyx_CyFunction_USED
-    if (likely(PyCFunction_Check(func) || PyObject_TypeCheck(func, __pyx_CyFunctionType))) {
-#else
-    if (likely(PyCFunction_Check(func))) {
-#endif
-        if (likely(PyCFunction_GET_FLAGS(func) & METH_NOARGS)) {
-            return __Pyx_PyObject_CallMethO(func, NULL);
-        }
-    }
-    return __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL);
-}
-#endif
-
-static CYTHON_INLINE PyObject *__Pyx_PyIter_Next2(PyObject* iterator, PyObject* defval) {
-    PyObject* next;
-    iternextfunc iternext = Py_TYPE(iterator)->tp_iternext;
-#if CYTHON_COMPILING_IN_CPYTHON
-    if (unlikely(!iternext)) {
-#else
-    if (unlikely(!iternext) || unlikely(!PyIter_Check(iterator))) {
-#endif
-        PyErr_Format(PyExc_TypeError,
-            "%.200s object is not an iterator", Py_TYPE(iterator)->tp_name);
-        return NULL;
-    }
-    next = iternext(iterator);
-    if (likely(next))
-        return next;
-#if CYTHON_COMPILING_IN_CPYTHON
-#if PY_VERSION_HEX >= 0x02070000
-    if (unlikely(iternext == &_PyObject_NextNotImplemented))
-        return NULL;
-#endif
-#endif
-    if (defval) {
-        PyObject* exc_type = PyErr_Occurred();
-        if (exc_type) {
-            if (unlikely(exc_type != PyExc_StopIteration) &&
-                    !PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))
-                return NULL;
-            PyErr_Clear();
-        }
-        Py_INCREF(defval);
-        return defval;
-    }
-    if (!PyErr_Occurred())
-        PyErr_SetNone(PyExc_StopIteration);
-    return NULL;
-}
-
-static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected) {
-    PyErr_Format(PyExc_ValueError,
-                 "too many values to unpack (expected %" CYTHON_FORMAT_SSIZE_T "d)", expected);
-}
-
-static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index) {
-    PyErr_Format(PyExc_ValueError,
-                 "need more than %" CYTHON_FORMAT_SSIZE_T "d value%.1s to unpack",
-                 index, (index == 1) ? "" : "s");
-}
-
-static CYTHON_INLINE int __Pyx_IterFinish(void) {
-#if CYTHON_COMPILING_IN_CPYTHON
-    PyThreadState *tstate = PyThreadState_GET();
-    PyObject* exc_type = tstate->curexc_type;
-    if (unlikely(exc_type)) {
-        if (likely(exc_type == PyExc_StopIteration) || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration)) {
-            PyObject *exc_value, *exc_tb;
-            exc_value = tstate->curexc_value;
-            exc_tb = tstate->curexc_traceback;
-            tstate->curexc_type = 0;
-            tstate->curexc_value = 0;
-            tstate->curexc_traceback = 0;
-            Py_DECREF(exc_type);
-            Py_XDECREF(exc_value);
-            Py_XDECREF(exc_tb);
-            return 0;
-        } else {
-            return -1;
-        }
-    }
-    return 0;
-#else
-    if (unlikely(PyErr_Occurred())) {
-        if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) {
-            PyErr_Clear();
-            return 0;
-        } else {
-            return -1;
-        }
-    }
-    return 0;
-#endif
-}
-
-static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected) {
-    if (unlikely(retval)) {
-        Py_DECREF(retval);
-        __Pyx_RaiseTooManyValuesError(expected);
-        return -1;
-    } else {
-        return __Pyx_IterFinish();
-    }
-    return 0;
-}
-
-static CYTHON_INLINE void __Pyx_ExceptionSave(PyObject **type, PyObject **value, PyObject **tb) {
-#if CYTHON_COMPILING_IN_CPYTHON
-    PyThreadState *tstate = PyThreadState_GET();
-    *type = tstate->exc_type;
-    *value = tstate->exc_value;
-    *tb = tstate->exc_traceback;
-    Py_XINCREF(*type);
-    Py_XINCREF(*value);
-    Py_XINCREF(*tb);
-#else
-    PyErr_GetExcInfo(type, value, tb);
-#endif
-}
-static void __Pyx_ExceptionReset(PyObject *type, PyObject *value, PyObject *tb) {
+static CYTHON_INLINE void __Pyx_ErrRestore(PyObject *type, PyObject *value, PyObject *tb) {
 #if CYTHON_COMPILING_IN_CPYTHON
     PyObject *tmp_type, *tmp_value, *tmp_tb;
     PyThreadState *tstate = PyThreadState_GET();
-    tmp_type = tstate->exc_type;
-    tmp_value = tstate->exc_value;
-    tmp_tb = tstate->exc_traceback;
-    tstate->exc_type = type;
-    tstate->exc_value = value;
-    tstate->exc_traceback = tb;
+    tmp_type = tstate->curexc_type;
+    tmp_value = tstate->curexc_value;
+    tmp_tb = tstate->curexc_traceback;
+    tstate->curexc_type = type;
+    tstate->curexc_value = value;
+    tstate->curexc_traceback = tb;
     Py_XDECREF(tmp_type);
     Py_XDECREF(tmp_value);
     Py_XDECREF(tmp_tb);
 #else
-    PyErr_SetExcInfo(type, value, tb);
+    PyErr_Restore(type, value, tb);
 #endif
 }
-
-static int __Pyx_GetException(PyObject **type, PyObject **value, PyObject **tb) {
-    PyObject *local_type, *local_value, *local_tb;
+static CYTHON_INLINE void __Pyx_ErrFetch(PyObject **type, PyObject **value, PyObject **tb) {
 #if CYTHON_COMPILING_IN_CPYTHON
-    PyObject *tmp_type, *tmp_value, *tmp_tb;
     PyThreadState *tstate = PyThreadState_GET();
-    local_type = tstate->curexc_type;
-    local_value = tstate->curexc_value;
-    local_tb = tstate->curexc_traceback;
+    *type = tstate->curexc_type;
+    *value = tstate->curexc_value;
+    *tb = tstate->curexc_traceback;
     tstate->curexc_type = 0;
     tstate->curexc_value = 0;
     tstate->curexc_traceback = 0;
 #else
-    PyErr_Fetch(&local_type, &local_value, &local_tb);
+    PyErr_Fetch(type, value, tb);
 #endif
-    PyErr_NormalizeException(&local_type, &local_value, &local_tb);
-#if CYTHON_COMPILING_IN_CPYTHON
-    if (unlikely(tstate->curexc_type))
-#else
-    if (unlikely(PyErr_Occurred()))
-#endif
-        goto bad;
-    #if PY_MAJOR_VERSION >= 3
-    if (local_tb) {
-        if (unlikely(PyException_SetTraceback(local_value, local_tb) < 0))
-            goto bad;
-    }
-    #endif
-    Py_XINCREF(local_tb);
-    Py_XINCREF(local_type);
-    Py_XINCREF(local_value);
-    *type = local_type;
-    *value = local_value;
-    *tb = local_tb;
-#if CYTHON_COMPILING_IN_CPYTHON
-    tmp_type = tstate->exc_type;
-    tmp_value = tstate->exc_value;
-    tmp_tb = tstate->exc_traceback;
-    tstate->exc_type = local_type;
-    tstate->exc_value = local_value;
-    tstate->exc_traceback = local_tb;
-    Py_XDECREF(tmp_type);
-    Py_XDECREF(tmp_value);
-    Py_XDECREF(tmp_tb);
-#else
-    PyErr_SetExcInfo(local_type, local_value, local_tb);
-#endif
-    return 0;
-bad:
-    *type = 0;
-    *value = 0;
-    *tb = 0;
-    Py_XDECREF(local_type);
-    Py_XDECREF(local_value);
-    Py_XDECREF(local_tb);
-    return -1;
 }
-
-static PyObject* __Pyx_PyObject_CallMethod0(PyObject* obj, PyObject* method_name) {
-    PyObject *method, *result = NULL;
-    method = __Pyx_PyObject_GetAttrStr(obj, method_name);
-    if (unlikely(!method)) goto bad;
-#if CYTHON_COMPILING_IN_CPYTHON
-    if (likely(PyMethod_Check(method))) {
-        PyObject *self = PyMethod_GET_SELF(method);
-        if (likely(self)) {
-            PyObject *function = PyMethod_GET_FUNCTION(method);
-            result = __Pyx_PyObject_CallOneArg(function, self);
-            Py_DECREF(method);
-            return result;
-        }
-    }
-#endif
-    result = __Pyx_PyObject_CallNoArg(method);
-    Py_DECREF(method);
-bad:
-    return result;
-}
-
-static int __Pyx_TryUnpackUnboundCMethod(__Pyx_CachedCFunction* target) {
-    PyObject *method;
-    method = __Pyx_PyObject_GetAttrStr(target->type, *target->method_name);
-    if (unlikely(!method))
-        return -1;
-    target->method = method;
-#if CYTHON_COMPILING_IN_CPYTHON
-    #if PY_MAJOR_VERSION >= 3
-    if (likely(PyObject_TypeCheck(method, &PyMethodDescr_Type)))
-    #endif
-    {
-        PyMethodDescrObject *descr = (PyMethodDescrObject*) method;
-        target->func = descr->d_method->ml_meth;
-        target->flag = descr->d_method->ml_flags & (METH_VARARGS | METH_KEYWORDS | METH_O | METH_NOARGS);
-    }
-#endif
-    return 0;
-}
-
-static PyObject* __Pyx__CallUnboundCMethod0(__Pyx_CachedCFunction* cfunc, PyObject* self) {
-    PyObject *args, *result = NULL;
-    if (unlikely(!cfunc->method) && unlikely(__Pyx_TryUnpackUnboundCMethod(cfunc) < 0)) return NULL;
-#if CYTHON_COMPILING_IN_CPYTHON
-    args = PyTuple_New(1);
-    if (unlikely(!args)) goto bad;
-    Py_INCREF(self);
-    PyTuple_SET_ITEM(args, 0, self);
-#else
-    args = PyTuple_Pack(1, self);
-    if (unlikely(!args)) goto bad;
-#endif
-    result = __Pyx_PyObject_Call(cfunc->method, args, NULL);
-    Py_DECREF(args);
-bad:
-    return result;
-}
-
-static CYTHON_INLINE PyObject* __Pyx__PyObject_Pop(PyObject* L) {
-#if CYTHON_COMPILING_IN_CPYTHON
-    if (Py_TYPE(L) == &PySet_Type) {
-        return PySet_Pop(L);
-    }
-#endif
-    return __Pyx_PyObject_CallMethod0(L, __pyx_n_s_pop);
-}
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyList_Pop(PyObject* L) {
-    if (likely(PyList_GET_SIZE(L) > (((PyListObject*)L)->allocated >> 1))) {
-        Py_SIZE(L) -= 1;
-        return PyList_GET_ITEM(L, PyList_GET_SIZE(L));
-    }
-    return __Pyx_CallUnboundCMethod0(&__pyx_umethod_PyList_Type_pop, L);
-}
-#endif
 
 #if PY_MAJOR_VERSION < 3
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb,
@@ -7975,45 +7004,73 @@ bad:
 }
 #endif
 
-static PyObject* __Pyx_PyObject_CallMethod1(PyObject* obj, PyObject* method_name, PyObject* arg) {
-    PyObject *method, *result = NULL;
-    method = __Pyx_PyObject_GetAttrStr(obj, method_name);
-    if (unlikely(!method)) goto bad;
 #if CYTHON_COMPILING_IN_CPYTHON
-    if (likely(PyMethod_Check(method))) {
-        PyObject *self = PyMethod_GET_SELF(method);
-        if (likely(self)) {
-            PyObject *args;
-            PyObject *function = PyMethod_GET_FUNCTION(method);
-            args = PyTuple_New(2);
-            if (unlikely(!args)) goto bad;
-            Py_INCREF(self);
-            PyTuple_SET_ITEM(args, 0, self);
-            Py_INCREF(arg);
-            PyTuple_SET_ITEM(args, 1, arg);
-            Py_INCREF(function);
-            Py_DECREF(method); method = NULL;
-            result = __Pyx_PyObject_Call(function, args, NULL);
-            Py_DECREF(args);
-            Py_DECREF(function);
-            return result;
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func) {
+#ifdef __Pyx_CyFunction_USED
+    if (likely(PyCFunction_Check(func) || PyObject_TypeCheck(func, __pyx_CyFunctionType))) {
+#else
+    if (likely(PyCFunction_Check(func))) {
+#endif
+        if (likely(PyCFunction_GET_FLAGS(func) & METH_NOARGS)) {
+            return __Pyx_PyObject_CallMethO(func, NULL);
         }
     }
+    return __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL);
+}
 #endif
-    result = __Pyx_PyObject_CallOneArg(method, arg);
-bad:
-    Py_XDECREF(method);
-    return result;
+
+static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected) {
+    PyErr_Format(PyExc_ValueError,
+                 "too many values to unpack (expected %" CYTHON_FORMAT_SSIZE_T "d)", expected);
 }
 
-static CYTHON_INLINE int __Pyx_PyObject_Append(PyObject* L, PyObject* x) {
-    if (likely(PyList_CheckExact(L))) {
-        if (unlikely(__Pyx_PyList_Append(L, x) < 0)) return -1;
-    } else {
-        PyObject* retval = __Pyx_PyObject_CallMethod1(L, __pyx_n_s_append, x);
-        if (unlikely(!retval))
+static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index) {
+    PyErr_Format(PyExc_ValueError,
+                 "need more than %" CYTHON_FORMAT_SSIZE_T "d value%.1s to unpack",
+                 index, (index == 1) ? "" : "s");
+}
+
+static CYTHON_INLINE int __Pyx_IterFinish(void) {
+#if CYTHON_COMPILING_IN_CPYTHON
+    PyThreadState *tstate = PyThreadState_GET();
+    PyObject* exc_type = tstate->curexc_type;
+    if (unlikely(exc_type)) {
+        if (likely(exc_type == PyExc_StopIteration) || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration)) {
+            PyObject *exc_value, *exc_tb;
+            exc_value = tstate->curexc_value;
+            exc_tb = tstate->curexc_traceback;
+            tstate->curexc_type = 0;
+            tstate->curexc_value = 0;
+            tstate->curexc_traceback = 0;
+            Py_DECREF(exc_type);
+            Py_XDECREF(exc_value);
+            Py_XDECREF(exc_tb);
+            return 0;
+        } else {
             return -1;
+        }
+    }
+    return 0;
+#else
+    if (unlikely(PyErr_Occurred())) {
+        if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) {
+            PyErr_Clear();
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+    return 0;
+#endif
+}
+
+static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected) {
+    if (unlikely(retval)) {
         Py_DECREF(retval);
+        __Pyx_RaiseTooManyValuesError(expected);
+        return -1;
+    } else {
+        return __Pyx_IterFinish();
     }
     return 0;
 }
@@ -8154,6 +7211,94 @@ invalid_keyword:
         function_name, key);
     #endif
 bad:
+    return -1;
+}
+
+static CYTHON_INLINE void __Pyx_ExceptionSave(PyObject **type, PyObject **value, PyObject **tb) {
+#if CYTHON_COMPILING_IN_CPYTHON
+    PyThreadState *tstate = PyThreadState_GET();
+    *type = tstate->exc_type;
+    *value = tstate->exc_value;
+    *tb = tstate->exc_traceback;
+    Py_XINCREF(*type);
+    Py_XINCREF(*value);
+    Py_XINCREF(*tb);
+#else
+    PyErr_GetExcInfo(type, value, tb);
+#endif
+}
+static void __Pyx_ExceptionReset(PyObject *type, PyObject *value, PyObject *tb) {
+#if CYTHON_COMPILING_IN_CPYTHON
+    PyObject *tmp_type, *tmp_value, *tmp_tb;
+    PyThreadState *tstate = PyThreadState_GET();
+    tmp_type = tstate->exc_type;
+    tmp_value = tstate->exc_value;
+    tmp_tb = tstate->exc_traceback;
+    tstate->exc_type = type;
+    tstate->exc_value = value;
+    tstate->exc_traceback = tb;
+    Py_XDECREF(tmp_type);
+    Py_XDECREF(tmp_value);
+    Py_XDECREF(tmp_tb);
+#else
+    PyErr_SetExcInfo(type, value, tb);
+#endif
+}
+
+static int __Pyx_GetException(PyObject **type, PyObject **value, PyObject **tb) {
+    PyObject *local_type, *local_value, *local_tb;
+#if CYTHON_COMPILING_IN_CPYTHON
+    PyObject *tmp_type, *tmp_value, *tmp_tb;
+    PyThreadState *tstate = PyThreadState_GET();
+    local_type = tstate->curexc_type;
+    local_value = tstate->curexc_value;
+    local_tb = tstate->curexc_traceback;
+    tstate->curexc_type = 0;
+    tstate->curexc_value = 0;
+    tstate->curexc_traceback = 0;
+#else
+    PyErr_Fetch(&local_type, &local_value, &local_tb);
+#endif
+    PyErr_NormalizeException(&local_type, &local_value, &local_tb);
+#if CYTHON_COMPILING_IN_CPYTHON
+    if (unlikely(tstate->curexc_type))
+#else
+    if (unlikely(PyErr_Occurred()))
+#endif
+        goto bad;
+    #if PY_MAJOR_VERSION >= 3
+    if (local_tb) {
+        if (unlikely(PyException_SetTraceback(local_value, local_tb) < 0))
+            goto bad;
+    }
+    #endif
+    Py_XINCREF(local_tb);
+    Py_XINCREF(local_type);
+    Py_XINCREF(local_value);
+    *type = local_type;
+    *value = local_value;
+    *tb = local_tb;
+#if CYTHON_COMPILING_IN_CPYTHON
+    tmp_type = tstate->exc_type;
+    tmp_value = tstate->exc_value;
+    tmp_tb = tstate->exc_traceback;
+    tstate->exc_type = local_type;
+    tstate->exc_value = local_value;
+    tstate->exc_traceback = local_tb;
+    Py_XDECREF(tmp_type);
+    Py_XDECREF(tmp_value);
+    Py_XDECREF(tmp_tb);
+#else
+    PyErr_SetExcInfo(local_type, local_value, local_tb);
+#endif
+    return 0;
+bad:
+    *type = 0;
+    *value = 0;
+    *tb = 0;
+    Py_XDECREF(local_type);
+    Py_XDECREF(local_value);
+    Py_XDECREF(local_tb);
     return -1;
 }
 
@@ -8527,6 +7672,216 @@ bad:
         return (target_type) value;\
     }
 
+static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *x) {
+    const long neg_one = (long) -1, const_zero = (long) 0;
+    const int is_unsigned = neg_one > const_zero;
+#if PY_MAJOR_VERSION < 3
+    if (likely(PyInt_Check(x))) {
+        if (sizeof(long) < sizeof(long)) {
+            __PYX_VERIFY_RETURN_INT(long, long, PyInt_AS_LONG(x))
+        } else {
+            long val = PyInt_AS_LONG(x);
+            if (is_unsigned && unlikely(val < 0)) {
+                goto raise_neg_overflow;
+            }
+            return (long) val;
+        }
+    } else
+#endif
+    if (likely(PyLong_Check(x))) {
+        if (is_unsigned) {
+#if CYTHON_USE_PYLONG_INTERNALS
+            const digit* digits = ((PyLongObject*)x)->ob_digit;
+            switch (Py_SIZE(x)) {
+                case  0: return (long) 0;
+                case  1: __PYX_VERIFY_RETURN_INT(long, digit, digits[0])
+                case 2:
+                    if (8 * sizeof(long) > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(long) >= 2 * PyLong_SHIFT) {
+                            return (long) (((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
+                        }
+                    }
+                    break;
+                case 3:
+                    if (8 * sizeof(long) > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(long) >= 3 * PyLong_SHIFT) {
+                            return (long) (((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
+                        }
+                    }
+                    break;
+                case 4:
+                    if (8 * sizeof(long) > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(long) >= 4 * PyLong_SHIFT) {
+                            return (long) (((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
+                        }
+                    }
+                    break;
+            }
+#endif
+#if CYTHON_COMPILING_IN_CPYTHON
+            if (unlikely(Py_SIZE(x) < 0)) {
+                goto raise_neg_overflow;
+            }
+#else
+            {
+                int result = PyObject_RichCompareBool(x, Py_False, Py_LT);
+                if (unlikely(result < 0))
+                    return (long) -1;
+                if (unlikely(result == 1))
+                    goto raise_neg_overflow;
+            }
+#endif
+            if (sizeof(long) <= sizeof(unsigned long)) {
+                __PYX_VERIFY_RETURN_INT_EXC(long, unsigned long, PyLong_AsUnsignedLong(x))
+            } else if (sizeof(long) <= sizeof(unsigned PY_LONG_LONG)) {
+                __PYX_VERIFY_RETURN_INT_EXC(long, unsigned PY_LONG_LONG, PyLong_AsUnsignedLongLong(x))
+            }
+        } else {
+#if CYTHON_USE_PYLONG_INTERNALS
+            const digit* digits = ((PyLongObject*)x)->ob_digit;
+            switch (Py_SIZE(x)) {
+                case  0: return (long) 0;
+                case -1: __PYX_VERIFY_RETURN_INT(long, sdigit, -(sdigit) digits[0])
+                case  1: __PYX_VERIFY_RETURN_INT(long,  digit, +digits[0])
+                case -2:
+                    if (8 * sizeof(long) - 1 > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
+                            return (long) (((long)-1)*(((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+                case 2:
+                    if (8 * sizeof(long) > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
+                            return (long) ((((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+                case -3:
+                    if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
+                            return (long) (((long)-1)*(((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+                case 3:
+                    if (8 * sizeof(long) > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
+                            return (long) ((((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+                case -4:
+                    if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(long) - 1 > 4 * PyLong_SHIFT) {
+                            return (long) (((long)-1)*(((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+                case 4:
+                    if (8 * sizeof(long) > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(long) - 1 > 4 * PyLong_SHIFT) {
+                            return (long) ((((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+            }
+#endif
+            if (sizeof(long) <= sizeof(long)) {
+                __PYX_VERIFY_RETURN_INT_EXC(long, long, PyLong_AsLong(x))
+            } else if (sizeof(long) <= sizeof(PY_LONG_LONG)) {
+                __PYX_VERIFY_RETURN_INT_EXC(long, PY_LONG_LONG, PyLong_AsLongLong(x))
+            }
+        }
+        {
+#if CYTHON_COMPILING_IN_PYPY && !defined(_PyLong_AsByteArray)
+            PyErr_SetString(PyExc_RuntimeError,
+                            "_PyLong_AsByteArray() not available in PyPy, cannot convert large numbers");
+#else
+            long val;
+            PyObject *v = __Pyx_PyNumber_Int(x);
+ #if PY_MAJOR_VERSION < 3
+            if (likely(v) && !PyLong_Check(v)) {
+                PyObject *tmp = v;
+                v = PyNumber_Long(tmp);
+                Py_DECREF(tmp);
+            }
+ #endif
+            if (likely(v)) {
+                int one = 1; int is_little = (int)*(unsigned char *)&one;
+                unsigned char *bytes = (unsigned char *)&val;
+                int ret = _PyLong_AsByteArray((PyLongObject *)v,
+                                              bytes, sizeof(val),
+                                              is_little, !is_unsigned);
+                Py_DECREF(v);
+                if (likely(!ret))
+                    return val;
+            }
+#endif
+            return (long) -1;
+        }
+    } else {
+        long val;
+        PyObject *tmp = __Pyx_PyNumber_Int(x);
+        if (!tmp) return (long) -1;
+        val = __Pyx_PyInt_As_long(tmp);
+        Py_DECREF(tmp);
+        return val;
+    }
+raise_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "value too large to convert to long");
+    return (long) -1;
+raise_neg_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "can't convert negative value to long");
+    return (long) -1;
+}
+
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value) {
+    const long neg_one = (long) -1, const_zero = (long) 0;
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(long) < sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(long) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+        } else if (sizeof(long) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+        }
+    } else {
+        if (sizeof(long) <= sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(long) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+        }
+    }
+    {
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        unsigned char *bytes = (unsigned char *)&value;
+        return _PyLong_FromByteArray(bytes, sizeof(long),
+                                     little, !is_unsigned);
+    }
+}
+
 static CYTHON_INLINE unsigned PY_LONG_LONG __Pyx_PyInt_As_unsigned_PY_LONG_LONG(PyObject *x) {
     const unsigned PY_LONG_LONG neg_one = (unsigned PY_LONG_LONG) -1, const_zero = (unsigned PY_LONG_LONG) 0;
     const int is_unsigned = neg_one > const_zero;
@@ -8737,242 +8092,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyInt_From_unsigned_PY_LONG_LONG(unsigned P
     }
 }
 
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value) {
-    const int neg_one = (int) -1, const_zero = (int) 0;
-    const int is_unsigned = neg_one > const_zero;
-    if (is_unsigned) {
-        if (sizeof(int) < sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(int) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
-        } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
-            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
-        }
-    } else {
-        if (sizeof(int) <= sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
-            return PyLong_FromLongLong((PY_LONG_LONG) value);
-        }
-    }
-    {
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        unsigned char *bytes = (unsigned char *)&value;
-        return _PyLong_FromByteArray(bytes, sizeof(int),
-                                     little, !is_unsigned);
-    }
-}
-
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value) {
-    const long neg_one = (long) -1, const_zero = (long) 0;
-    const int is_unsigned = neg_one > const_zero;
-    if (is_unsigned) {
-        if (sizeof(long) < sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(long) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
-        } else if (sizeof(long) <= sizeof(unsigned PY_LONG_LONG)) {
-            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
-        }
-    } else {
-        if (sizeof(long) <= sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(long) <= sizeof(PY_LONG_LONG)) {
-            return PyLong_FromLongLong((PY_LONG_LONG) value);
-        }
-    }
-    {
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        unsigned char *bytes = (unsigned char *)&value;
-        return _PyLong_FromByteArray(bytes, sizeof(long),
-                                     little, !is_unsigned);
-    }
-}
-
-static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *x) {
-    const long neg_one = (long) -1, const_zero = (long) 0;
-    const int is_unsigned = neg_one > const_zero;
-#if PY_MAJOR_VERSION < 3
-    if (likely(PyInt_Check(x))) {
-        if (sizeof(long) < sizeof(long)) {
-            __PYX_VERIFY_RETURN_INT(long, long, PyInt_AS_LONG(x))
-        } else {
-            long val = PyInt_AS_LONG(x);
-            if (is_unsigned && unlikely(val < 0)) {
-                goto raise_neg_overflow;
-            }
-            return (long) val;
-        }
-    } else
-#endif
-    if (likely(PyLong_Check(x))) {
-        if (is_unsigned) {
-#if CYTHON_USE_PYLONG_INTERNALS
-            const digit* digits = ((PyLongObject*)x)->ob_digit;
-            switch (Py_SIZE(x)) {
-                case  0: return (long) 0;
-                case  1: __PYX_VERIFY_RETURN_INT(long, digit, digits[0])
-                case 2:
-                    if (8 * sizeof(long) > 1 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(long) >= 2 * PyLong_SHIFT) {
-                            return (long) (((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
-                        }
-                    }
-                    break;
-                case 3:
-                    if (8 * sizeof(long) > 2 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(long) >= 3 * PyLong_SHIFT) {
-                            return (long) (((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
-                        }
-                    }
-                    break;
-                case 4:
-                    if (8 * sizeof(long) > 3 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(long) >= 4 * PyLong_SHIFT) {
-                            return (long) (((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
-                        }
-                    }
-                    break;
-            }
-#endif
-#if CYTHON_COMPILING_IN_CPYTHON
-            if (unlikely(Py_SIZE(x) < 0)) {
-                goto raise_neg_overflow;
-            }
-#else
-            {
-                int result = PyObject_RichCompareBool(x, Py_False, Py_LT);
-                if (unlikely(result < 0))
-                    return (long) -1;
-                if (unlikely(result == 1))
-                    goto raise_neg_overflow;
-            }
-#endif
-            if (sizeof(long) <= sizeof(unsigned long)) {
-                __PYX_VERIFY_RETURN_INT_EXC(long, unsigned long, PyLong_AsUnsignedLong(x))
-            } else if (sizeof(long) <= sizeof(unsigned PY_LONG_LONG)) {
-                __PYX_VERIFY_RETURN_INT_EXC(long, unsigned PY_LONG_LONG, PyLong_AsUnsignedLongLong(x))
-            }
-        } else {
-#if CYTHON_USE_PYLONG_INTERNALS
-            const digit* digits = ((PyLongObject*)x)->ob_digit;
-            switch (Py_SIZE(x)) {
-                case  0: return (long) 0;
-                case -1: __PYX_VERIFY_RETURN_INT(long, sdigit, -(sdigit) digits[0])
-                case  1: __PYX_VERIFY_RETURN_INT(long,  digit, +digits[0])
-                case -2:
-                    if (8 * sizeof(long) - 1 > 1 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
-                            return (long) (((long)-1)*(((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-                case 2:
-                    if (8 * sizeof(long) > 1 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
-                            return (long) ((((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-                case -3:
-                    if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
-                            return (long) (((long)-1)*(((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-                case 3:
-                    if (8 * sizeof(long) > 2 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
-                            return (long) ((((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-                case -4:
-                    if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(long) - 1 > 4 * PyLong_SHIFT) {
-                            return (long) (((long)-1)*(((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-                case 4:
-                    if (8 * sizeof(long) > 3 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(long) - 1 > 4 * PyLong_SHIFT) {
-                            return (long) ((((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-            }
-#endif
-            if (sizeof(long) <= sizeof(long)) {
-                __PYX_VERIFY_RETURN_INT_EXC(long, long, PyLong_AsLong(x))
-            } else if (sizeof(long) <= sizeof(PY_LONG_LONG)) {
-                __PYX_VERIFY_RETURN_INT_EXC(long, PY_LONG_LONG, PyLong_AsLongLong(x))
-            }
-        }
-        {
-#if CYTHON_COMPILING_IN_PYPY && !defined(_PyLong_AsByteArray)
-            PyErr_SetString(PyExc_RuntimeError,
-                            "_PyLong_AsByteArray() not available in PyPy, cannot convert large numbers");
-#else
-            long val;
-            PyObject *v = __Pyx_PyNumber_Int(x);
- #if PY_MAJOR_VERSION < 3
-            if (likely(v) && !PyLong_Check(v)) {
-                PyObject *tmp = v;
-                v = PyNumber_Long(tmp);
-                Py_DECREF(tmp);
-            }
- #endif
-            if (likely(v)) {
-                int one = 1; int is_little = (int)*(unsigned char *)&one;
-                unsigned char *bytes = (unsigned char *)&val;
-                int ret = _PyLong_AsByteArray((PyLongObject *)v,
-                                              bytes, sizeof(val),
-                                              is_little, !is_unsigned);
-                Py_DECREF(v);
-                if (likely(!ret))
-                    return val;
-            }
-#endif
-            return (long) -1;
-        }
-    } else {
-        long val;
-        PyObject *tmp = __Pyx_PyNumber_Int(x);
-        if (!tmp) return (long) -1;
-        val = __Pyx_PyInt_As_long(tmp);
-        Py_DECREF(tmp);
-        return val;
-    }
-raise_overflow:
-    PyErr_SetString(PyExc_OverflowError,
-        "value too large to convert to long");
-    return (long) -1;
-raise_neg_overflow:
-    PyErr_SetString(PyExc_OverflowError,
-        "can't convert negative value to long");
-    return (long) -1;
-}
-
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *x) {
     const int neg_one = (int) -1, const_zero = (int) 0;
     const int is_unsigned = neg_one > const_zero;
@@ -9170,6 +8289,36 @@ static int __Pyx_check_binary_version(void) {
         return PyErr_WarnEx(NULL, message, 1);
     }
     return 0;
+}
+
+static int __Pyx_ExportVoidPtr(PyObject *name, void *p, const char *sig) {
+    PyObject *d;
+    PyObject *cobj = 0;
+    d = PyDict_GetItem(__pyx_d, __pyx_n_s_pyx_capi);
+    Py_XINCREF(d);
+    if (!d) {
+        d = PyDict_New();
+        if (!d)
+            goto bad;
+        if (__Pyx_PyObject_SetAttrStr(__pyx_m, __pyx_n_s_pyx_capi, d) < 0)
+            goto bad;
+    }
+#if PY_VERSION_HEX >= 0x02070000
+    cobj = PyCapsule_New(p, sig, 0);
+#else
+    cobj = PyCObject_FromVoidPtrAndDesc(p, (void *)sig, 0);
+#endif
+    if (!cobj)
+        goto bad;
+    if (PyDict_SetItem(d, name, cobj) < 0)
+        goto bad;
+    Py_DECREF(cobj);
+    Py_DECREF(d);
+    return 0;
+bad:
+    Py_XDECREF(cobj);
+    Py_XDECREF(d);
+    return -1;
 }
 
 static int __Pyx_ExportFunction(const char *name, void (*f)(void), const char *sig) {

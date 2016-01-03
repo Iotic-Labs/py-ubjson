@@ -26,7 +26,10 @@ decoded = ubjson.loadb(encoded)
 To use a file-like object as input/output, use dump() & load() methods instead.
 """
 
-__version__ = '0.6'
+from .encoder import dump, dumpb, EncoderException  # noqa
+from .decoder import load, loadb, DecoderException  # noqa
+
+__version__ = '0.7'
 
 __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
 
@@ -36,10 +39,4 @@ try:
 except NameError:
     EXTENSION_ENABLED = False
 else:
-    EXTENSION_ENABLED = True
-
-
-# pylint: disable=unused-import
-from .encoder import dump, dumpb, EncoderException  # noqa
-# pylint: disable=unused-import
-from .decoder import load, loadb, DecoderException  # noqa
+    EXTENSION_ENABLED = True  # pragma: no cover
