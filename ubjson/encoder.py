@@ -18,6 +18,7 @@
 from struct import pack, Struct
 from decimal import Decimal
 from io import BytesIO
+from math import isinf, isnan
 
 from .compat import Mapping, Sequence, INTEGER_TYPES, UNICODE_TYPE, TEXT_TYPES, BYTES_TYPES
 try:
@@ -54,10 +55,13 @@ def __encode_high_prec(fp_write, item):
 
 
 def __encode_decimal(fp_write, item):
-    fp_write(TYPE_HIGH_PREC)
-    encoded_val = str(item).encode('utf-8')
-    __encode_int(fp_write, len(encoded_val))
-    fp_write(encoded_val)
+    if item.is_finite():
+        fp_write(TYPE_HIGH_PREC)
+        encoded_val = str(item).encode('utf-8')
+        __encode_int(fp_write, len(encoded_val))
+        fp_write(encoded_val)
+    else:
+        fp_write(TYPE_NULL)
 
 
 def __encode_int(fp_write, item):
@@ -97,6 +101,21 @@ def __encode_float(fp_write, item):
     elif 2.23e-308 <= abs(item) < 1.8e308:
         fp_write(TYPE_FLOAT64)
         fp_write(__PACK_FLOAT64(item))
+    elif isinf(item) or isnan(item):
+        fp_write(TYPE_NULL)
+    else:
+        __encode_high_prec(fp_write, item)
+
+
+def __encode_float64(fp_write, item):
+    if 2.23e-308 <= abs(item) < 1.8e308:
+        fp_write(TYPE_FLOAT64)
+        fp_write(__PACK_FLOAT64(item))
+    elif item == 0:
+        fp_write(TYPE_FLOAT32)
+        fp_write(__PACK_FLOAT32(item))
+    elif isinf(item) or isnan(item):
+        fp_write(TYPE_NULL)
     else:
         __encode_high_prec(fp_write, item)
 
@@ -126,7 +145,7 @@ def __encode_bytes(fp_write, item):
     # no ARRAY_END since length was specified
 
 
-def __encode_value(fp_write, item):
+def __encode_value(fp_write, item, no_float32):
     if isinstance(item, UNICODE_TYPE):
         __encode_string(fp_write, item)
 
@@ -143,7 +162,10 @@ def __encode_value(fp_write, item):
         __encode_int(fp_write, item)
 
     elif isinstance(item, float):
-        __encode_float(fp_write, item)
+        if no_float32:
+            __encode_float64(fp_write, item)
+        else:
+            __encode_float(fp_write, item)
 
     elif isinstance(item, Decimal):
         __encode_decimal(fp_write, item)
@@ -157,7 +179,7 @@ def __encode_value(fp_write, item):
     return True
 
 
-def __encode_array(fp_write, item, seen_containers, container_count, sort_keys):
+def __encode_array(fp_write, item, seen_containers, container_count, sort_keys, no_float32):
     # circular reference check
     container_id = id(item)
     if container_id in seen_containers:
@@ -170,12 +192,12 @@ def __encode_array(fp_write, item, seen_containers, container_count, sort_keys):
         __encode_int(fp_write, len(item))
 
     for value in item:
-        if not __encode_value(fp_write, value):
+        if not __encode_value(fp_write, value, no_float32):
             # order important since mappings could also be sequences
             if isinstance(value, Mapping):
-                __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+                __encode_object(fp_write, value, seen_containers, container_count, sort_keys, no_float32)
             elif isinstance(value, Sequence):
-                __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
+                __encode_array(fp_write, value, seen_containers, container_count, sort_keys, no_float32)
             else:
                 raise EncoderException('Cannot encode item of type %s' % type(value))
 
@@ -185,7 +207,7 @@ def __encode_array(fp_write, item, seen_containers, container_count, sort_keys):
     del seen_containers[container_id]
 
 
-def __encode_object(fp_write, item, seen_containers, container_count, sort_keys):
+def __encode_object(fp_write, item, seen_containers, container_count, sort_keys, no_float32):
     # circular reference check
     container_id = id(item)
     if container_id in seen_containers:
@@ -209,12 +231,12 @@ def __encode_object(fp_write, item, seen_containers, container_count, sort_keys)
             __encode_int(fp_write, length)
         fp_write(encoded_val)
 
-        if not __encode_value(fp_write, value):
+        if not __encode_value(fp_write, value, no_float32):
             # order important since mappings could also be sequences
             if isinstance(value, Mapping):
-                __encode_object(fp_write, value, seen_containers, container_count, sort_keys)
+                __encode_object(fp_write, value, seen_containers, container_count, sort_keys, no_float32)
             elif isinstance(value, Sequence):
-                __encode_array(fp_write, value, seen_containers, container_count, sort_keys)
+                __encode_array(fp_write, value, seen_containers, container_count, sort_keys, no_float32)
             else:
                 raise EncoderException('Cannot encode item of type %s' % type(value))
 
@@ -224,7 +246,7 @@ def __encode_object(fp_write, item, seen_containers, container_count, sort_keys)
     del seen_containers[container_id]
 
 
-def dump(obj, fp, container_count=False, sort_keys=False):
+def dump(obj, fp, container_count=False, sort_keys=False, no_float32=True):
     """Writes the given object as UBJSON to the provided file-like object
 
     Args:
@@ -237,7 +259,9 @@ def dump(obj, fp, container_count=False, sort_keys=False):
                                 if getting length of any of the containers is
                                 expensive.
         sort_keys (bool): Sort keys of dictionaries
-
+        no_float32 (bool): Never use float32 to store float numbers (other than
+                           for zero). Disabling this might save space at the
+                           loss of precision.
     Raises:
         EncoderException: If an encoding failure occured.
 
@@ -281,21 +305,25 @@ def dump(obj, fp, container_count=False, sort_keys=False):
       will be interpreted as a byte array).
     - Mapping keys have to be strings: str for Python3 and unicode or str in
       Python 2.
+    - float conversion rules (depending on no_float32 setting):
+        float32: 1.18e-38 <= abs(value) <= 3.4e38 or value == 0
+        float64: 2.23e-308 <= abs(value) < 1.8e308
+        For other values Decimal is used.
     """
     fp_write = fp.write
-    if not __encode_value(fp_write, obj):
+    if not __encode_value(fp_write, obj, no_float32):
         # order important since mappings could also be sequences
         if isinstance(obj, Mapping):
-            __encode_object(fp_write, obj, {}, container_count, sort_keys)
+            __encode_object(fp_write, obj, {}, container_count, sort_keys, no_float32)
         elif isinstance(obj, Sequence):
-            __encode_array(fp_write, obj, {}, container_count, sort_keys)
+            __encode_array(fp_write, obj, {}, container_count, sort_keys, no_float32)
         else:
             raise EncoderException('Cannot encode item of type %s' % type(obj))
 
 
-def dumpb(obj, container_count=False, sort_keys=False):
+def dumpb(obj, container_count=False, sort_keys=False, no_float32=True):
     """Returns the given object as UBJSON in a bytes instance. See dump() for
        available arguments."""
     with BytesIO() as fp:
-        dump(obj, fp, container_count=container_count, sort_keys=sort_keys)
+        dump(obj, fp, container_count=container_count, sort_keys=sort_keys, no_float32=no_float32)
         return fp.getvalue()

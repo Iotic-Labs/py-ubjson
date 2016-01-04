@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-"""Non-resursive UBJSON decoder. (cython annotations)"""
+"""UBJSON decoder. (cython annotations)"""
 
 import cython
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-"""Non-resursive UBJSON encoder (cython annotations)"""
+"""UBJSON encoder (cython annotations)"""
 
 import cython
 
@@ -39,26 +39,32 @@ cdef void __encode_int(fp_write, item) except *
 cdef void __encode_float(fp_write, item) except *
 
 
+cdef void __encode_float64(fp_write, item) except *
+
+
 cdef void __encode_string(fp_write, item) except *
 
 
 cdef void __encode_bytes(fp_write, item) except *
 
 
-cdef bint __encode_value(fp_write, item) except *
+@cython.locals(no_float32=cython.bint)
+cdef bint __encode_value(fp_write, item, no_float32) except *
 
 
-@cython.locals(seen_containers=dict, container_count=cython.bint, sort_keys=cython.bint, container_id=cython.ulonglong)
-cdef void __encode_array(fp_write, item, seen_containers, container_count, sort_keys) except *
+@cython.locals(seen_containers=dict, container_count=cython.bint, sort_keys=cython.bint, container_id=cython.ulonglong,
+               no_float32=cython.bint)
+cdef void __encode_array(fp_write, item, seen_containers, container_count, sort_keys, no_float32) except *
 
 
-@cython.locals(seen_containers=dict, container_count=cython.bint, sort_keys=cython.bint, container_id=cython.ulonglong)
-cdef void __encode_object(fp_write, item, seen_containers, container_count, sort_keys) except *
+@cython.locals(seen_containers=dict, container_count=cython.bint, sort_keys=cython.bint, container_id=cython.ulonglong,
+               no_float32=cython.bint)
+cdef void __encode_object(fp_write, item, seen_containers, container_count, sort_keys, no_float32) except *
 
 
-@cython.locals(container_count=cython.bint, sort_keys=cython.bint)
-cpdef void dump(obj, fp, container_count=*, sort_keys=*) except *
+@cython.locals(container_count=cython.bint, sort_keys=cython.bint, no_float32=cython.bint)
+cpdef void dump(obj, fp, container_count=*, sort_keys=*, no_float32=*) except *
 
 
-@cython.locals(container_count=cython.bint, sort_keys=cython.bint)
-cpdef object dumpb(obj, container_count=*, sort_keys=*)
+@cython.locals(container_count=cython.bint, sort_keys=cython.bint, no_float32=cython.bint)
+cpdef object dumpb(obj, container_count=*, sort_keys=*, no_float32=*)

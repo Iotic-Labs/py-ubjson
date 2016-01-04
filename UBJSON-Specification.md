@@ -127,7 +127,7 @@ float64 | Yes | See [IEEE 754 Spec](http://en.wikipedia.org/wiki/IEEE_754-1985) 
 high-precision number | Yes | Infinite | Infinite
 
 **Notes**:
-- Numeric values of infinity are to be encoded as a [null](#value_null) value.
+- Numeric values of infinity (and NaN) are to be encoded as a [null](#value_null) in all cases
 - It is advisable to use the smallest applicable type when encoding a number.
 
 #### Integer
@@ -145,7 +145,7 @@ All integer types are written in Big-Endian order.
   - Bit 51-0 (52 bits) - fraction (significant)
 
 #### High-Precision
-These are encoded as a string and thus are only limited by the maximum string size.
+These are encoded as a string and thus are only limited by the maximum string size. Values **must** be written out in accordance with the original [JSON number type specification](http://json.org). Infinity (and NaN) are to be encoded as a [null](#value_null) value.
 
 #### Examples
 Numeric values in JSON:

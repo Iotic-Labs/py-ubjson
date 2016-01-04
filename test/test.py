@@ -54,7 +54,7 @@ CONTAINER_COUNT = b'#'
 PY2 = version_info[0] < 3
 
 
-class TestEncodeDecode(TestCase):
+class TestEncodeDecode(TestCase):  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def __format_in_out(obj, encoded):
@@ -67,13 +67,19 @@ class TestEncodeDecode(TestCase):
         def type_check(self, actual, expected):
             self.assertEqual(actual, ord(expected))
 
+    # based on math.isclose available in Python v3.5
+    @staticmethod
+    # pylint: disable=invalid-name
+    def numbers_close(a, b, rel_tol=1e-05, abs_tol=0.0):
+        return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
     def check_enc_dec(self, obj,
                       # total length of encoded object
                       length=None,
                       # total length is at least the given number of bytes
                       length_greater_or_equal=False,
                       # approximate comparison (e.g. for float)
-                      equal_delta=None,
+                      approximate=False,
                       # type marker expected at start of encoded output
                       expected_type=None,
                       # additional arguments to pass to encoder
@@ -85,8 +91,8 @@ class TestEncodeDecode(TestCase):
         if length is not None:
             assert_func = self.assertGreaterEqual if length_greater_or_equal else self.assertEqual
             assert_func(len(encoded), length, self.__format_in_out(obj, encoded))
-        if equal_delta is not None:
-            self.assertAlmostEqual(ubjloadb(encoded), obj, delta=equal_delta, msg=self.__format_in_out(obj, encoded))
+        if approximate:
+            self.assertTrue(self.numbers_close(ubjloadb(encoded), obj), msg=self.__format_in_out(obj, encoded))
         else:
             self.assertEqual(ubjloadb(encoded), obj, self.__format_in_out(obj, encoded))
 
@@ -162,31 +168,49 @@ class TestEncodeDecode(TestCase):
             with self.assertRaises(DecoderException):
                 ubjloadb(TYPE_HIGH_PREC + TYPE_UINT8 + b'\x02' + suffix)
 
-        self.check_enc_dec(1.8e315)
+        self.check_enc_dec('1.8e315')
         for value in (
-                0.0,
-                2.5,
-                'inf',
-                '-inf',
-                10e30,
-                -1.2345e67890):
+                '0.0',
+                '2.5',
+                '10e30',
+                '-1.2345e67890'):
             # minimum length because: marker + length marker + length + value
             self.check_enc_dec(Decimal(value), 4, length_greater_or_equal=True)
-        # cannot compare equality, so test separately
-        self.assertTrue(ubjloadb(ubjdumpb(Decimal('nan'))).is_nan())  # pylint: disable=no-member
+        # cannot compare equality, so test separately (since these evaluate to "NULL"
+        for value in ('nan', '-inf', 'inf'):
+            self.assertEqual(ubjloadb(ubjdumpb(Decimal(value))), None)
 
     def test_float(self):
         # insufficient length
         for float_type in (TYPE_FLOAT32, TYPE_FLOAT64):
             with self.assertRaises(DecoderException):
                 ubjloadb(float_type + b'\x01')
+
+        self.check_enc_dec(0.0, 5, expected_type=TYPE_FLOAT32)
+
         for type_, value, total_size in (
-                (TYPE_FLOAT32, 0.0, 5),
                 (TYPE_FLOAT32, 1.18e-38, 5),
                 (TYPE_FLOAT32, 3.4e38, 5),
                 (TYPE_FLOAT64, 2.23e-308, 9),
+                (TYPE_FLOAT64, 12345.44e40, 9),
                 (TYPE_FLOAT64, 1.8e307, 9)):
-            self.check_enc_dec(value, total_size, equal_delta=(0.0001 * abs(value)), expected_type=type_)
+            self.check_enc_dec(value,
+                               total_size,
+                               approximate=True,
+                               expected_type=type_,
+                               no_float32=False)
+            # using only float64 (default)
+            self.check_enc_dec(value,
+                               9 if type_ == TYPE_FLOAT32 else total_size,
+                               approximate=True,
+                               expected_type=(TYPE_FLOAT64 if type_ == TYPE_FLOAT32 else type_))
+        for value in ('nan', '-inf', 'inf'):
+            for no_float32 in (True, False):
+                self.assertEqual(ubjloadb(ubjdumpb(float(value), no_float32=no_float32)), None)
+        # value which results in high_prec usage
+        for no_float32 in (True, False):
+            self.check_enc_dec(2.22e-308, 4, expected_type=TYPE_HIGH_PREC, length_greater_or_equal=True,
+                               no_float32=no_float32)
 
     def test_array(self):
         # invalid length
@@ -201,6 +225,8 @@ class TestEncodeDecode(TestCase):
                                                                    b'\x01' + TYPE_NULL))
         obj = [123,
                1.25,
+               43121609.5543,
+               12345.44e40,
                Decimal('10e15'),
                'a',
                'here is a string',
