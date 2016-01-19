@@ -18,7 +18,7 @@ python3 setup.py build_ext -i
 - The ([cython](http://cython.org)-generated) extension modules are not required but provide a significant speed boost.
 - The above can also be run with v2.7+
 - If any _.py_ or _.pxd_ has been modified, _cython_generate.sh_ has to be run first
-- At run time, one can check whether compiled version is in use via the _ubjson.extension_enabled_ boolean
+- At run time, one can check whether compiled version is in use via the _ubjson.EXTENSION_ENABLED_ boolean
 
 
 # Usage

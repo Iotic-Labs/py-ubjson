@@ -223,13 +223,13 @@ def __encode_object(fp_write, item, seen_containers, container_count, sort_keys,
         # allow both str & unicode for Python 2
         if not isinstance(key, TEXT_TYPES):
             raise EncoderException('Mapping keys can only be strings')
-        encoded_val = key.encode('utf-8')
-        length = len(encoded_val)
+        encoded_key = key.encode('utf-8')
+        length = len(encoded_key)
         if length < 2 ** 8:
             fp_write(__SMALL_UINTS_ENCODED[length])
         else:
             __encode_int(fp_write, length)
-        fp_write(encoded_val)
+        fp_write(encoded_key)
 
         if not __encode_value(fp_write, value, no_float32):
             # order important since mappings could also be sequences
@@ -310,7 +310,12 @@ def dump(obj, fp, container_count=False, sort_keys=False, no_float32=True):
         float64: 2.23e-308 <= abs(value) < 1.8e308
         For other values Decimal is used.
     """
+    if fp is None:
+        raise TypeError('fp')
+    if not callable(fp.write):
+        raise TypeError('fp.write not callable')
     fp_write = fp.write
+
     if not __encode_value(fp_write, obj, no_float32):
         # order important since mappings could also be sequences
         if isinstance(obj, Mapping):

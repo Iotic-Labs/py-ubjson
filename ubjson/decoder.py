@@ -135,6 +135,7 @@ def __decode_char(fp_read, marker):
 
 
 def __decode_string(fp_read, marker):
+    # current marker is string identifier, so read next byte which identifies integer type
     length = __decode_int_non_negative(fp_read, fp_read(1))
     raw = fp_read(length)
     if len(raw) < length:
@@ -174,16 +175,16 @@ __METHOD_MAP = {TYPE_NULL: (lambda _, __: None),
 
 def __get_container_params(fp_read, in_mapping, no_bytes, object_pairs_hook):  # pylint: disable=too-many-branches
     container = object_pairs_hook() if in_mapping else []
-    next_byte = fp_read(1)
-    if next_byte == CONTAINER_TYPE:
-        next_byte = fp_read(1)
-        if next_byte not in __TYPES:
+    marker = fp_read(1)
+    if marker == CONTAINER_TYPE:
+        marker = fp_read(1)
+        if marker not in __TYPES:
             raise DecoderException('Invalid container type')
-        type_ = next_byte
-        next_byte = fp_read(1)
+        type_ = marker
+        marker = fp_read(1)
     else:
         type_ = TYPE_NONE
-    if next_byte == CONTAINER_COUNT:
+    if marker == CONTAINER_COUNT:
         count = __decode_int_non_negative(fp_read, fp_read(1))
         counting = True
 
@@ -198,7 +199,7 @@ def __get_container_params(fp_read, in_mapping, no_bytes, object_pairs_hook):  #
             # Make __decode_container finish immediately
             count = 0
         # special case - bytes array
-        elif type_ == TYPE_UINT8 and not no_bytes:
+        elif type_ == TYPE_UINT8 and not in_mapping and not no_bytes:
             container = fp_read(count)
             if len(container) < count:
                 raise DecoderException('Container bytes array too short')
@@ -206,7 +207,7 @@ def __get_container_params(fp_read, in_mapping, no_bytes, object_pairs_hook):  #
             count = 0
         else:
             # Reading ahead is just to capture type, which will not exist if type is fixed
-            next_byte = fp_read(1) if (in_mapping or type_ == TYPE_NONE) else type_
+            marker = fp_read(1) if (in_mapping or type_ == TYPE_NONE) else type_
 
     elif type_ == TYPE_NONE:
         # set to one to indicate that not finished yet
@@ -214,7 +215,7 @@ def __get_container_params(fp_read, in_mapping, no_bytes, object_pairs_hook):  #
         counting = False
     else:
         raise DecoderException('Container type without count')
-    return next_byte, counting, count, type_, container
+    return marker, counting, count, type_, container
 
 
 def __decode_object(fp_read, no_bytes, object_pairs_hook):
@@ -283,7 +284,7 @@ def __decode_array(fp_read, no_bytes, object_pairs_hook):
     return container
 
 
-def load(fp, no_bytes=False, object_pairs_hook=None):
+def load(fp, no_bytes=False, object_pairs_hook=None):  # noqa (complexity)
     """Decodes and returns UBJSON from the given file-like object
 
     Args:
@@ -336,7 +337,12 @@ def load(fp, no_bytes=False, object_pairs_hook=None):
     elif not issubclass(object_pairs_hook, Mapping):
         raise TypeError('object_pairs_hook is not a mapping type')
 
+    if fp is None:
+        raise TypeError('fp')
+    if not callable(fp.read):
+        raise TypeError('fp.read not callable')
     fp_read = fp.read
+
     marker = fp_read(1)
     try:
         try:

@@ -62,6 +62,7 @@ setup(
     packages=['ubjson'],
     ext_modules=[Extension(name[:-len(EXTENSION)], [name]) for name in iglob('ubjson/*' + EXTENSION)],
     cmdclass={"build_ext": BuildExtWarnOnFail},
+    keywords=('ubjson', 'ubj'),
     classifiers=(
         'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: Apache Software License',

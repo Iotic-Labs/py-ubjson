@@ -76,7 +76,7 @@ cdef unicode __decode_string(fp_read, marker)
 cdef unicode __decode_object_key(fp_read, marker)
 
 
-@cython.locals(in_mapping=cython.bint, no_bytes=cython.bint, next_byte=bytes, type_=bytes, count=int)
+@cython.locals(in_mapping=cython.bint, no_bytes=cython.bint, marker=bytes, type_=bytes, count=int)
 cdef object __get_container_params(fp_read, in_mapping, no_bytes, object_pairs_hook)
 
 

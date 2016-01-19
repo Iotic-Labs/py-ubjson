@@ -272,6 +272,11 @@ class TestEncodeDecode(TestCase):  # pylint: disable=too-many-public-methods
                                   TYPE_UINT8 + b'\x02' + b'aa' + TYPE_UINT8 + b'\x02' + b'bb'),
                          {'aa': None, 'bb': None})
 
+        # fixed type + count (bytes)
+        self.assertEqual(ubjloadb(OBJECT_START + CONTAINER_TYPE + TYPE_UINT8 + CONTAINER_COUNT + TYPE_UINT8 + b'\x02' +
+                                  TYPE_UINT8 + b'\x02' + b'aa' + b'\x04' + TYPE_UINT8 + b'\x02' + b'bb' + b'\x05'),
+                         {'aa': 4, 'bb': 5})
+
     def test_object(self):
         self.assertEqual(ubjdumpb({}), OBJECT_START + OBJECT_END)
         self.assertEqual(ubjdumpb({'a': None}, container_count=True), (OBJECT_START + CONTAINER_COUNT + TYPE_UINT8 +
