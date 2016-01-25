@@ -6,3 +6,7 @@ ubjson/*.html
 *.py[cod]
 *.so
 .coverage
+MANIFEST
+*.egg
+.eggs/
+py_ubjson.egg-info/

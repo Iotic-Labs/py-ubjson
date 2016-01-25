@@ -5,18 +5,20 @@ This is a Python v3.2+ (and 2.7+) [Universal Binary JSON](http://ubjson.org) enc
 
 # Installing / packaging
 ```shell
+# To get from PyPI
+pip3 install lz4framed
+
+# To only build extension modules inline (e.g. in repository)
+python3 setup.py build_ext -i
+
 # To build & install globally
 python3 setup.py install
-
-# To package
-python3 setup.py bdist
-
-# To only build extension modules inline (i.e. in source directory)
-python3 setup.py build_ext -i
 ```
 **Notes**
+
 - The ([cython](http://cython.org)-generated) extension modules are not required but provide a significant speed boost.
 - The above can also be run with v2.7+
+- PyPI releases are signed with the [Iotic Labs Software release signing key](https://iotic-labs.com/iotic-labs.com.asc)
 - If any _.py_ or _.pxd_ has been modified, _cython_generate.sh_ has to be run first
 - At run time, one can check whether compiled version is in use via the _ubjson.EXTENSION_ENABLED_ boolean
 
@@ -30,7 +32,7 @@ encoded = ubjson.dumpb({u'a': 1})
 
 decoded = ubjson.loadb(encoded)
 ```
-**Note**: Note: Only unicode strings in Python 2 will be encoded as strings, plain *str* will be encoded as a byte array.
+**Note**: Only unicode strings in Python 2 will be encoded as strings, plain *str* will be encoded as a byte array.
 
 
 # Documentation
@@ -57,7 +59,7 @@ This library has been checked using [flake8](https://pypi.python.org/pypi/flake8
 ```shell
 ./coverage_test.sh
 ```
-Note: This requires [coverage](https://pypi.python.org/pypi/coverage).
+**Note**: This requires [coverage](https://pypi.python.org/pypi/coverage).
 
 
 # Limitations
@@ -69,6 +71,7 @@ Note: This requires [coverage](https://pypi.python.org/pypi/coverage).
 
 # Why?
 The only existing implementation I was aware of at the time of writing ([simpleubjson](https://github.com/brainwater/simpleubjson)) had the following limitations:
+
 - Does not support efficient binary encoding
 - Only supports draft-9
 - Only supports individual Python types rather than anything implementing an interface (e.g. _Mapping_)
