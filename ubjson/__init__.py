@@ -29,7 +29,7 @@ To use a file-like object as input/output, use dump() & load() methods instead.
 from .encoder import dump, dumpb, EncoderException  # noqa
 from .decoder import load, loadb, DecoderException  # noqa
 
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 
 __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
 
