@@ -6,7 +6,7 @@ This is a Python v3.2+ (and 2.7+) [Universal Binary JSON](http://ubjson.org) enc
 # Installing / packaging
 ```shell
 # To get from PyPI
-pip3 install lz4framed
+pip3 install py-ubjson
 
 # To only build extension modules inline (e.g. in repository)
 python3 setup.py build_ext -i
