@@ -577,12 +577,12 @@ int __pyx_module_is_main_ubjson____init__ = 0;
 
 /* Implementation of 'ubjson.__init__' */
 static PyObject *__pyx_builtin_NameError;
-static char __pyx_k_0_8[] = "0.8";
 static char __pyx_k_all[] = "__all__";
 static char __pyx_k_dump[] = "dump";
 static char __pyx_k_load[] = "load";
 static char __pyx_k_main[] = "__main__";
 static char __pyx_k_test[] = "__test__";
+static char __pyx_k_0_8_2[] = "0.8.2";
 static char __pyx_k_dumpb[] = "dumpb";
 static char __pyx_k_loadb[] = "loadb";
 static char __pyx_k_import[] = "__import__";
@@ -595,7 +595,7 @@ static char __pyx_k_DecoderException[] = "DecoderException";
 static char __pyx_k_EncoderException[] = "EncoderException";
 static char __pyx_k_EXTENSION_ENABLED[] = "EXTENSION_ENABLED";
 static char __pyx_k_UBJSON_draft_12_implementation_w[] = "UBJSON (draft 12) implementation without No-Op support\n\nExample usage:\n\n# To encode\nencoded = ubjson.dumpb({'a': 1})\n\n# To decode\ndecoded = ubjson.loadb(encoded)\n\nTo use a file-like object as input/output, use dump() & load() methods instead.\n";
-static PyObject *__pyx_kp_s_0_8;
+static PyObject *__pyx_kp_s_0_8_2;
 static PyObject *__pyx_n_s_DecoderException;
 static PyObject *__pyx_n_s_EXTENSION_ENABLED;
 static PyObject *__pyx_n_s_EncoderException;
@@ -694,7 +694,7 @@ static struct PyModuleDef __pyx_moduledef = {
 #endif
 
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
-  {&__pyx_kp_s_0_8, __pyx_k_0_8, sizeof(__pyx_k_0_8), 0, 0, 1, 0},
+  {&__pyx_kp_s_0_8_2, __pyx_k_0_8_2, sizeof(__pyx_k_0_8_2), 0, 0, 1, 0},
   {&__pyx_n_s_DecoderException, __pyx_k_DecoderException, sizeof(__pyx_k_DecoderException), 0, 0, 1, 1},
   {&__pyx_n_s_EXTENSION_ENABLED, __pyx_k_EXTENSION_ENABLED, sizeof(__pyx_k_EXTENSION_ENABLED), 0, 0, 1, 1},
   {&__pyx_n_s_EncoderException, __pyx_k_EncoderException, sizeof(__pyx_k_EncoderException), 0, 0, 1, 1},
@@ -725,7 +725,7 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
   /* "ubjson/__init__.py":34
- * __version__ = '0.8'
+ * __version__ = '0.8.2'
  * 
  * __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')             # <<<<<<<<<<<<<<
  * 
@@ -887,7 +887,7 @@ PyMODINIT_FUNC PyInit_ubjson(void)
  * from .encoder import dump, dumpb, EncoderException  # noqa
  * from .decoder import load, loadb, DecoderException  # noqa             # <<<<<<<<<<<<<<
  * 
- * __version__ = '0.8'
+ * __version__ = '0.8.2'
  */
   __pyx_t_2 = PyList_New(3); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
@@ -920,14 +920,14 @@ PyMODINIT_FUNC PyInit_ubjson(void)
   /* "ubjson/__init__.py":32
  * from .decoder import load, loadb, DecoderException  # noqa
  * 
- * __version__ = '0.8'             # <<<<<<<<<<<<<<
+ * __version__ = '0.8.2'             # <<<<<<<<<<<<<<
  * 
  * __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_kp_s_0_8) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_kp_s_0_8_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "ubjson/__init__.py":34
- * __version__ = '0.8'
+ * __version__ = '0.8.2'
  * 
  * __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')             # <<<<<<<<<<<<<<
  * 
