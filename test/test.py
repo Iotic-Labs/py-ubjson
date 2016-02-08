@@ -53,6 +53,15 @@ CONTAINER_COUNT = b'#'
 
 PY2 = version_info[0] < 3
 
+if PY2:
+    def u(obj):
+        """Casts obj to unicode string, unless already one"""
+        return obj if isinstance(obj, unicode) else unicode(obj)  # noqa  pylint: disable=undefined-variable
+else:
+    def u(obj):
+        """Casts obj to unicode string, unless already one"""
+        return obj if isinstance(obj, str) else str(obj)
+
 
 class TestEncodeDecode(TestCase):  # pylint: disable=too-many-public-methods
 
@@ -118,23 +127,23 @@ class TestEncodeDecode(TestCase):  # pylint: disable=too-many-public-methods
         self.check_enc_dec(None, 1)
 
     def test_char(self):
-        self.assertEqual(ubjdumpb(u'a'), TYPE_CHAR + 'a'.encode('utf-8'))
+        self.assertEqual(ubjdumpb(u('a')), TYPE_CHAR + 'a'.encode('utf-8'))
         # no char, char invalid utf-8
         for suffix in (b'', b'\xfe'):
             with self.assertRaises(DecoderException):
                 ubjloadb(TYPE_CHAR + suffix)
-        for char in (u'a', u'\0', u'~'):
+        for char in (u('a'), u('\0'), u('~')):
             self.check_enc_dec(char, 2)
 
     def test_string(self):
-        self.assertEqual(ubjdumpb(u'ab'), TYPE_STRING + TYPE_UINT8 + b'\x02' + 'ab'.encode('utf-8'))
-        self.check_enc_dec(u'', 3)
+        self.assertEqual(ubjdumpb(u('ab')), TYPE_STRING + TYPE_UINT8 + b'\x02' + 'ab'.encode('utf-8'))
+        self.check_enc_dec(u(''), 3)
         # invalid string size, string too short, string invalid utf-8
         for suffix in (b'\x81', b'\x01', b'\x01' + b'\xfe'):
             with self.assertRaises(DecoderException):
                 ubjloadb(TYPE_STRING + TYPE_INT8 + suffix)
         # Note: In Python 2 plain str type is encoded as byte array
-        for string in ('some ascii', u'\u00a9 with extended\u2122', u'long string' * 100):
+        for string in ('some ascii', u(r'\u00a9 with extended\u2122'), u('long string') * 100):
             self.check_enc_dec(string, 4, length_greater_or_equal=True)
 
     def test_int(self):
@@ -306,9 +315,9 @@ class TestEncodeDecode(TestCase):  # pylint: disable=too-many-public-methods
                'hp': Decimal('10e15'),
                'char': 'a',
                'str': 'here is a string',
-               'unicode': u'\u00a9 with extended\u2122',
+               'unicode': u(r'\u00a9 with extended\u2122'),
                '': 'empty key',
-               u'\u00a9 with extended\u2122': 'unicode-key',
+               u(r'\u00a9 with extended\u2122'): 'unicode-key',
                'null': None,
                'true': True,
                'false': False,

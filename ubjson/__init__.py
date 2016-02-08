@@ -28,15 +28,8 @@ To use a file-like object as input/output, use dump() & load() methods instead.
 
 from .encoder import dump, dumpb, EncoderException  # noqa
 from .decoder import load, loadb, DecoderException  # noqa
+from .compat import EXTENSION_ENABLED
 
-__version__ = '0.8.2'
+__version__ = '0.8.3'
 
 __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
-
-# Whether cython extension is in use
-try:
-    __compiled()  # pylint: disable=undefined-variable
-except NameError:
-    EXTENSION_ENABLED = False
-else:
-    EXTENSION_ENABLED = True  # pragma: no cover

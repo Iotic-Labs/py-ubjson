@@ -45,8 +45,6 @@ from sys import stderr, stdout, stdin, version_info
 PY2 = (version_info[0] == 2)
 
 if PY2:
-    from collections import Mapping, Sequence  # noqa
-
     # pylint:disable=undefined-variable
     INTEGER_TYPES = (int, long)  # noqa
     UNICODE_TYPE = unicode  # noqa
@@ -58,8 +56,6 @@ if PY2:
     STDERR_RAW = stderr
 
 else:
-    from collections.abc import Mapping, Sequence  # noqa
-
     INTEGER_TYPES = (int,)
     UNICODE_TYPE = str
     TEXT_TYPES = (str,)
@@ -68,6 +64,12 @@ else:
     STDIN_RAW = stdin.buffer  # pylint: disable=no-member
     STDOUT_RAW = stdout.buffer  # pylint: disable=no-member
     STDERR_RAW = stderr.buffer  # pylint: disable=no-member
+
+try:
+    # introduced in v3.3
+    from collections.abc import Mapping, Sequence  # noqa
+except ImportError:
+    from collections import Mapping, Sequence  # noqa  pylint: disable=wrong-import-order
 
 
 if version_info[:2] == (3, 2):
@@ -85,3 +87,11 @@ elif version_info[:2] > (3, 2):
 else:
     def raise_from(value, _):
         raise value
+
+# Whether cython extension is in use
+try:
+    __compiled()  # pylint: disable=undefined-variable
+except NameError:
+    EXTENSION_ENABLED = False
+else:
+    EXTENSION_ENABLED = True  # pragma: no cover
