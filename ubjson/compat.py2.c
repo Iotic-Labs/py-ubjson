@@ -1717,7 +1717,7 @@ PyMODINIT_FUNC PyInit_compat(void)
   }
 
   /* "ubjson/compat.py":1
- * # Copyright 2015 Iotic Labs Ltd             # <<<<<<<<<<<<<<
+ * # Copyright (c) 2016 Iotic Labs Ltd. All rights reserved.             # <<<<<<<<<<<<<<
  * #
  * # Licensed under the Apache License, Version 2.0 (the "License");
  */

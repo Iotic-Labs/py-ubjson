@@ -7388,7 +7388,7 @@ PyMODINIT_FUNC PyInit_encoder(void)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "ubjson/encoder.py":1
- * # Copyright 2015 Iotic Labs Ltd             # <<<<<<<<<<<<<<
+ * # Copyright (c) 2016 Iotic Labs Ltd. All rights reserved.             # <<<<<<<<<<<<<<
  * #
  * # Licensed under the Apache License, Version 2.0 (the "License");
  */
