@@ -61,9 +61,9 @@ else:
     TEXT_TYPES = (str,)
     BYTES_TYPES = (bytes, bytearray)
 
-    STDIN_RAW = stdin.buffer  # pylint: disable=no-member
-    STDOUT_RAW = stdout.buffer  # pylint: disable=no-member
-    STDERR_RAW = stderr.buffer  # pylint: disable=no-member
+    STDIN_RAW = getattr(stdin, 'buffer', stdin)
+    STDOUT_RAW = getattr(stdout, 'buffer', stdout)
+    STDERR_RAW = getattr(stderr, 'buffer', stderr)
 
 try:
     # introduced in v3.3
