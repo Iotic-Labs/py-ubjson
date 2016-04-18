@@ -13,6 +13,9 @@ python3 setup.py build_ext -i
 
 # To build & install globally
 python3 setup.py install
+
+# To skip building of extensions when installing (or building)
+PYUBJSON_NO_EXTENSION=1 python3 setup.py install
 ```
 **Notes**
 

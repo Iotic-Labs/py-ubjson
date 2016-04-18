@@ -15,6 +15,7 @@
 # pylint: disable=import-error,wrong-import-order
 
 import sys
+import os
 import warnings
 from glob import iglob
 
@@ -67,6 +68,7 @@ class BuildExtWarnOnFail(build_ext):
 
 
 EXTENSION = '.py3.c' if sys.version_info[0] >= 3 else '.py2.c'
+BUILD_EXTENSIONS = 'PYUBJSON_NO_EXTENSION' not in os.environ
 
 setup(
     name='py-ubjson',
@@ -81,7 +83,8 @@ setup(
     license='Apache License 2.0',
     packages=['ubjson'],
     zip_safe=False,
-    ext_modules=[Extension(name[:-len(EXTENSION)], [name]) for name in iglob('ubjson/*' + EXTENSION)],
+    ext_modules=([Extension(name[:-len(EXTENSION)], [name]) for name in iglob('ubjson/*' + EXTENSION)]
+                 if BUILD_EXTENSIONS else []),
     cmdclass={"build_ext": BuildExtWarnOnFail},
     keywords=['ubjson', 'ubj'],
     classifiers=[
