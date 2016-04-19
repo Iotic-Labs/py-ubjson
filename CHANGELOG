@@ -1,5 +1,7 @@
-UNRELEASED
+0.8.4
 - License information update
+- Allow for lack of stdin/stdout/stdout buffer access (#1)
+- Allow for extenion building to be skipped via env. var (#2)
 
 0.8.3
 - Initial public release
