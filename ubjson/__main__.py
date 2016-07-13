@@ -84,7 +84,7 @@ specified, output goes to stdout.""", file=stderr)
             out_stream = STDOUT_RAW if do_from_json else stdout
         else:
             try:
-                out_stream = out_file = open(argv[2], 'ab' if do_from_json else 'a')
+                out_stream = out_file = open(argv[3], 'ab' if do_from_json else 'a')
             except IOError as ex:
                 __error('Failed to open output file for writing: %s' % ex)
                 return 4

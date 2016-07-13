@@ -30,6 +30,6 @@ from .encoder import dump, dumpb, EncoderException  # noqa
 from .decoder import load, loadb, DecoderException  # noqa
 from .compat import EXTENSION_ENABLED
 
-__version__ = '0.8.4'
+__version__ = '0.8.5'
 
 __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
