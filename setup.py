@@ -73,8 +73,8 @@ BUILD_EXTENSIONS = 'PYUBJSON_NO_EXTENSION' not in os.environ
 
 COMPILE_ARGS = ['-std=c99']
 # For testing/debug only - some of these are GCC-specific
-COMPILE_ARGS += ['-Wall', '-Wextra', '-Wundef', '-Wshadow', '-Wcast-align', '-Wcast-qual', '-Wstrict-prototypes',
-                 '-pedantic']
+# COMPILE_ARGS += ['-Wall', '-Wextra', '-Wundef', '-Wshadow', '-Wcast-align', '-Wcast-qual', '-Wstrict-prototypes',
+#                  '-pedantic']
 
 setup(
     name='py-ubjson',
