@@ -14,6 +14,8 @@
 
 # pylint: disable=superfluous-parens,wrong-import-position
 
+from __future__ import print_function, unicode_literals
+
 from abc import ABCMeta, abstractmethod
 from sys import argv
 from traceback import print_exc
@@ -63,6 +65,8 @@ class Json(LibWrapper):
     @staticmethod
     def decode(obj):
         return j_dec(obj)
+
+
 TEST_LIBS = [Json]
 
 # py-ubjson

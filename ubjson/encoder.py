@@ -21,13 +21,9 @@ from io import BytesIO
 from math import isinf, isnan
 
 from .compat import Mapping, Sequence, INTEGER_TYPES, UNICODE_TYPE, TEXT_TYPES, BYTES_TYPES
-try:
-    from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
-                          TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
-                          OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
-    # encoder.pxd defines these when C extension is enabled
-except ImportError:  # pragma: no cover
-    pass
+from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
+                      TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
+                      OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
 
 # Lookup tables for encoding small intergers, pre-initialised larger integer & float packers
 __SMALL_INTS_ENCODED = {i: TYPE_INT8 + pack('>b', i) for i in range(-128, 128)}
@@ -45,13 +41,6 @@ __BYTES_ARRAY_PREFIX = ARRAY_START + CONTAINER_TYPE + TYPE_UINT8 + CONTAINER_COU
 class EncoderException(TypeError):
     """Raised when encoding of an object fails."""
     pass
-
-
-def __encode_high_prec(fp_write, item):
-    fp_write(TYPE_HIGH_PREC)
-    encoded_val = str(Decimal(item)).encode('utf-8')
-    __encode_int(fp_write, len(encoded_val))
-    fp_write(encoded_val)
 
 
 def __encode_decimal(fp_write, item):
@@ -78,7 +67,7 @@ def __encode_int(fp_write, item):
             fp_write(TYPE_INT64)
             fp_write(__PACK_INT64(item))
         else:
-            __encode_high_prec(fp_write, item)
+            __encode_decimal(fp_write, Decimal(item))
     elif item >= -(2 ** 7):
         fp_write(__SMALL_INTS_ENCODED[item])
     elif item >= -(2 ** 15):
@@ -91,7 +80,7 @@ def __encode_int(fp_write, item):
         fp_write(TYPE_INT64)
         fp_write(__PACK_INT64(item))
     else:
-        __encode_high_prec(fp_write, item)
+        __encode_decimal(fp_write, Decimal(item))
 
 
 def __encode_float(fp_write, item):
@@ -104,7 +93,7 @@ def __encode_float(fp_write, item):
     elif isinf(item) or isnan(item):
         fp_write(TYPE_NULL)
     else:
-        __encode_high_prec(fp_write, item)
+        __encode_decimal(fp_write, Decimal(item))
 
 
 def __encode_float64(fp_write, item):
@@ -117,7 +106,7 @@ def __encode_float64(fp_write, item):
     elif isinf(item) or isnan(item):
         fp_write(TYPE_NULL)
     else:
-        __encode_high_prec(fp_write, item)
+        __encode_decimal(fp_write, Decimal(item))
 
 
 def __encode_string(fp_write, item):
@@ -183,7 +172,7 @@ def __encode_array(fp_write, item, seen_containers, container_count, sort_keys, 
     # circular reference check
     container_id = id(item)
     if container_id in seen_containers:
-        raise EncoderException('Circular reference detected')
+        raise ValueError('Circular reference detected')
     seen_containers[container_id] = item
 
     fp_write(ARRAY_START)
@@ -211,7 +200,7 @@ def __encode_object(fp_write, item, seen_containers, container_count, sort_keys,
     # circular reference check
     container_id = id(item)
     if container_id in seen_containers:
-        raise EncoderException('Circular reference detected')
+        raise ValueError('Circular reference detected')
     seen_containers[container_id] = item
 
     fp_write(OBJECT_START)
@@ -258,7 +247,7 @@ def dump(obj, fp, container_count=False, sort_keys=False, no_float32=True):
                                 more space and encoding speed could be reduced
                                 if getting length of any of the containers is
                                 expensive.
-        sort_keys (bool): Sort keys of dictionaries
+        sort_keys (bool): Sort keys of mappings
         no_float32 (bool): Never use float32 to store float numbers (other than
                            for zero). Disabling this might save space at the
                            loss of precision.
@@ -310,8 +299,6 @@ def dump(obj, fp, container_count=False, sort_keys=False, no_float32=True):
         float64: 2.23e-308 <= abs(value) < 1.8e308
         For other values Decimal is used.
     """
-    if fp is None:
-        raise TypeError('fp')
     if not callable(fp.write):
         raise TypeError('fp.write not callable')
     fp_write = fp.write

@@ -26,10 +26,17 @@ decoded = ubjson.loadb(encoded)
 To use a file-like object as input/output, use dump() & load() methods instead.
 """
 
-from .encoder import dump, dumpb, EncoderException  # noqa
-from .decoder import load, loadb, DecoderException  # noqa
-from .compat import EXTENSION_ENABLED
+try:
+    from _ubjson import dump, dumpb, load, loadb
+    EXTENSION_ENABLED = True  # pragma: no cover
+except ImportError:
+    from .encoder import dump, dumpb
+    from .decoder import load, loadb
+    EXTENSION_ENABLED = False
 
-__version__ = '0.8.5'
+from .encoder import EncoderException  # noqa
+from .decoder import DecoderException  # noqa
+
+__version__ = '0.9.0'
 
 __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')

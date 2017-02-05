@@ -20,16 +20,13 @@ from struct import Struct, pack, error as StructError
 from decimal import Decimal, DecimalException
 
 from .compat import raise_from, Mapping
-try:
-    from .markers import (TYPE_NONE, TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16,
-                          TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
-                          OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
-    # decoder.pxd defines these when C extension is enabled
-except ImportError:  # pragma: no cover
-    pass
+from .markers import (TYPE_NONE, TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16,
+                      TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
+                      OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
 
 __TYPES = frozenset((TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
-                     TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING))
+                     TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, ARRAY_START,
+                     OBJECT_START))
 __TYPES_NO_DATA = frozenset((TYPE_NULL, TYPE_BOOL_FALSE, TYPE_BOOL_TRUE))
 __TYPES_INT = frozenset((TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32, TYPE_INT64))
 
@@ -46,10 +43,10 @@ class DecoderException(ValueError):
     """Raised when decoding of a UBJSON stream fails."""
 
     def __init__(self, message, fp=None):
-        if fp is None:
-            super(DecoderException, self).__init__(str(message))
-        else:
+        if hasattr(fp, 'tell'):
             super(DecoderException, self).__init__('%s (at byte %d)' % (message, fp.tell()))
+        else:
+            super(DecoderException, self).__init__(str(message))
 
 
 # pylint: disable=unused-argument
@@ -173,8 +170,7 @@ __METHOD_MAP = {TYPE_NULL: (lambda _, __: None),
                 TYPE_STRING: __decode_string}
 
 
-def __get_container_params(fp_read, in_mapping, no_bytes, object_pairs_hook):  # pylint: disable=too-many-branches
-    container = object_pairs_hook() if in_mapping else []
+def __get_container_params(fp_read, in_mapping, no_bytes):
     marker = fp_read(1)
     if marker == CONTAINER_TYPE:
         marker = fp_read(1)
@@ -188,24 +184,9 @@ def __get_container_params(fp_read, in_mapping, no_bytes, object_pairs_hook):  #
         count = __decode_int_non_negative(fp_read, fp_read(1))
         counting = True
 
-        # special case - no data (None or bool)
-        if type_ in __TYPES_NO_DATA:
-            if in_mapping:
-                value = __METHOD_MAP[type_](fp_read, type_)
-                for _ in range(count):
-                    container[__decode_object_key(fp_read, fp_read(1))] = value
-            else:
-                container = [__METHOD_MAP[type_](fp_read, type_)] * count
-            # Make __decode_container finish immediately
-            count = 0
-        # special case - bytes array
-        elif type_ == TYPE_UINT8 and not in_mapping and not no_bytes:
-            container = fp_read(count)
-            if len(container) < count:
-                raise DecoderException('Container bytes array too short')
-            # Make __decode_container finish immediately
-            count = 0
-        else:
+        # special cases (no data (None or bool) / bytes array) will be handled in calling functions
+        if not (type_ in __TYPES_NO_DATA or
+                (type_ == TYPE_UINT8 and not in_mapping and not no_bytes)):
             # Reading ahead is just to capture type, which will not exist if type is fixed
             marker = fp_read(1) if (in_mapping or type_ == TYPE_NONE) else type_
 
@@ -215,12 +196,19 @@ def __get_container_params(fp_read, in_mapping, no_bytes, object_pairs_hook):  #
         counting = False
     else:
         raise DecoderException('Container type without count')
-    return marker, counting, count, type_, container
+    return marker, counting, count, type_
 
 
-def __decode_object(fp_read, no_bytes, object_pairs_hook):
-    marker, counting, count, type_, container = __get_container_params(fp_read, True, no_bytes, object_pairs_hook)
-    value = None
+def __decode_object(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
+    marker, counting, count, type_ = __get_container_params(fp_read, True, no_bytes)
+    pairs = []
+
+    # special case - no data (None or bool)
+    if type_ in __TYPES_NO_DATA:
+        value = __METHOD_MAP[type_](fp_read, type_)
+        for _ in range(count):
+            pairs.append((__decode_object_key(fp_read, fp_read(1)), value))
+        return object_pairs_hook(pairs)
 
     while count > 0 and (counting or marker != OBJECT_END):
         # decode key for object
@@ -244,19 +232,29 @@ def __decode_object(fp_read, no_bytes, object_pairs_hook):
             else:
                 raise DecoderException('Invalid marker within object')
 
-        container[key] = value
+        pairs.append((key, value))
         if counting:
             count -= 1
-        if count:
+        if count > 0:
             marker = fp_read(1)
 
-    return container
+    return object_pairs_hook(pairs)
 
 
-def __decode_array(fp_read, no_bytes, object_pairs_hook):
-    marker, counting, count, type_, container = __get_container_params(fp_read, False, no_bytes, object_pairs_hook)
-    value = None
+def __decode_array(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
+    marker, counting, count, type_ = __get_container_params(fp_read, False, no_bytes)
 
+    # special case - no data (None or bool)
+    if type_ in __TYPES_NO_DATA:
+        return [__METHOD_MAP[type_](fp_read, type_)] * count
+    # special case - bytes array
+    elif type_ == TYPE_UINT8 and not no_bytes:
+        container = fp_read(count)
+        if len(container) < count:
+            raise DecoderException('Container bytes array too short')
+        return container
+
+    container = []
     while count > 0 and (counting or marker != ARRAY_END):
         # decode value
         try:
@@ -278,13 +276,13 @@ def __decode_array(fp_read, no_bytes, object_pairs_hook):
         container.append(value)
         if counting:
             count -= 1
-        if count:
-            marker = fp_read(1) if type_ == TYPE_NONE else type_
+        if count and type_ == TYPE_NONE:
+            marker = fp_read(1)
 
     return container
 
 
-def load(fp, no_bytes=False, object_pairs_hook=None):  # noqa (complexity)
+def load(fp, no_bytes=False, object_pairs_hook=None):
     """Decodes and returns UBJSON from the given file-like object
 
     Args:
@@ -292,9 +290,9 @@ def load(fp, no_bytes=False, object_pairs_hook=None):  # noqa (complexity)
         no_bytes (bool): If set, typed UBJSON arrays (uint8) will not be
                          converted to a bytes instance and instead treated like
                          any other array (i.e. result in a list).
-        object_pairs_hook (class): A alternative class to use as the mapping
-                                   type (instead of dict), e.g. OrderedDict
-                                   from the collections module.
+        object_pairs_hook (function): Called with the result of any object
+                                      literal decoded with an ordered list of
+                                      pairs (instead of dict).
 
     Returns:
         Decoded object
@@ -337,8 +335,6 @@ def load(fp, no_bytes=False, object_pairs_hook=None):  # noqa (complexity)
     elif not issubclass(object_pairs_hook, Mapping):
         raise TypeError('object_pairs_hook is not a mapping type')
 
-    if fp is None:
-        raise TypeError('fp')
     if not callable(fp.read):
         raise TypeError('fp.read not callable')
     fp_read = fp.read

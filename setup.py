@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pylint: disable=import-error,wrong-import-order
+# pylint: disable=import-error,wrong-import-order,ungrouped-imports
+
+from __future__ import print_function
 
 import sys
 import os
 import warnings
-from glob import iglob
+from glob import glob
 
 # Allow for environments without setuptools
 try:
@@ -39,10 +41,10 @@ from ubjson import __version__ as version
 try:
     from pypandoc import convert
 except ImportError:
-    READ_MD = lambda f: open(f, 'r').read()
+    READ_MD = lambda f: open(f, 'r').read()  # noqa: E731
     print('Warning: pypandoc module not found, will not convert Markdown to RST')
 else:
-    READ_MD = lambda f: convert(f, 'rst')
+    READ_MD = lambda f: convert(f, 'rst')  # noqa: E731
 
 
 # Loosely based on https://github.com/mongodb/mongo-python-driver/blob/master/setup.py
@@ -67,8 +69,12 @@ class BuildExtWarnOnFail(build_ext):
                           % ext.name)
 
 
-EXTENSION = '.py3.c' if sys.version_info[0] >= 3 else '.py2.c'
 BUILD_EXTENSIONS = 'PYUBJSON_NO_EXTENSION' not in os.environ
+
+COMPILE_ARGS = ['-std=c99']
+# For testing/debug only - some of these are GCC-specific
+COMPILE_ARGS += ['-Wall', '-Wextra', '-Wundef', '-Wshadow', '-Wcast-align', '-Wcast-qual', '-Wstrict-prototypes',
+                 '-pedantic']
 
 setup(
     name='py-ubjson',
@@ -83,7 +89,7 @@ setup(
     license='Apache License 2.0',
     packages=['ubjson'],
     zip_safe=False,
-    ext_modules=([Extension(name[:-len(EXTENSION)], [name]) for name in iglob('ubjson/*' + EXTENSION)]
+    ext_modules=([Extension('_ubjson', glob('src/*.c'), extra_compile_args=COMPILE_ARGS)]
                  if BUILD_EXTENSIONS else []),
     cmdclass={"build_ext": BuildExtWarnOnFail},
     keywords=['ubjson', 'ubj'],

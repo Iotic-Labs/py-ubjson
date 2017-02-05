@@ -38,7 +38,7 @@
 
 # pylint: disable=unused-import,invalid-name,redefined-variable-type,wrong-import-position,no-name-in-module
 # pylint: disable=import-error
-
+# pragma: no cover
 
 from sys import stderr, stdout, stdin, version_info
 
@@ -87,11 +87,3 @@ elif version_info[:2] > (3, 2):
 else:
     def raise_from(value, _):
         raise value
-
-# Whether cython extension is in use
-try:
-    __compiled()  # pylint: disable=undefined-variable
-except NameError:
-    EXTENSION_ENABLED = False
-else:
-    EXTENSION_ENABLED = True  # pragma: no cover
