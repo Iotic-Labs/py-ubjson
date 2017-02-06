@@ -226,20 +226,16 @@ bail:
 /******************************************************************************/
 
 static int _encode_PyObject_as_PyDecimal(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
-    PyObject *args;
     PyObject *decimal = NULL;
 
-    BAIL_ON_NULL(args = PyTuple_Pack(1, obj));
     // Decimal class has no public C API
     BAIL_ON_NULL(decimal =  PyObject_CallFunctionObjArgs((PyObject*)PyDec_Type, obj, NULL));
     BAIL_ON_NONZERO(_encode_PyDecimal(decimal, buffer));
 
-    Py_DECREF(args);
     Py_DECREF(decimal);
     return 0;
 
 bail:
-    Py_XDECREF(args);
     Py_XDECREF(decimal);
     return 1;
 }
