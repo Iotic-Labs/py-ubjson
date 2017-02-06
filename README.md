@@ -19,10 +19,9 @@ PYUBJSON_NO_EXTENSION=1 python3 setup.py install
 ```
 **Notes**
 
-- The ([cython](http://cython.org)-generated) extension modules are not required but provide a significant speed boost.
+- The extension module is not required but provide a significant speed boost.
 - The above can also be run with v2.7+
 - PyPI releases are signed with the [Iotic Labs Software release signing key](https://iotic-labs.com/iotic-labs.com.asc)
-- If any _.py_ or _.pxd_ has been modified, _cython_generate.sh_ has to be run first
 - At run time, one can check whether compiled version is in use via the _ubjson.EXTENSION_ENABLED_ boolean
 
 
@@ -69,7 +68,6 @@ This library has been checked using [flake8](https://pypi.python.org/pypi/flake8
 - The **No-Op** type is not supported. (This should arguably be a protocol-level rather than serialisation-level option.)
 - Strongly-typed containers are only supported by the decoder (apart from for **bytes**/**bytearray**).
 - Encoder/decoder extensions are not supported at this time.
-- cython optimizations could be improved.
 
 
 # Why?
