@@ -60,9 +60,8 @@ _ubjson_dump(PyObject *self, PyObject *args, PyObject *kwargs) {
 
     BAIL_ON_NONZERO(_ubjson_encode_value(obj, buffer));
     BAIL_ON_NULL(obj = _ubjson_encoder_buffer_finalise(buffer));
-    Py_DECREF(obj);
     _ubjson_encoder_buffer_free(buffer);
-    Py_RETURN_NONE;
+    return obj;
 
 bail:
     Py_XDECREF(fp_write);

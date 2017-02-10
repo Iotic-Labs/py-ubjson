@@ -40,9 +40,9 @@
         PyErr_SetObject(DecoderException, tuple);\
     /* backup method in case object creation fails */\
     } else {\
-        Py_XDECREF(tuple);\
         PyErr_Format(DecoderException, "%s (at byte [%zd])", msg, buffer->total_read);\
     }\
+    Py_XDECREF(tuple);\
     Py_XDECREF(num);\
     Py_XDECREF(str);\
     goto bail;\
@@ -562,6 +562,7 @@ static _container_params_t _get_container_params(_ubjson_decoder_buffer_t *buffe
     }
 
     params.marker = marker;
+    params.invalid = false;
     return params;
 
 bail:
@@ -782,7 +783,8 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
         while (params.count > 0) {
             DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized, no data");
             BAIL_ON_NONZERO(PyDict_SetItem(object, key, value));
-            // reference stolen in above call
+            // reference stolen in above call, but only for value!
+            Py_CLEAR(key);
             Py_INCREF(value);
 
             params.count--;
