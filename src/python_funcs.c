@@ -24,7 +24,7 @@ static float_format_type double_format, float_format;
 
 
 /* MUST be called before using floating point related functions defined below */
-void _pyfuncs_detect_formats(void) {
+void _pyfuncs_ubj_detect_formats(void) {
     float_format_type detected_double_format, detected_float_format;
 
 /* We attempt to determine if this machine is using IEEE
@@ -76,7 +76,7 @@ void _pyfuncs_detect_formats(void) {
 /******************************************************************************/
 
 int
-_pyfuncs_PyFloat_Pack4(double x, unsigned char *p, int le)
+_pyfuncs_ubj_PyFloat_Pack4(double x, unsigned char *p, int le)
 {
     if (float_format == unknown_format) {
         unsigned char sign;
@@ -181,7 +181,7 @@ _pyfuncs_PyFloat_Pack4(double x, unsigned char *p, int le)
 }
 
 int
-_pyfuncs_PyFloat_Pack8(double x, unsigned char *p, int le)
+_pyfuncs_ubj_PyFloat_Pack8(double x, unsigned char *p, int le)
 {
     if (double_format == unknown_format) {
         unsigned char sign;
@@ -312,7 +312,7 @@ _pyfuncs_PyFloat_Pack8(double x, unsigned char *p, int le)
 /******************************************************************************/
 
 double
-_PyFloat_Unpack4(const unsigned char *p, int le)
+_pyfuncs_ubj_PyFloat_Unpack4(const unsigned char *p, int le)
 {
     if (float_format == unknown_format) {
         unsigned char sign;
@@ -390,7 +390,7 @@ _PyFloat_Unpack4(const unsigned char *p, int le)
 }
 
 double
-_PyFloat_Unpack8(const unsigned char *p, int le)
+_pyfuncs_ubj_PyFloat_Unpack8(const unsigned char *p, int le)
 {
     if (double_format == unknown_format) {
         unsigned char sign;

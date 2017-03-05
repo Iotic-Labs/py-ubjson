@@ -322,7 +322,7 @@ static int _encode_PyFloat(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
             WRITE_CHAR_OR_BAIL(TYPE_NULL);
             return 0;
         case FP_ZERO:
-            BAIL_ON_NONZERO(_pyfuncs_PyFloat_Pack4(num, (unsigned char*)&numtmp[1], 0));
+            BAIL_ON_NONZERO(_pyfuncs_ubj_PyFloat_Pack4(num, (unsigned char*)&numtmp[1], 0));
             numtmp[0] = TYPE_FLOAT32;
             WRITE_OR_BAIL(numtmp, 5);
             return 0;
@@ -333,11 +333,11 @@ static int _encode_PyFloat(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
 
     abs = fabs(num);
     if (!buffer->prefs.no_float32 && 1.18e-38 <= abs && 3.4e38 >= abs) {
-        BAIL_ON_NONZERO(_pyfuncs_PyFloat_Pack4(num, (unsigned char*)&numtmp[1], 0));
+        BAIL_ON_NONZERO(_pyfuncs_ubj_PyFloat_Pack4(num, (unsigned char*)&numtmp[1], 0));
         numtmp[0] = TYPE_FLOAT32;
         WRITE_OR_BAIL(numtmp, 5);
     } else {
-        BAIL_ON_NONZERO(_pyfuncs_PyFloat_Pack8(num, (unsigned char*)&numtmp[1], 0));
+        BAIL_ON_NONZERO(_pyfuncs_ubj_PyFloat_Pack8(num, (unsigned char*)&numtmp[1], 0));
         numtmp[0] = TYPE_FLOAT64;
         WRITE_OR_BAIL(numtmp, 9);
     }
@@ -351,7 +351,7 @@ bail:
 
 #define WRITE_TYPE_AND_INT8_OR_BAIL(c1, c2) {\
     numtmp[0] = c1;\
-    numtmp[1] = c2;\
+    numtmp[1] = (char)c2;\
     WRITE_OR_BAIL(numtmp, 2);\
 }
 #define WRITE_INT_INTO_NUMTMP(num, size) {\
@@ -616,6 +616,9 @@ int _ubjson_encode_value(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
         RECURSE_AND_BAIL_ON_NONZERO(_encode_PyMapping(obj, buffer), " while encoding a UBJSON object");
     } else if (PySequence_Check(obj)) {
         RECURSE_AND_BAIL_ON_NONZERO(_encode_PySequence(obj, buffer), " while encoding a UBJSON array");
+    } else if (NULL == obj) {
+        PyErr_SetString(PyExc_RuntimeError, "Internal error - _ubjson_encode_value got NULL obj");
+        goto bail;
     } else {
         PyErr_Format(EncoderException, "Cannot encode item of type %s", obj->ob_type->tp_name);
         goto bail;
@@ -632,7 +635,7 @@ int _ubjson_encoder_init(void) {
     PyObject *tmp_obj = NULL;
 
     // try to determine floating point format / endianess
-    _pyfuncs_detect_formats();
+    _pyfuncs_ubj_detect_formats();
 
     // allow encoder to access EncoderException & Decimal class
     BAIL_ON_NULL(tmp_module = PyImport_ImportModule("ubjson.encoder"));

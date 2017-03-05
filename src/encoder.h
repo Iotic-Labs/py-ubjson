@@ -34,7 +34,7 @@ typedef struct {
     // holds PyBytes instance (buffer)
     PyObject *obj;
     // raw access to obj, size & position
-    char* restrict raw;
+    char* raw;
     size_t len;
     size_t pos;
     // if not NULL, full buffer will be written to this method

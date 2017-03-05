@@ -442,7 +442,7 @@ static PyObject* _decode_float32(_ubjson_decoder_buffer_t *buffer) {
     double value;
 
     READ_OR_BAIL(4, raw, "float32");
-    value = _PyFloat_Unpack4((const unsigned char *)raw, 0);
+    value = _pyfuncs_ubj_PyFloat_Unpack4((const unsigned char *)raw, 0);
     if ((-1.0 == value) && PyErr_Occurred()) {
         goto bail;
     }
@@ -457,7 +457,7 @@ static PyObject* _decode_float64(_ubjson_decoder_buffer_t *buffer) {
     double value;
 
     READ_OR_BAIL(8, raw, "float64");
-    value = _PyFloat_Unpack8((const unsigned char *)raw, 0);
+    value = _pyfuncs_ubj_PyFloat_Unpack8((const unsigned char *)raw, 0);
     if ((-1.0 == value) && PyErr_Occurred()) {
         goto bail;
     }
@@ -685,6 +685,7 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
     PyObject *key = NULL;
     PyObject *value = NULL;
     PyObject *item = NULL;
+    char *fixed_type;
     char marker;
 
     if (params.invalid) {
@@ -717,9 +718,11 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
                 }
             }
         } else {
+            fixed_type = (TYPE_NONE == params.type) ? NULL : &params.type;
+
             while (params.count > 0) {
                 DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized");
-                BAIL_ON_NULL(value = _ubjson_decode_value(buffer, (TYPE_NONE == params.type) ? NULL : &params.type));
+                BAIL_ON_NULL(value = _ubjson_decode_value(buffer, fixed_type));
                 BAIL_ON_NULL(item = PyTuple_Pack(2, key, value));
                 Py_CLEAR(key);
                 Py_CLEAR(value);
@@ -735,10 +738,11 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
         }
     } else {
         BAIL_ON_NULL(list = PyList_New(0));
+        fixed_type = (TYPE_NONE == params.type) ? NULL : &params.type;
 
         while (OBJECT_END != marker) {
             DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("unsized");
-            BAIL_ON_NULL(value = _ubjson_decode_value(buffer, (TYPE_NONE == params.type) ? NULL : &params.type));
+            BAIL_ON_NULL(value = _ubjson_decode_value(buffer, fixed_type));
             BAIL_ON_NULL(item = PyTuple_Pack(2, key, value));
             Py_CLEAR(key);
             Py_CLEAR(value);
@@ -767,6 +771,7 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
     PyObject *object = NULL;
     PyObject *key = NULL;
     PyObject *value = NULL;
+    char *fixed_type;
     char marker;
 
     if (params.invalid) {
@@ -793,9 +798,11 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
             }
         }
     } else {
+        fixed_type = (TYPE_NONE == params.type) ? NULL : &params.type;
+
         while (params.count > 0 && (params.counting || (OBJECT_END != marker))) {
             DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized/unsized");
-            BAIL_ON_NULL(value = _ubjson_decode_value(buffer, (TYPE_NONE == params.type) ? NULL : &params.type));
+            BAIL_ON_NULL(value = _ubjson_decode_value(buffer, fixed_type));
             BAIL_ON_NONZERO(PyDict_SetItem(object, key, value));
             Py_CLEAR(key);
             Py_CLEAR(value);
@@ -890,7 +897,7 @@ int _ubjson_decoder_init(void) {
     PyObject *tmp_obj = NULL;
 
     // try to determine floating point format / endianess
-    _pyfuncs_detect_formats();
+    _pyfuncs_ubj_detect_formats();
 
     // allow decoder to access DecoderException & Decimal class
     BAIL_ON_NULL(tmp_module = PyImport_ImportModule("ubjson.decoder"));
