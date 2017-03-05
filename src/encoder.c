@@ -28,6 +28,10 @@ static char bytes_array_prefix[] = {ARRAY_START, CONTAINER_TYPE, TYPE_UINT8, CON
 
 #define POWER_TWO(x) ((long long) 1 << (x))
 
+#if defined(_MSC_VER) && !defined(fpclassify)
+#   define USE__FPCLASS
+#endif
+
 // initial encoder buffer size (when not supplied with fp)
 #define BUFFER_INITIAL_SIZE 64
 // encoder buffer size when using fp (i.e. minimum number of bytes to buffer before writing out)
@@ -42,8 +46,9 @@ static PyTypeObject *PyDec_Type = NULL;
 static int _encoder_buffer_write(_ubjson_encoder_buffer_t *buffer, const char* const chunk, size_t chunk_len);
 
 #define RECURSE_AND_BAIL_ON_NONZERO(action, recurse_msg) {\
+    int ret;\
     BAIL_ON_NONZERO(Py_EnterRecursiveCall(recurse_msg));\
-    int ret = (action);\
+    ret = (action);\
     Py_LeaveRecursiveCall();\
     BAIL_ON_NONZERO(ret);\
 }
@@ -316,17 +321,35 @@ static int _encode_PyFloat(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
         goto bail;
     }
 
+#ifdef USE__FPCLASS
+    switch (_fpclass(num)) {
+        case _FPCLASS_SNAN:
+        case _FPCLASS_QNAN:
+        case _FPCLASS_NINF:
+        case _FPCLASS_PINF:
+#else
     switch (fpclassify(num)) {
         case FP_NAN:
         case FP_INFINITE:
+#endif
             WRITE_CHAR_OR_BAIL(TYPE_NULL);
             return 0;
+#ifdef USE__FPCLASS
+        case _FPCLASS_NZ:
+        case _FPCLASS_PZ:
+#else
         case FP_ZERO:
+#endif
             BAIL_ON_NONZERO(_pyfuncs_ubj_PyFloat_Pack4(num, (unsigned char*)&numtmp[1], 0));
             numtmp[0] = TYPE_FLOAT32;
             WRITE_OR_BAIL(numtmp, 5);
             return 0;
+#ifdef USE__FPCLASS
+        case _FPCLASS_ND:
+        case _FPCLASS_PD:
+#else
         case FP_SUBNORMAL:
+#endif
             BAIL_ON_NONZERO(_encode_PyObject_as_PyDecimal(obj, buffer));
             return 0;
     }

@@ -2,6 +2,7 @@
 - C extension re-implemented (without Cython) with major speedup (7-10x)
 - object_pairs_hook now works like built-in json module
 - Minor pure version improvements
+- Windows build compatibility
 
 0.8.5
 - Added Python 3.5 to classifiers list

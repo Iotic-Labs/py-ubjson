@@ -25,8 +25,9 @@
 /******************************************************************************/
 
 #define RECURSE_AND_RETURN_OR_BAIL(action, recurse_msg) {\
+    PyObject *ret;\
     BAIL_ON_NONZERO(Py_EnterRecursiveCall(recurse_msg));\
-    PyObject *ret = (action);\
+    ret = (action);\
     Py_LeaveRecursiveCall();\
     return ret;\
 }

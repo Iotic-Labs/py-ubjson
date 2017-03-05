@@ -22,16 +22,11 @@
 
 /******************************************************************************/
 
-static _ubjson_encoder_prefs_t _ubjson_encoder_prefs_defaults = {
-    .container_count = 0,
-    .sort_keys = 0,
-    .no_float32 = 1
-};
+// container_count, sort_keys, no_float32
+static _ubjson_encoder_prefs_t _ubjson_encoder_prefs_defaults = { 0, 0, 1 };
 
-static _ubjson_decoder_prefs_t _ubjson_decoder_prefs_defaults = {
-    .no_bytes = 0,
-    .object_pairs_hook = NULL
-};
+// no_bytes, object_pairs_hook
+static _ubjson_decoder_prefs_t _ubjson_decoder_prefs_defaults = { NULL, 0 };
 
 /******************************************************************************/
 
