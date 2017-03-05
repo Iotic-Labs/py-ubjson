@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <stdbool.h>
 #include <Python.h>
 #include <bytesobject.h>
 
@@ -107,13 +106,13 @@ typedef struct {
     // next marker after container parameters
     char marker;
     // indicates whether countainer has count specified
-    bool counting;
+    int counting;
     // number of elements in container (if counting or 1 if not)
     long long count;
     // type of container values, if typed, otherwise TYPE_NONE
     char type;
     // indicates the parameter specification for the container is invalid (an exception will have been set)
-    bool invalid;
+    int invalid;
 } _container_params_t;
 
 static const char* _decoder_buffer_read(_ubjson_decoder_buffer_t *buffer, Py_ssize_t *len, char *dst_buffer);
@@ -130,8 +129,8 @@ static PyObject* _decode_high_prec(_ubjson_decoder_buffer_t *buffer);
 static long long _decode_int_non_negative(_ubjson_decoder_buffer_t *buffer, char *given_marker);
 static PyObject* _decode_char(_ubjson_decoder_buffer_t *buffer);
 static PyObject* _decode_string(_ubjson_decoder_buffer_t *buffer);
-static _container_params_t _get_container_params(_ubjson_decoder_buffer_t *buffer, bool in_mapping);
-static bool _is_no_data_type(char type);
+static _container_params_t _get_container_params(_ubjson_decoder_buffer_t *buffer, int in_mapping);
+static int _is_no_data_type(char type);
 static PyObject* _no_data_type(char type);
 static PyObject* _decode_array(_ubjson_decoder_buffer_t *buffer);
 static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer);
@@ -520,7 +519,7 @@ bail:
     return NULL;
 }
 
-static _container_params_t _get_container_params(_ubjson_decoder_buffer_t *buffer, bool in_mapping) {
+static _container_params_t _get_container_params(_ubjson_decoder_buffer_t *buffer, int in_mapping) {
     _container_params_t params;
     char marker;
 
@@ -562,15 +561,15 @@ static _container_params_t _get_container_params(_ubjson_decoder_buffer_t *buffe
     }
 
     params.marker = marker;
-    params.invalid = false;
+    params.invalid = 0;
     return params;
 
 bail:
-    params.invalid = true;
+    params.invalid = 1;
     return params;
 }
 
-static bool _is_no_data_type(char type) {
+static int _is_no_data_type(char type) {
     return ((TYPE_NULL == type) || (TYPE_BOOL_TRUE == type) || (TYPE_BOOL_FALSE == type));
 }
 
@@ -590,7 +589,7 @@ static PyObject* _no_data_type(char type) {
 }
 
 static PyObject* _decode_array(_ubjson_decoder_buffer_t *buffer) {
-    _container_params_t params = _get_container_params(buffer, false);
+    _container_params_t params = _get_container_params(buffer, 0);
     PyObject *list = NULL;
     PyObject *value = NULL;
     char marker;
@@ -679,7 +678,7 @@ bail:
 }
 
 static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
-    _container_params_t params = _get_container_params(buffer, true);
+    _container_params_t params = _get_container_params(buffer, 1);
     PyObject *object = NULL;
     PyObject *list = NULL;
     PyObject *key = NULL;
@@ -767,7 +766,7 @@ bail:
 }
 
 static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
-    _container_params_t params = _get_container_params(buffer, true);
+    _container_params_t params = _get_container_params(buffer, 1);
     PyObject *object = NULL;
     PyObject *key = NULL;
     PyObject *value = NULL;
