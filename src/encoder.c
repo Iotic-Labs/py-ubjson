@@ -571,7 +571,7 @@ static int _encode_PyMapping(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
 
     BAIL_ON_NULL(iter = PyObject_GetIter(items));
     while (NULL != (item = PyIter_Next(iter))) {
-        if (!PyTuple_Check(item) || 2 != Py_SIZE(item)) {
+        if (!PyTuple_Check(item) || 2 != PyTuple_GET_SIZE(item)) {
             PyErr_SetString(PyExc_ValueError, "items must return 2-tuples");
             goto bail;
         }
