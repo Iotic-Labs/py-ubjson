@@ -18,6 +18,7 @@
 # Value types
 TYPE_NONE = b'\x00'  # Used internally only, not part of ubjson specification
 TYPE_NULL = b'Z'
+TYPE_NOOP = b'N'
 TYPE_BOOL_TRUE = b'T'
 TYPE_BOOL_FALSE = b'F'
 TYPE_INT8 = b'i'

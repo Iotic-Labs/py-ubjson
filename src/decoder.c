@@ -624,13 +624,17 @@ static PyObject* _decode_array(_ubjson_decoder_buffer_t *buffer) {
             BAIL_ON_NULL(list = PyList_New(params.count));
 
             while (params.count > 0) {
+                if (TYPE_NOOP == marker) {
+                    READ_CHAR_OR_BAIL(marker, "array value type marker (sized, after no-op)");
+                    continue;
+                }
                 BAIL_ON_NULL(value = _ubjson_decode_value(buffer, &marker));
                 PyList_SET_ITEM(list, list_pos++, value);
                 // reference stolen by list so no longer want to decrement on failure
                 value = NULL;
                 params.count--;
                 if (params.count > 0 && TYPE_NONE == params.type) {
-                    READ_CHAR_OR_BAIL(marker, "array value type marker (counted)");
+                    READ_CHAR_OR_BAIL(marker, "array value type marker (sized)");
                 }
             }
         }
@@ -638,6 +642,10 @@ static PyObject* _decode_array(_ubjson_decoder_buffer_t *buffer) {
         BAIL_ON_NULL(list = PyList_New(0));
 
         while (ARRAY_END != marker) {
+            if (TYPE_NOOP == marker) {
+                READ_CHAR_OR_BAIL(marker, "array value type marker (after no-op)");
+                continue;
+            }
             BAIL_ON_NULL(value = _ubjson_decode_value(buffer, &marker));
             BAIL_ON_NONZERO(PyList_Append(list, value));
             Py_CLEAR(value);
@@ -721,6 +729,10 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
             fixed_type = (TYPE_NONE == params.type) ? NULL : &params.type;
 
             while (params.count > 0) {
+                if (TYPE_NOOP == marker) {
+                    READ_CHAR_OR_BAIL(marker, "object key length (sized, after no-op)");
+                    continue;
+                }
                 DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized");
                 BAIL_ON_NULL(value = _ubjson_decode_value(buffer, fixed_type));
                 BAIL_ON_NULL(item = PyTuple_Pack(2, key, value));
@@ -732,7 +744,7 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
 
                 params.count--;
                 if (params.count > 0) {
-                    READ_CHAR_OR_BAIL(marker, "object key length");
+                    READ_CHAR_OR_BAIL(marker, "object key length (sized)");
                 }
             }
         }
@@ -741,6 +753,10 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
         fixed_type = (TYPE_NONE == params.type) ? NULL : &params.type;
 
         while (OBJECT_END != marker) {
+            if (TYPE_NOOP == marker) {
+                READ_CHAR_OR_BAIL(marker, "object key length (after no-op)");
+                continue;
+            }
             DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("unsized");
             BAIL_ON_NULL(value = _ubjson_decode_value(buffer, fixed_type));
             BAIL_ON_NULL(item = PyTuple_Pack(2, key, value));
@@ -801,6 +817,10 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
         fixed_type = (TYPE_NONE == params.type) ? NULL : &params.type;
 
         while (params.count > 0 && (params.counting || (OBJECT_END != marker))) {
+            if (TYPE_NOOP == marker) {
+                READ_CHAR_OR_BAIL(marker, "object key length");
+                continue;
+            }
             DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized/unsized");
             BAIL_ON_NULL(value = _ubjson_decode_value(buffer, fixed_type));
             BAIL_ON_NONZERO(PyDict_SetItem(object, key, value));

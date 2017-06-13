@@ -24,8 +24,8 @@ from collections import OrderedDict
 
 from ubjson import (dump as ubjdump, dumpb as ubjdumpb, load as ubjload, loadb as ubjloadb, EncoderException,
                     DecoderException)
-from ubjson.markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
-                            TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
+from ubjson.markers import (TYPE_NULL, TYPE_NOOP, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16,
+                            TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
                             OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
 
 PY2 = version_info[0] < 3
@@ -277,6 +277,19 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
                                        TYPE_BOOL_FALSE + TYPE_BOOL_TRUE + ARRAY_END),
                          [[], [True], [False, True]])
 
+    def test_array_noop(self):
+        # only supported without type
+        self.assertEqual(self.ubjloadb(ARRAY_START +
+                                       TYPE_NOOP +
+                                       TYPE_UINT8 + b'\x01' +
+                                       TYPE_NOOP +
+                                       TYPE_UINT8 + b'\x02' +
+                                       TYPE_NOOP +
+                                       ARRAY_END), [1, 2])
+        self.assertEqual(self.ubjloadb(ARRAY_START + CONTAINER_COUNT + TYPE_UINT8 + b'\x01' +
+                                       TYPE_NOOP +
+                                       TYPE_UINT8 + b'\x01'), [1])
+
     def test_object(self):
         # custom hook
         with self.assertRaises(TypeError):
@@ -347,6 +360,11 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
                                                           TYPE_UINT8 + b'\x02' + b'cc' + b'\x03')),
                              {'aa': 1, 'bb': 2, 'cc': 3})
 
+            # count only
+            self.assertEqual(loadb(OBJECT_START + CONTAINER_COUNT + TYPE_UINT8 + b'\x02' +
+                                   TYPE_UINT8 + b'\x02' + b'aa' + TYPE_NULL + TYPE_UINT8 + b'\x02' + b'bb' + TYPE_NULL),
+                             {'aa': None, 'bb': None})
+
             # fixed type + count
             self.assertEqual(loadb(OBJECT_START + CONTAINER_TYPE + TYPE_NULL + CONTAINER_COUNT + TYPE_UINT8 + b'\x02' +
                                    TYPE_UINT8 + b'\x02' + b'aa' + TYPE_UINT8 + b'\x02' + b'bb'),
@@ -356,6 +374,20 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
             self.assertEqual(loadb(OBJECT_START + CONTAINER_TYPE + TYPE_UINT8 + CONTAINER_COUNT + TYPE_UINT8 + b'\x02' +
                                    TYPE_UINT8 + b'\x02' + b'aa' + b'\x04' + TYPE_UINT8 + b'\x02' + b'bb' + b'\x05'),
                              {'aa': 4, 'bb': 5})
+
+    def test_object_noop(self):
+        # only supported without type
+        for hook in (None, OrderedDict):
+            loadb = partial(self.ubjloadb, object_pairs_hook=hook)
+            self.assertEqual(ubjloadb(OBJECT_START +
+                                      TYPE_NOOP +
+                                      TYPE_UINT8 + b'\x01' + 'a'.encode('utf-8') + TYPE_NULL +
+                                      TYPE_NOOP +
+                                     TYPE_UINT8 + b'\x01' + 'b'.encode('utf-8') + TYPE_BOOL_TRUE +
+                                     OBJECT_END), {'a': None, 'b': True})
+            self.assertEqual(ubjloadb(OBJECT_START + CONTAINER_COUNT + TYPE_UINT8 + b'\x01' +
+                                      TYPE_NOOP +
+                                      TYPE_UINT8 + b'\x01' + 'a'.encode('utf-8') + TYPE_NULL), {'a': None})
 
     def test_circular(self):
         sequence = [1, 2, 3]

@@ -13,16 +13,16 @@
 # limitations under the License.
 
 
-"""UBJSON draft v12 decoder. It does NOT support No-Op ('N') values"""
+"""UBJSON draft v12 decoder"""
 
 from io import BytesIO
 from struct import Struct, pack, error as StructError
 from decimal import Decimal, DecimalException
 
 from .compat import raise_from, Mapping
-from .markers import (TYPE_NONE, TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16,
-                      TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
-                      OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
+from .markers import (TYPE_NONE, TYPE_NULL, TYPE_NOOP, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8,
+                      TYPE_INT16, TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR,
+                      TYPE_STRING, OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
 
 __TYPES = frozenset((TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
                      TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, ARRAY_START,
@@ -211,6 +211,10 @@ def __decode_object(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
         return object_pairs_hook(pairs)
 
     while count > 0 and (counting or marker != OBJECT_END):
+        if marker == TYPE_NOOP:
+            marker = fp_read(1)
+            continue
+
         # decode key for object
         key = __decode_object_key(fp_read, marker)
         marker = fp_read(1) if type_ == TYPE_NONE else type_
@@ -256,6 +260,10 @@ def __decode_array(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
 
     container = []
     while count > 0 and (counting or marker != ARRAY_END):
+        if marker == TYPE_NOOP:
+            marker = fp_read(1)
+            continue
+
         # decode value
         try:
             value = __METHOD_MAP[marker](fp_read, marker)

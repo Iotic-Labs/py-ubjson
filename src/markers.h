@@ -22,6 +22,7 @@ extern "C" {
 
 #define TYPE_NONE '\0' // Used internally only, not part of ubjson specification
 #define TYPE_NULL 'Z'
+#define TYPE_NOOP 'N'
 #define TYPE_BOOL_TRUE 'T'
 #define TYPE_BOOL_FALSE 'F'
 #define TYPE_INT8 'i'

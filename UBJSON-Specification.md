@@ -362,9 +362,9 @@ Optimized with type & count
 ### Special case: Marker-only types (null, no-op & boolean)
 If using both _count_ and _type_ optimisations, the marker itself represent the value thus saving repetition (since these types to not have a payload). Additional requirements are:
 
-Strongly typed array of type no-op and with a count of 512:
+Strongly typed array of type true (boolean) and with a count of 512:
 ```
-[[][$][N][#][I][512]
+[[][$][T][#][I][512]
 ```
 
 Strongly typed object of type null and with a count of 3:
