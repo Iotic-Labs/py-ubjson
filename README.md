@@ -66,7 +66,7 @@ This library has been checked using [flake8](https://pypi.python.org/pypi/flake8
 
 
 # Limitations
-- The **No-Op** type is only supported by the decoder. (This should arguably be a protocol-level rather than serialisation-level option.) Specifically, it is **only** allowed to occur at the start or between elements of a container and **only** inside un-typed containers. (In a typed container it impossible to tell the differene between an encoded element and a No-Op.)
+- The **No-Op** type is only supported by the decoder. (This should arguably be a protocol-level rather than serialisation-level option.) Specifically, it is **only** allowed to occur at the start or between elements of a container and **only** inside un-typed containers. (In a typed container it is impossible to tell the difference between an encoded element and a No-Op.)
 - Strongly-typed containers are only supported by the decoder (apart from for **bytes**/**bytearray**) and not for No-Op.
 - Encoder/decoder extensions are not supported at this time.
 
