@@ -1,5 +1,7 @@
 UNRELEASED
 - Support No-Op type (decoder only)
+- Open file for writing, not appending (to/from json utility)
+- Used more compact json encoding (to/from json utility)
 
 0.9.0
 - C extension re-implemented (without Cython) with major speedup (7-10x)

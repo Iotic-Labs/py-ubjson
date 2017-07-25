@@ -48,7 +48,7 @@ def to_json(in_stream, out_stream):
         __error('Failed to decode ubjson: %s' % ex)
         return 8
     try:
-        jdump(obj, out_stream, sort_keys=True)
+        jdump(obj, out_stream, sort_keys=True, separators=(',', ':'))
     except TypeError as ex:
         __error('Failed to encode to sjon: %s' % ex)
         return 16
@@ -84,7 +84,7 @@ specified, output goes to stdout.""", file=stderr)
             out_stream = STDOUT_RAW if do_from_json else stdout
         else:
             try:
-                out_stream = out_file = open(argv[3], 'ab' if do_from_json else 'a')
+                out_stream = out_file = open(argv[3], 'wb' if do_from_json else 'w')
             except IOError as ex:
                 __error('Failed to open output file for writing: %s' % ex)
                 return 4
