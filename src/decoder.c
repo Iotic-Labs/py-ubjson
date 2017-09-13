@@ -83,7 +83,7 @@
 }
 
 #define DECODE_UNICODE_OR_BAIL(dst_obj, raw, length, item_str) {\
-    if (NULL == ((dst_obj) = PyUnicode_DecodeUTF8(raw, length, NULL))) {\
+    if (NULL == ((dst_obj) = PyUnicode_FromStringAndSize(raw, length))) {\
         RAISE_DECODER_EXCEPTION(("Failed to decode utf8: " item_str));\
     }\
 }\
@@ -665,22 +665,32 @@ bail:
 }
 
 // same as string, except there is no 'S' marker
-static PyObject* _decode_object_key(_ubjson_decoder_buffer_t *buffer, char marker) {
+static PyObject* _decode_object_key(_ubjson_decoder_buffer_t *buffer, char marker, int intern) {
     long long length;
     const char *raw;
+    PyObject *key;
 
     DECODE_LENGTH_OR_BAIL_MARKER(length, marker);
     READ_OR_BAIL((Py_ssize_t)length, raw, "string");
 
-    return PyUnicode_DecodeUTF8(raw, (Py_ssize_t)length, NULL);
+    BAIL_ON_NULL(key = PyUnicode_FromStringAndSize(raw, (Py_ssize_t)length));
+// unicode string interning not supported in v2
+#if PY_MAJOR_VERSION < 3
+    UNUSED(intern);
+#else
+    if (intern) {
+        PyUnicode_InternInPlace(&key);
+    }
+#endif
+    return key;
 
 bail:
     return NULL;
 }
 
 // used by _decode_object* functions
-#define DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION(context_str) {\
-    key = _decode_object_key(buffer, marker);\
+#define DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION(context_str, intern) {\
+    key = _decode_object_key(buffer, marker, intern);\
     if (NULL == key) {\
         RAISE_DECODER_EXCEPTION("Failed to decode object key (" context_str ")");\
     }\
@@ -695,6 +705,7 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
     PyObject *item = NULL;
     char *fixed_type;
     char marker;
+    int intern = buffer->prefs.intern_object_keys;
 
     if (params.invalid) {
         goto bail;
@@ -713,7 +724,7 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
             Py_INCREF(value);
 
             while (params.count > 0) {
-                DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized, no data");
+                DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized, no data", intern);
                 BAIL_ON_NULL(item = PyTuple_Pack(2, key, value));
                 Py_CLEAR(key);
                 PyList_SET_ITEM(list, list_pos++, item);
@@ -733,7 +744,7 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
                     READ_CHAR_OR_BAIL(marker, "object key length (sized, after no-op)");
                     continue;
                 }
-                DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized");
+                DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized", intern);
                 BAIL_ON_NULL(value = _ubjson_decode_value(buffer, fixed_type));
                 BAIL_ON_NULL(item = PyTuple_Pack(2, key, value));
                 Py_CLEAR(key);
@@ -757,7 +768,7 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
                 READ_CHAR_OR_BAIL(marker, "object key length (after no-op)");
                 continue;
             }
-            DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("unsized");
+            DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("unsized", intern);
             BAIL_ON_NULL(value = _ubjson_decode_value(buffer, fixed_type));
             BAIL_ON_NULL(item = PyTuple_Pack(2, key, value));
             Py_CLEAR(key);
@@ -789,6 +800,7 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
     PyObject *value = NULL;
     char *fixed_type;
     char marker;
+    int intern = buffer->prefs.intern_object_keys;
 
     if (params.invalid) {
         goto bail;
@@ -802,7 +814,7 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
         value = _no_data_type(params.type);
 
         while (params.count > 0) {
-            DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized, no data");
+            DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized, no data", intern);
             BAIL_ON_NONZERO(PyDict_SetItem(object, key, value));
             // reference stolen in above call, but only for value!
             Py_CLEAR(key);
@@ -821,7 +833,7 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
                 READ_CHAR_OR_BAIL(marker, "object key length");
                 continue;
             }
-            DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized/unsized");
+            DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized/unsized", intern);
             BAIL_ON_NULL(value = _ubjson_decode_value(buffer, fixed_type));
             BAIL_ON_NONZERO(PyDict_SetItem(object, key, value));
             Py_CLEAR(key);

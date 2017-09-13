@@ -26,7 +26,9 @@ extern "C" {
 
 typedef struct {
     PyObject *object_pairs_hook;
+    // don't convert UINT8 arrays to bytes instances (and keep as an array of individual integers)
     int no_bytes;
+    int intern_object_keys;
 } _ubjson_decoder_prefs_t;
 
 typedef struct {

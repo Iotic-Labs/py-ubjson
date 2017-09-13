@@ -98,6 +98,10 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
         with self.assertRaises(DecoderException):
             self.ubjloadb(b'')
 
+    def test_invalid_data(self):
+        with self.assertRaises(TypeError):
+            self.ubjloadb(123)
+
     def test_trailing_input(self):
         self.assertEqual(self.ubjloadb(TYPE_BOOL_TRUE * 10), True)
 
@@ -379,15 +383,26 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
         # only supported without type
         for hook in (None, OrderedDict):
             loadb = partial(self.ubjloadb, object_pairs_hook=hook)
-            self.assertEqual(ubjloadb(OBJECT_START +
-                                      TYPE_NOOP +
-                                      TYPE_UINT8 + b'\x01' + 'a'.encode('utf-8') + TYPE_NULL +
-                                      TYPE_NOOP +
-                                     TYPE_UINT8 + b'\x01' + 'b'.encode('utf-8') + TYPE_BOOL_TRUE +
-                                     OBJECT_END), {'a': None, 'b': True})
-            self.assertEqual(ubjloadb(OBJECT_START + CONTAINER_COUNT + TYPE_UINT8 + b'\x01' +
-                                      TYPE_NOOP +
-                                      TYPE_UINT8 + b'\x01' + 'a'.encode('utf-8') + TYPE_NULL), {'a': None})
+            self.assertEqual(loadb(OBJECT_START +
+                                   TYPE_NOOP +
+                                   TYPE_UINT8 + b'\x01' + 'a'.encode('utf-8') + TYPE_NULL +
+                                   TYPE_NOOP +
+                                   TYPE_UINT8 + b'\x01' + 'b'.encode('utf-8') + TYPE_BOOL_TRUE +
+                                   OBJECT_END), {'a': None, 'b': True})
+            self.assertEqual(loadb(OBJECT_START + CONTAINER_COUNT + TYPE_UINT8 + b'\x01' +
+                                   TYPE_NOOP +
+                                   TYPE_UINT8 + b'\x01' + 'a'.encode('utf-8') + TYPE_NULL), {'a': None})
+
+    def test_intern_object_keys(self):
+        encoded = self.ubjdumpb({'asdasd': 1, 'qwdwqd': 2})
+        mapping2 = self.ubjloadb(encoded, intern_object_keys=True)
+        mapping3 = self.ubjloadb(encoded, intern_object_keys=True)
+        for key1, key2 in zip(sorted(mapping2.keys()), sorted(mapping3.keys())):
+            if PY2:  # pragma: no cover
+                # interning of unicode not supported
+                self.assertEqual(key1, key2)
+            else:
+                self.assertIs(key1, key2)
 
     def test_circular(self):
         sequence = [1, 2, 3]
@@ -444,11 +459,10 @@ class TestEncodeDecodeFp(TestEncodeDecodePlain):
     def ubjloadb(raw, *args, **kwargs):
         try:
             raw = BytesIO(raw)
-        except:  # pylint: disable=bare-except
+        except TypeError:  # pylint: disable=bare-except
             # Invalid raw input testing
-            pass
-        else:
-            return ubjload(raw, *args, **kwargs)
+            raise
+        return ubjload(raw, *args, **kwargs)
 
     @staticmethod
     def ubjdumpb(obj, *args, **kwargs):

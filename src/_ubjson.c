@@ -26,7 +26,7 @@
 static _ubjson_encoder_prefs_t _ubjson_encoder_prefs_defaults = { 0, 0, 1 };
 
 // no_bytes, object_pairs_hook
-static _ubjson_decoder_prefs_t _ubjson_decoder_prefs_defaults = { NULL, 0 };
+static _ubjson_decoder_prefs_t _ubjson_decoder_prefs_defaults = { NULL, 0, 0 };
 
 /******************************************************************************/
 
@@ -98,8 +98,8 @@ PyDoc_STRVAR(_ubjson_load__doc__, "See pure Python version (encoder.load) for do
 #define FUNC_DEF_LOAD {"load", (PyCFunction)_ubjson_load, METH_VARARGS | METH_KEYWORDS, _ubjson_load__doc__}
 static PyObject*
 _ubjson_load(PyObject *self, PyObject *args, PyObject *kwargs) {
-    static const char *format = "O|iO:load";
-    static char *keywords[] = {"fp", "no_bytes", "object_pairs_hook", NULL};
+    static const char *format = "O|iOi:load";
+    static char *keywords[] = {"fp", "no_bytes", "object_pairs_hook", "intern_object_keys", NULL};
 
     _ubjson_decoder_buffer_t *buffer = NULL;
     _ubjson_decoder_prefs_t prefs = _ubjson_decoder_prefs_defaults;
@@ -108,7 +108,8 @@ _ubjson_load(PyObject *self, PyObject *args, PyObject *kwargs) {
     PyObject *obj = NULL;
     UNUSED(self);
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, format, keywords, &fp, &prefs.no_bytes, &prefs.object_pairs_hook)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, format, keywords, &fp, &prefs.no_bytes, &prefs.object_pairs_hook,
+                                     &prefs.intern_object_keys)) {
         goto bail;
     }
     BAIL_ON_NULL(fp_read = PyObject_GetAttrString(fp, "read"));
@@ -135,8 +136,8 @@ PyDoc_STRVAR(_ubjson_loadb__doc__, "See pure Python version (encoder.loadb) for 
 #define FUNC_DEF_LOADB {"loadb", (PyCFunction)_ubjson_loadb, METH_VARARGS | METH_KEYWORDS, _ubjson_loadb__doc__}
 static PyObject*
 _ubjson_loadb(PyObject *self, PyObject *args, PyObject *kwargs) {
-    static const char *format = "O|iO:loadb";
-    static char *keywords[] = {"chars", "no_bytes", "object_pairs_hook", NULL};
+    static const char *format = "O|iOi:loadb";
+    static char *keywords[] = {"chars", "no_bytes", "object_pairs_hook", "intern_object_keys", NULL};
 
     _ubjson_decoder_buffer_t *buffer = NULL;
     _ubjson_decoder_prefs_t prefs = _ubjson_decoder_prefs_defaults;
@@ -145,7 +146,7 @@ _ubjson_loadb(PyObject *self, PyObject *args, PyObject *kwargs) {
     UNUSED(self);
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, format, keywords, &chars, &prefs.no_bytes,
-                                     &prefs.object_pairs_hook)) {
+                                     &prefs.object_pairs_hook, &prefs.intern_object_keys)) {
         goto bail;
     }
     if (PyUnicode_Check(chars)) {

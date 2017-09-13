@@ -19,7 +19,7 @@ from io import BytesIO
 from struct import Struct, pack, error as StructError
 from decimal import Decimal, DecimalException
 
-from .compat import raise_from, Mapping
+from .compat import raise_from, Mapping, intern_unicode
 from .markers import (TYPE_NONE, TYPE_NULL, TYPE_NOOP, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8,
                       TYPE_INT16, TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR,
                       TYPE_STRING, OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
@@ -144,13 +144,13 @@ def __decode_string(fp_read, marker):
 
 
 # same as string, except there is no 'S' marker
-def __decode_object_key(fp_read, marker):
+def __decode_object_key(fp_read, marker, intern_object_keys):
     length = __decode_int_non_negative(fp_read, marker)
     raw = fp_read(length)
     if len(raw) < length:
         raise DecoderException('String too short')
     try:
-        return raw.decode('utf-8')
+        return intern_unicode(raw.decode('utf-8')) if intern_object_keys else raw.decode('utf-8')
     except UnicodeError as ex:
         raise_from(DecoderException('Failed to decode object key'), ex)
 
@@ -199,7 +199,7 @@ def __get_container_params(fp_read, in_mapping, no_bytes):
     return marker, counting, count, type_
 
 
-def __decode_object(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
+def __decode_object(fp_read, no_bytes, object_pairs_hook, intern_object_keys):  # noqa (complexity)
     marker, counting, count, type_ = __get_container_params(fp_read, True, no_bytes)
     pairs = []
 
@@ -207,7 +207,7 @@ def __decode_object(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
     if type_ in __TYPES_NO_DATA:
         value = __METHOD_MAP[type_](fp_read, type_)
         for _ in range(count):
-            pairs.append((__decode_object_key(fp_read, fp_read(1)), value))
+            pairs.append((__decode_object_key(fp_read, fp_read(1), intern_object_keys), value))
         return object_pairs_hook(pairs)
 
     while count > 0 and (counting or marker != OBJECT_END):
@@ -216,7 +216,7 @@ def __decode_object(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
             continue
 
         # decode key for object
-        key = __decode_object_key(fp_read, marker)
+        key = __decode_object_key(fp_read, marker, intern_object_keys)
         marker = fp_read(1) if type_ == TYPE_NONE else type_
 
         # decode value
@@ -230,9 +230,9 @@ def __decode_object(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
         # handle outside above except (on KeyError) so do not have unfriendly "exception within except" backtrace
         if not handled:
             if marker == ARRAY_START:
-                value = __decode_array(fp_read, no_bytes, object_pairs_hook)
+                value = __decode_array(fp_read, no_bytes, object_pairs_hook, intern_object_keys)
             elif marker == OBJECT_START:
-                value = __decode_object(fp_read, no_bytes, object_pairs_hook)
+                value = __decode_object(fp_read, no_bytes, object_pairs_hook, intern_object_keys)
             else:
                 raise DecoderException('Invalid marker within object')
 
@@ -245,7 +245,7 @@ def __decode_object(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
     return object_pairs_hook(pairs)
 
 
-def __decode_array(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
+def __decode_array(fp_read, no_bytes, object_pairs_hook, intern_object_keys):  # noqa (complexity)
     marker, counting, count, type_ = __get_container_params(fp_read, False, no_bytes)
 
     # special case - no data (None or bool)
@@ -275,9 +275,9 @@ def __decode_array(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
         # handle outside above except (on KeyError) so do not have unfriendly "exception within except" backtrace
         if not handled:
             if marker == ARRAY_START:
-                value = __decode_array(fp_read, no_bytes, object_pairs_hook)
+                value = __decode_array(fp_read, no_bytes, object_pairs_hook, intern_object_keys)
             elif marker == OBJECT_START:
-                value = __decode_object(fp_read, no_bytes, object_pairs_hook)
+                value = __decode_object(fp_read, no_bytes, object_pairs_hook, intern_object_keys)
             else:
                 raise DecoderException('Invalid marker within array')
 
@@ -290,7 +290,7 @@ def __decode_array(fp_read, no_bytes, object_pairs_hook):  # noqa (complexity)
     return container
 
 
-def load(fp, no_bytes=False, object_pairs_hook=None):
+def load(fp, no_bytes=False, object_pairs_hook=None, intern_object_keys=False):
     """Decodes and returns UBJSON from the given file-like object
 
     Args:
@@ -301,6 +301,11 @@ def load(fp, no_bytes=False, object_pairs_hook=None):
         object_pairs_hook (function): Called with the result of any object
                                       literal decoded with an ordered list of
                                       pairs (instead of dict).
+        intern_object_keys (bool): If set, object keys are interned which can
+                                   provide a memory saving when many repeated
+                                   keys are used. NOTE: This is not supported
+                                   in Python2 (since interning does not apply
+                                   to unicode) and wil be ignored.
 
     Returns:
         Decoded object
@@ -354,17 +359,17 @@ def load(fp, no_bytes=False, object_pairs_hook=None):
         except KeyError:
             pass
         if marker == ARRAY_START:
-            return __decode_array(fp_read, bool(no_bytes), object_pairs_hook)
+            return __decode_array(fp_read, bool(no_bytes), object_pairs_hook, intern_object_keys)
         elif marker == OBJECT_START:
-            return __decode_object(fp_read, bool(no_bytes), object_pairs_hook)
+            return __decode_object(fp_read, bool(no_bytes), object_pairs_hook, intern_object_keys)
         else:
             raise DecoderException('Invalid marker')
     except DecoderException as ex:
         raise_from(DecoderException(ex.args[0], fp), ex)
 
 
-def loadb(chars, no_bytes=False, object_pairs_hook=None):
+def loadb(chars, no_bytes=False, object_pairs_hook=None, intern_object_keys=False):
     """Decodes and returns UBJSON from the given bytes or bytesarray object. See
        load() for available arguments."""
     with BytesIO(chars) as fp:
-        return load(fp, no_bytes=no_bytes, object_pairs_hook=object_pairs_hook)
+        return load(fp, no_bytes=no_bytes, object_pairs_hook=object_pairs_hook, intern_object_keys=intern_object_keys)

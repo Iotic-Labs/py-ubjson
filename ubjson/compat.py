@@ -36,7 +36,7 @@
 
 """Python v2.7 (NOT 2.6) compatibility"""
 
-# pylint: disable=unused-import,invalid-name,redefined-variable-type,wrong-import-position,no-name-in-module
+# pylint: disable=unused-import,invalid-name,wrong-import-position,no-name-in-module
 # pylint: disable=import-error
 # pragma: no cover
 
@@ -45,7 +45,7 @@ from sys import stderr, stdout, stdin, version_info
 PY2 = (version_info[0] == 2)
 
 if PY2:
-    # pylint:disable=undefined-variable
+    # pylint: disable=undefined-variable
     INTEGER_TYPES = (int, long)  # noqa
     UNICODE_TYPE = unicode  # noqa
     TEXT_TYPES = (str, unicode)  # noqa
@@ -54,6 +54,10 @@ if PY2:
     STDIN_RAW = stdin
     STDOUT_RAW = stdout
     STDERR_RAW = stderr
+
+    # Interning applies to str, not unicode
+    def intern_unicode(obj):
+        return obj
 
 else:
     INTEGER_TYPES = (int,)
@@ -64,6 +68,7 @@ else:
     STDIN_RAW = getattr(stdin, 'buffer', stdin)
     STDOUT_RAW = getattr(stdout, 'buffer', stdout)
     STDERR_RAW = getattr(stderr, 'buffer', stderr)
+    from sys import intern as intern_unicode  # noqa
 
 try:
     # introduced in v3.3
