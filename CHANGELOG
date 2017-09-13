@@ -1,4 +1,4 @@
-UNRELEASED
+0.10.0
 - Support No-Op type (decoder only)
 - Allow for object keys to be interned, saving memory if repeated (PY3 only)
 - Use PyUnicode_FromStringAndSize instead of PyUnicode_DecodeUTF8 (decoder)

@@ -37,6 +37,6 @@ except ImportError:
 from .encoder import EncoderException  # noqa
 from .decoder import DecoderException  # noqa
 
-__version__ = '0.9.1'
+__version__ = '0.10.0'
 
 __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
