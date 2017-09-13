@@ -43,7 +43,7 @@ def from_json(in_stream, out_stream):
 
 def to_json(in_stream, out_stream):
     try:
-        obj = ubjload(in_stream)
+        obj = ubjload(in_stream, intern_object_keys=True)
     except DecoderException as ex:
         __error('Failed to decode ubjson: %s' % ex)
         return 8
