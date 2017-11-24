@@ -451,6 +451,29 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
         with self.assert_raises_regex(RuntimeError, 'recursion'):
             self.ubjloadb(raw)
 
+    def test_encode_default(self):
+        def default(obj):
+            if isinstance(obj, set):
+                return sorted(obj)
+            raise EncoderException('__test__marker__')
+
+        dumpb_default = partial(self.ubjdumpb, default=default)
+        # Top-level custom type
+        obj1 = {1, 2, 3}
+        obj2 = default(obj1)
+        # Custom type within sequence or mapping
+        obj3 = OrderedDict(sorted({'a': 1, 'b': obj1, 'c': [2, obj1]}.items()))
+        obj4 = OrderedDict(sorted({'a': 1, 'b': obj2, 'c': [2, obj2]}.items()))
+
+        with self.assert_raises_regex(EncoderException, 'Cannot encode item'):
+            self.ubjdumpb(obj1)
+
+        with self.assert_raises_regex(EncoderException, '__test__marker__'):
+            dumpb_default(self)
+
+        self.assertEqual(dumpb_default(obj1), self.ubjdumpb(obj2))
+        self.assertEqual(dumpb_default(obj3), self.ubjdumpb(obj4))
+
 
 class TestEncodeDecodeFp(TestEncodeDecodePlain):
     """Performs tests via file-like objects (BytesIO) instead of bytes instances"""

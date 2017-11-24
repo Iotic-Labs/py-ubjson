@@ -140,7 +140,7 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer);
 /******************************************************************************/
 
 /* Returns new decoder buffer or NULL on failure (an exception will be set). Input must either support buffer interface
- * or be callable.
+ * or be callable. Currently only increases reference count for input parameter.
  */
 _ubjson_decoder_buffer_t* _ubjson_decoder_buffer_create(_ubjson_decoder_prefs_t* prefs, PyObject *input) {
     _ubjson_decoder_buffer_t *buffer;

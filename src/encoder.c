@@ -78,7 +78,9 @@ static int _encode_PyMapping(PyObject *obj, _ubjson_encoder_buffer_t *buffer);
 
 /******************************************************************************/
 
-// fp_write, if not NULL, must be a callable which accepts a single bytes argument. On failure will set exception.
+/* fp_write, if not NULL, must be a callable which accepts a single bytes argument. On failure will set exception.
+ * Currently only increases reference count for fp_write parameter.
+ */
 _ubjson_encoder_buffer_t* _ubjson_encoder_buffer_create(_ubjson_encoder_prefs_t* prefs, PyObject *fp_write) {
     _ubjson_encoder_buffer_t *buffer;
 
@@ -87,7 +89,7 @@ _ubjson_encoder_buffer_t* _ubjson_encoder_buffer_create(_ubjson_encoder_prefs_t*
         return NULL;
     }
 
-    buffer->len = (NULL != buffer->fp_write) ? BUFFER_FP_SIZE : BUFFER_INITIAL_SIZE;
+    buffer->len = (NULL != fp_write) ? BUFFER_FP_SIZE : BUFFER_INITIAL_SIZE;
     BAIL_ON_NULL(buffer->obj = PyBytes_FromStringAndSize(NULL, buffer->len));
     buffer->raw = PyBytes_AS_STRING(buffer->obj);
     buffer->pos = 0;
@@ -95,16 +97,18 @@ _ubjson_encoder_buffer_t* _ubjson_encoder_buffer_create(_ubjson_encoder_prefs_t*
     BAIL_ON_NULL(buffer->markers = PySet_New(NULL));
 
     buffer->prefs = *prefs;
-
     buffer->fp_write = fp_write;
     Py_XINCREF(fp_write);
+
+    // treat Py_None as no default_func being supplied
+    if (Py_None == buffer->prefs.default_func) {
+        buffer->prefs.default_func = NULL;
+    }
 
     return buffer;
 
 bail:
-    Py_XDECREF(buffer->obj);
-    Py_XDECREF(buffer->markers);
-    free(buffer);
+    _ubjson_encoder_buffer_free(buffer);
     return NULL;
 }
 
@@ -607,6 +611,8 @@ bail:
 /******************************************************************************/
 
 int _ubjson_encode_value(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
+    PyObject *newobj = NULL; // result of default call (when encoding unsupported types)
+
     if (Py_None == obj) {
         WRITE_CHAR_OR_BAIL(TYPE_NULL);
     } else if (Py_True == obj) {
@@ -642,6 +648,10 @@ int _ubjson_encode_value(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
     } else if (NULL == obj) {
         PyErr_SetString(PyExc_RuntimeError, "Internal error - _ubjson_encode_value got NULL obj");
         goto bail;
+    } else if (NULL != buffer->prefs.default_func) {
+        BAIL_ON_NULL(newobj = PyObject_CallFunctionObjArgs(buffer->prefs.default_func, obj, NULL));
+        RECURSE_AND_BAIL_ON_NONZERO(_ubjson_encode_value(newobj, buffer), " while encoding with default function");
+        Py_DECREF(newobj);
     } else {
         PyErr_Format(EncoderException, "Cannot encode item of type %s", obj->ob_type->tp_name);
         goto bail;
@@ -649,6 +659,7 @@ int _ubjson_encode_value(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
     return 0;
 
 bail:
+    Py_XDECREF(newobj);
     return 1;
 }
 

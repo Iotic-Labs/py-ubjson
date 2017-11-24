@@ -1,3 +1,8 @@
+UNRELEASED
+- Add default parameter to encoder, allowing for unsupported types to be
+  encoded.
+- Treat object_pairs_hook the same in pure Python mode as with extension
+
 0.10.0
 - Support No-Op type (decoder only)
 - Allow for object keys to be interned, saving memory if repeated (PY3 only)

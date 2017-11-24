@@ -134,7 +134,8 @@ def __encode_bytes(fp_write, item):
     # no ARRAY_END since length was specified
 
 
-def __encode_value(fp_write, item, no_float32):
+def __encode_value(fp_write, item, seen_containers, container_count, sort_keys, # noqa pylint: disable=too-many-branches
+                   no_float32, default):
     if isinstance(item, UNICODE_TYPE):
         __encode_string(fp_write, item)
 
@@ -162,13 +163,21 @@ def __encode_value(fp_write, item, no_float32):
     elif isinstance(item, BYTES_TYPES):
         __encode_bytes(fp_write, item)
 
+    # order important since mappings could also be sequences
+    elif isinstance(item, Mapping):
+        __encode_object(fp_write, item, seen_containers, container_count, sort_keys, no_float32, default)
+
+    elif isinstance(item, Sequence):
+        __encode_array(fp_write, item, seen_containers, container_count, sort_keys, no_float32, default)
+
+    elif default is not None:
+        __encode_value(fp_write, default(item), seen_containers, container_count, sort_keys, no_float32, default)
+
     else:
-        return False
-
-    return True
+        raise EncoderException('Cannot encode item of type %s' % type(item))
 
 
-def __encode_array(fp_write, item, seen_containers, container_count, sort_keys, no_float32):
+def __encode_array(fp_write, item, seen_containers, container_count, sort_keys, no_float32, default):
     # circular reference check
     container_id = id(item)
     if container_id in seen_containers:
@@ -181,14 +190,7 @@ def __encode_array(fp_write, item, seen_containers, container_count, sort_keys, 
         __encode_int(fp_write, len(item))
 
     for value in item:
-        if not __encode_value(fp_write, value, no_float32):
-            # order important since mappings could also be sequences
-            if isinstance(value, Mapping):
-                __encode_object(fp_write, value, seen_containers, container_count, sort_keys, no_float32)
-            elif isinstance(value, Sequence):
-                __encode_array(fp_write, value, seen_containers, container_count, sort_keys, no_float32)
-            else:
-                raise EncoderException('Cannot encode item of type %s' % type(value))
+        __encode_value(fp_write, value, seen_containers, container_count, sort_keys, no_float32, default)
 
     if not container_count:
         fp_write(ARRAY_END)
@@ -196,7 +198,7 @@ def __encode_array(fp_write, item, seen_containers, container_count, sort_keys, 
     del seen_containers[container_id]
 
 
-def __encode_object(fp_write, item, seen_containers, container_count, sort_keys, no_float32):
+def __encode_object(fp_write, item, seen_containers, container_count, sort_keys, no_float32, default):
     # circular reference check
     container_id = id(item)
     if container_id in seen_containers:
@@ -220,14 +222,7 @@ def __encode_object(fp_write, item, seen_containers, container_count, sort_keys,
             __encode_int(fp_write, length)
         fp_write(encoded_key)
 
-        if not __encode_value(fp_write, value, no_float32):
-            # order important since mappings could also be sequences
-            if isinstance(value, Mapping):
-                __encode_object(fp_write, value, seen_containers, container_count, sort_keys, no_float32)
-            elif isinstance(value, Sequence):
-                __encode_array(fp_write, value, seen_containers, container_count, sort_keys, no_float32)
-            else:
-                raise EncoderException('Cannot encode item of type %s' % type(value))
+        __encode_value(fp_write, value, seen_containers, container_count, sort_keys, no_float32, default)
 
     if not container_count:
         fp_write(OBJECT_END)
@@ -235,7 +230,7 @@ def __encode_object(fp_write, item, seen_containers, container_count, sort_keys,
     del seen_containers[container_id]
 
 
-def dump(obj, fp, container_count=False, sort_keys=False, no_float32=True):
+def dump(obj, fp, container_count=False, sort_keys=False, no_float32=True, default=None):
     """Writes the given object as UBJSON to the provided file-like object
 
     Args:
@@ -251,6 +246,10 @@ def dump(obj, fp, container_count=False, sort_keys=False, no_float32=True):
         no_float32 (bool): Never use float32 to store float numbers (other than
                            for zero). Disabling this might save space at the
                            loss of precision.
+        default (callable): Called for objects which cannot be serialised.
+                            Should return a UBJSON-encodable version of the
+                            object or raise an EncoderException.
+
     Raises:
         EncoderException: If an encoding failure occured.
 
@@ -303,19 +302,12 @@ def dump(obj, fp, container_count=False, sort_keys=False, no_float32=True):
         raise TypeError('fp.write not callable')
     fp_write = fp.write
 
-    if not __encode_value(fp_write, obj, no_float32):
-        # order important since mappings could also be sequences
-        if isinstance(obj, Mapping):
-            __encode_object(fp_write, obj, {}, container_count, sort_keys, no_float32)
-        elif isinstance(obj, Sequence):
-            __encode_array(fp_write, obj, {}, container_count, sort_keys, no_float32)
-        else:
-            raise EncoderException('Cannot encode item of type %s' % type(obj))
+    __encode_value(fp_write, obj, {}, container_count, sort_keys, no_float32, default)
 
 
-def dumpb(obj, container_count=False, sort_keys=False, no_float32=True):
+def dumpb(obj, container_count=False, sort_keys=False, no_float32=True, default=None):
     """Returns the given object as UBJSON in a bytes instance. See dump() for
        available arguments."""
     with BytesIO() as fp:
-        dump(obj, fp, container_count=container_count, sort_keys=sort_keys, no_float32=no_float32)
+        dump(obj, fp, container_count=container_count, sort_keys=sort_keys, no_float32=no_float32, default=default)
         return fp.getvalue()

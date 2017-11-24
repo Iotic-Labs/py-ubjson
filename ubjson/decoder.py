@@ -19,7 +19,7 @@ from io import BytesIO
 from struct import Struct, pack, error as StructError
 from decimal import Decimal, DecimalException
 
-from .compat import raise_from, Mapping, intern_unicode
+from .compat import raise_from, intern_unicode
 from .markers import (TYPE_NONE, TYPE_NULL, TYPE_NOOP, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8,
                       TYPE_INT16, TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR,
                       TYPE_STRING, OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
@@ -298,7 +298,7 @@ def load(fp, no_bytes=False, object_pairs_hook=None, intern_object_keys=False):
         no_bytes (bool): If set, typed UBJSON arrays (uint8) will not be
                          converted to a bytes instance and instead treated like
                          any other array (i.e. result in a list).
-        object_pairs_hook (function): Called with the result of any object
+        object_pairs_hook (callable): Called with the result of any object
                                       literal decoded with an ordered list of
                                       pairs (instead of dict).
         intern_object_keys (bool): If set, object keys are interned which can
@@ -345,8 +345,6 @@ def load(fp, no_bytes=False, object_pairs_hook=None, intern_object_keys=False):
     """
     if object_pairs_hook is None:
         object_pairs_hook = dict
-    elif not issubclass(object_pairs_hook, Mapping):
-        raise TypeError('object_pairs_hook is not a mapping type')
 
     if not callable(fp.read):
         raise TypeError('fp.read not callable')

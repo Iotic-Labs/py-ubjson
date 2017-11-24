@@ -23,7 +23,7 @@
 /******************************************************************************/
 
 // container_count, sort_keys, no_float32
-static _ubjson_encoder_prefs_t _ubjson_encoder_prefs_defaults = { 0, 0, 1 };
+static _ubjson_encoder_prefs_t _ubjson_encoder_prefs_defaults = { NULL, 0, 0, 1 };
 
 // no_bytes, object_pairs_hook
 static _ubjson_decoder_prefs_t _ubjson_decoder_prefs_defaults = { NULL, 0, 0 };
@@ -34,8 +34,8 @@ PyDoc_STRVAR(_ubjson_dump__doc__, "See pure Python version (encoder.dump) for do
 #define FUNC_DEF_DUMP {"dump", (PyCFunction)_ubjson_dump, METH_VARARGS | METH_KEYWORDS, _ubjson_dump__doc__}
 static PyObject*
 _ubjson_dump(PyObject *self, PyObject *args, PyObject *kwargs) {
-    static const char *format = "OO|iii:dump";
-    static char *keywords[] = {"obj", "fp", "container_count", "sort_keys", "no_float32", NULL};
+    static const char *format = "OO|iiiO:dump";
+    static char *keywords[] = {"obj", "fp", "container_count", "sort_keys", "no_float32", "default", NULL};
 
     _ubjson_encoder_buffer_t *buffer = NULL;
     _ubjson_encoder_prefs_t prefs = _ubjson_encoder_prefs_defaults;
@@ -45,7 +45,7 @@ _ubjson_dump(PyObject *self, PyObject *args, PyObject *kwargs) {
     UNUSED(self);
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, format, keywords, &obj, &fp, &prefs.container_count,
-                                     &prefs.sort_keys, &prefs.no_float32)) {
+                                     &prefs.sort_keys, &prefs.no_float32, &prefs.default_func)) {
         goto bail;
     }
     BAIL_ON_NULL(fp_write = PyObject_GetAttrString(fp, "write"));
@@ -68,8 +68,8 @@ PyDoc_STRVAR(_ubjson_dumpb__doc__, "See pure Python version (encoder.dumpb) for 
 #define FUNC_DEF_DUMPB {"dumpb", (PyCFunction)_ubjson_dumpb, METH_VARARGS | METH_KEYWORDS, _ubjson_dumpb__doc__}
 static PyObject*
 _ubjson_dumpb(PyObject *self, PyObject *args, PyObject *kwargs) {
-    static const char *format = "O|iii:dumpb";
-    static char *keywords[] = {"obj", "container_count", "sort_keys", "no_float32", NULL};
+    static const char *format = "O|iiiO:dumpb";
+    static char *keywords[] = {"obj", "container_count", "sort_keys", "no_float32", "default", NULL};
 
     _ubjson_encoder_buffer_t *buffer = NULL;
     _ubjson_encoder_prefs_t prefs = _ubjson_encoder_prefs_defaults;
@@ -77,7 +77,7 @@ _ubjson_dumpb(PyObject *self, PyObject *args, PyObject *kwargs) {
     UNUSED(self);
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, format, keywords, &obj, &prefs.container_count, &prefs.sort_keys,
-                                     &prefs.no_float32)) {
+                                     &prefs.no_float32, &prefs.default_func)) {
         goto bail;
     }
 

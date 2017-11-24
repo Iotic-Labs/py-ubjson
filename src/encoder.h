@@ -25,6 +25,7 @@ extern "C" {
 /******************************************************************************/
 
 typedef struct {
+    PyObject *default_func;
     int container_count;
     int sort_keys;
     int no_float32;

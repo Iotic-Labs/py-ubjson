@@ -38,6 +38,8 @@ extension-pkg-whitelist=_ubjson
 # AST will be different than the one from reality.
 optimize-ast=no
 
+score=no
+
 
 [MESSAGES CONTROL]
 
@@ -66,6 +68,7 @@ confidence=
 # I0011 - locally-disabled pylint options
 # C0111 - missing-docstring
 disable=R0903,W0511,I0011,C0111,no-else-return
+
 
 [REPORTS]
 
