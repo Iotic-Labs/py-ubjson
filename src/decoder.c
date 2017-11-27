@@ -134,7 +134,7 @@ static _container_params_t _get_container_params(_ubjson_decoder_buffer_t *buffe
 static int _is_no_data_type(char type);
 static PyObject* _no_data_type(char type);
 static PyObject* _decode_array(_ubjson_decoder_buffer_t *buffer);
-static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer);
+static PyObject* _decode_object_with_pairs_hook(_ubjson_decoder_buffer_t *buffer);
 static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer);
 
 /******************************************************************************/
@@ -164,7 +164,10 @@ _ubjson_decoder_buffer_t* _ubjson_decoder_buffer_create(_ubjson_decoder_prefs_t*
         PyErr_SetString(PyExc_TypeError, "Input neither support buffer interface nor is callable");
         goto bail;
     }
-    // treat Py_None as no object_pairs_hook being supplied
+    // treat Py_None as no argument being supplied
+    if (Py_None == buffer->prefs.object_hook) {
+        buffer->prefs.object_hook = NULL;
+    }
     if (Py_None == buffer->prefs.object_pairs_hook) {
         buffer->prefs.object_pairs_hook = NULL;
     }
@@ -696,9 +699,9 @@ bail:
     }\
 }
 
-static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
+static PyObject* _decode_object_with_pairs_hook(_ubjson_decoder_buffer_t *buffer) {
     _container_params_t params = _get_container_params(buffer, 1);
-    PyObject *object = NULL;
+    PyObject *obj = NULL;
     PyObject *list = NULL;
     PyObject *key = NULL;
     PyObject *value = NULL;
@@ -780,12 +783,12 @@ static PyObject* _decode_object_with_hook(_ubjson_decoder_buffer_t *buffer) {
         }
     }
 
-    BAIL_ON_NULL(object = PyObject_CallFunctionObjArgs(buffer->prefs.object_pairs_hook, list, NULL));
+    BAIL_ON_NULL(obj = PyObject_CallFunctionObjArgs(buffer->prefs.object_pairs_hook, list, NULL));
     Py_XDECREF(list);
-    return object;
+    return obj;
 
 bail:
-    Py_XDECREF(object);
+    Py_XDECREF(obj);
     Py_XDECREF(list);
     Py_XDECREF(key);
     Py_XDECREF(value);
@@ -795,7 +798,8 @@ bail:
 
 static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
     _container_params_t params = _get_container_params(buffer, 1);
-    PyObject *object = NULL;
+    PyObject *obj = NULL;
+    PyObject *newobj = NULL; // result of object_hook (if applicable)
     PyObject *key = NULL;
     PyObject *value = NULL;
     char *fixed_type;
@@ -807,7 +811,7 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
     }
     marker = params.marker;
 
-    BAIL_ON_NULL(object = PyDict_New());
+    BAIL_ON_NULL(obj = PyDict_New());
 
     // special case: no data values (keys only)
     if (params.counting && _is_no_data_type(params.type)) {
@@ -815,7 +819,7 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
 
         while (params.count > 0) {
             DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized, no data", intern);
-            BAIL_ON_NONZERO(PyDict_SetItem(object, key, value));
+            BAIL_ON_NONZERO(PyDict_SetItem(obj, key, value));
             // reference stolen in above call, but only for value!
             Py_CLEAR(key);
             Py_INCREF(value);
@@ -835,7 +839,7 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
             }
             DECODE_OBJECT_KEY_OR_RAISE_ENCODER_EXCEPTION("sized/unsized", intern);
             BAIL_ON_NULL(value = _ubjson_decode_value(buffer, fixed_type));
-            BAIL_ON_NONZERO(PyDict_SetItem(object, key, value));
+            BAIL_ON_NONZERO(PyDict_SetItem(obj, key, value));
             Py_CLEAR(key);
             Py_CLEAR(value);
 
@@ -848,12 +852,18 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer) {
         }
     }
 
-    return object;
+    if (NULL != buffer->prefs.object_hook) {
+        BAIL_ON_NULL(newobj = PyObject_CallFunctionObjArgs(buffer->prefs.object_hook, obj, NULL));
+        Py_CLEAR(obj);
+        return newobj;
+    }
+    return obj;
 
 bail:
     Py_XDECREF(key);
     Py_XDECREF(value);
-    Py_XDECREF(object);
+    Py_XDECREF(obj);
+    Py_XDECREF(newobj);
     return NULL;
 }
 
@@ -912,7 +922,7 @@ PyObject* _ubjson_decode_value(_ubjson_decoder_buffer_t *buffer, char *given_mar
             if (NULL == buffer->prefs.object_pairs_hook) {
                 RECURSE_AND_RETURN_OR_BAIL(_decode_object(buffer), "whilst decoding a UBJSON object");
             } else {
-                RECURSE_AND_RETURN_OR_BAIL(_decode_object_with_hook(buffer), "whilst decoding a UBJSON object");
+                RECURSE_AND_RETURN_OR_BAIL(_decode_object_with_pairs_hook(buffer), "whilst decoding a UBJSON object");
             }
         default:
             RAISE_DECODER_EXCEPTION("Invalid marker");

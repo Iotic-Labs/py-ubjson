@@ -1,6 +1,8 @@
 UNRELEASED
 - Add default parameter to encoder, allowing for unsupported types to be
   encoded.
+- Add object_hook parameter to decoder, to e.g. allow decoding of custom types
+  (which were encoded with the help of default parameter).
 - Treat object_pairs_hook the same in pure Python mode as with extension
 
 0.10.0

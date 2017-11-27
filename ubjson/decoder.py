@@ -199,16 +199,23 @@ def __get_container_params(fp_read, in_mapping, no_bytes):
     return marker, counting, count, type_
 
 
-def __decode_object(fp_read, no_bytes, object_pairs_hook, intern_object_keys):  # noqa (complexity)
+def __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook, # noqa pylint: disable=too-many-branches
+                    intern_object_keys):
     marker, counting, count, type_ = __get_container_params(fp_read, True, no_bytes)
-    pairs = []
+    has_pairs_hook = object_pairs_hook is not None
+    obj = [] if has_pairs_hook else {}
 
     # special case - no data (None or bool)
     if type_ in __TYPES_NO_DATA:
         value = __METHOD_MAP[type_](fp_read, type_)
-        for _ in range(count):
-            pairs.append((__decode_object_key(fp_read, fp_read(1), intern_object_keys), value))
-        return object_pairs_hook(pairs)
+        if has_pairs_hook:
+            for _ in range(count):
+                obj.append((__decode_object_key(fp_read, fp_read(1), intern_object_keys), value))
+            return object_pairs_hook(obj)
+        else:
+            for _ in range(count):
+                obj[__decode_object_key(fp_read, fp_read(1), intern_object_keys)] = value
+            return object_hook(obj)
 
     while count > 0 and (counting or marker != OBJECT_END):
         if marker == TYPE_NOOP:
@@ -230,22 +237,25 @@ def __decode_object(fp_read, no_bytes, object_pairs_hook, intern_object_keys):  
         # handle outside above except (on KeyError) so do not have unfriendly "exception within except" backtrace
         if not handled:
             if marker == ARRAY_START:
-                value = __decode_array(fp_read, no_bytes, object_pairs_hook, intern_object_keys)
+                value = __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys)
             elif marker == OBJECT_START:
-                value = __decode_object(fp_read, no_bytes, object_pairs_hook, intern_object_keys)
+                value = __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys)
             else:
                 raise DecoderException('Invalid marker within object')
 
-        pairs.append((key, value))
+        if has_pairs_hook:
+            obj.append((key, value))
+        else:
+            obj[key] = value
         if counting:
             count -= 1
         if count > 0:
             marker = fp_read(1)
 
-    return object_pairs_hook(pairs)
+    return object_pairs_hook(obj) if has_pairs_hook else object_hook(obj)
 
 
-def __decode_array(fp_read, no_bytes, object_pairs_hook, intern_object_keys):  # noqa (complexity)
+def __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys):  # noqa (complexity)
     marker, counting, count, type_ = __get_container_params(fp_read, False, no_bytes)
 
     # special case - no data (None or bool)
@@ -275,9 +285,9 @@ def __decode_array(fp_read, no_bytes, object_pairs_hook, intern_object_keys):  #
         # handle outside above except (on KeyError) so do not have unfriendly "exception within except" backtrace
         if not handled:
             if marker == ARRAY_START:
-                value = __decode_array(fp_read, no_bytes, object_pairs_hook, intern_object_keys)
+                value = __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys)
             elif marker == OBJECT_START:
-                value = __decode_object(fp_read, no_bytes, object_pairs_hook, intern_object_keys)
+                value = __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys)
             else:
                 raise DecoderException('Invalid marker within array')
 
@@ -290,7 +300,11 @@ def __decode_array(fp_read, no_bytes, object_pairs_hook, intern_object_keys):  #
     return container
 
 
-def load(fp, no_bytes=False, object_pairs_hook=None, intern_object_keys=False):
+def __object_hook_noop(obj):
+    return obj
+
+
+def load(fp, no_bytes=False, object_hook=None, object_pairs_hook=None, intern_object_keys=False):
     """Decodes and returns UBJSON from the given file-like object
 
     Args:
@@ -298,9 +312,12 @@ def load(fp, no_bytes=False, object_pairs_hook=None, intern_object_keys=False):
         no_bytes (bool): If set, typed UBJSON arrays (uint8) will not be
                          converted to a bytes instance and instead treated like
                          any other array (i.e. result in a list).
+        object_hook (callable): Called with the result of any object literal
+                                decoded (instead of dict).
         object_pairs_hook (callable): Called with the result of any object
                                       literal decoded with an ordered list of
-                                      pairs (instead of dict).
+                                      pairs (instead of dict). Takes precedence
+                                      over object_hook.
         intern_object_keys (bool): If set, object keys are interned which can
                                    provide a memory saving when many repeated
                                    keys are used. NOTE: This is not supported
@@ -343,8 +360,8 @@ def load(fp, no_bytes=False, object_pairs_hook=None, intern_object_keys=False):
         | null                             | None          |
         +----------------------------------+---------------+
     """
-    if object_pairs_hook is None:
-        object_pairs_hook = dict
+    if object_pairs_hook is None and object_hook is None:
+        object_hook = __object_hook_noop
 
     if not callable(fp.read):
         raise TypeError('fp.read not callable')
@@ -357,17 +374,18 @@ def load(fp, no_bytes=False, object_pairs_hook=None, intern_object_keys=False):
         except KeyError:
             pass
         if marker == ARRAY_START:
-            return __decode_array(fp_read, bool(no_bytes), object_pairs_hook, intern_object_keys)
+            return __decode_array(fp_read, bool(no_bytes), object_hook, object_pairs_hook, intern_object_keys)
         elif marker == OBJECT_START:
-            return __decode_object(fp_read, bool(no_bytes), object_pairs_hook, intern_object_keys)
+            return __decode_object(fp_read, bool(no_bytes), object_hook, object_pairs_hook, intern_object_keys)
         else:
             raise DecoderException('Invalid marker')
     except DecoderException as ex:
         raise_from(DecoderException(ex.args[0], fp), ex)
 
 
-def loadb(chars, no_bytes=False, object_pairs_hook=None, intern_object_keys=False):
+def loadb(chars, no_bytes=False, object_hook=None, object_pairs_hook=None, intern_object_keys=False):
     """Decodes and returns UBJSON from the given bytes or bytesarray object. See
        load() for available arguments."""
     with BytesIO(chars) as fp:
-        return load(fp, no_bytes=no_bytes, object_pairs_hook=object_pairs_hook, intern_object_keys=intern_object_keys)
+        return load(fp, no_bytes=no_bytes, object_hook=object_hook, object_pairs_hook=object_pairs_hook,
+                    intern_object_keys=intern_object_keys)

@@ -76,7 +76,8 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
                       approximate=False,
                       # type marker expected at start of encoded output
                       expected_type=None,
-                      # encode param
+                      # decoder params
+                      object_hook=None,
                       object_pairs_hook=None,
                       # additional arguments to pass to encoder
                       **kwargs):
@@ -88,10 +89,12 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
             assert_func = self.assertGreaterEqual if length_greater_or_equal else self.assertEqual
             assert_func(len(encoded), length, self.__format_in_out(obj, encoded))
         if approximate:
-            self.assertTrue(self.numbers_close(self.ubjloadb(encoded, object_pairs_hook=object_pairs_hook), obj),
+            self.assertTrue(self.numbers_close(self.ubjloadb(encoded, object_hook=object_hook,
+                                                             object_pairs_hook=object_pairs_hook), obj),
                             msg=self.__format_in_out(obj, encoded))
         else:
-            self.assertEqual(self.ubjloadb(encoded, object_pairs_hook=object_pairs_hook), obj,
+            self.assertEqual(self.ubjloadb(encoded, object_hook=object_hook,
+                                           object_pairs_hook=object_pairs_hook), obj,
                              self.__format_in_out(obj, encoded))
 
     def test_no_data(self):
@@ -473,6 +476,22 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
 
         self.assertEqual(dumpb_default(obj1), self.ubjdumpb(obj2))
         self.assertEqual(dumpb_default(obj3), self.ubjdumpb(obj4))
+
+    def test_decode_object_hook(self):
+        with self.assertRaises(TypeError):
+            self.check_enc_dec({'a': 1, 'b': 2}, object_hook=int)
+
+        def default(obj):
+            if isinstance(obj, set):
+                return {'__set__': list(obj)}
+            raise EncoderException('__test__marker__')
+
+        def object_hook(obj):
+            if '__set__' in obj:
+                return set(obj['__set__'])
+            return obj
+
+        self.check_enc_dec({'a': 1, 'b': {2, 3, 4}}, object_hook=object_hook, default=default)
 
 
 class TestEncodeDecodeFp(TestEncodeDecodePlain):

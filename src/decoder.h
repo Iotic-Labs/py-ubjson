@@ -25,6 +25,7 @@ extern "C" {
 /******************************************************************************/
 
 typedef struct {
+    PyObject *object_hook;
     PyObject *object_pairs_hook;
     // don't convert UINT8 arrays to bytes instances (and keep as an array of individual integers)
     int no_bytes;
