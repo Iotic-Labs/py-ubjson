@@ -1,3 +1,6 @@
+UNRELEASED
+- Relax floating point type test case (for 32-bit targets)
+
 0.11.0
 - Add default parameter to encoder, allowing for unsupported types to be
   encoded.

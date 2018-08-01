@@ -197,8 +197,8 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
         self.check_enc_dec(0.0, 5, expected_type=TYPE_FLOAT32)
 
         for type_, value, total_size in (
-                (TYPE_FLOAT32, 1.18e-38, 5),
-                (TYPE_FLOAT32, 3.4e38, 5),
+                (TYPE_FLOAT32, 1.18e-37, 5),
+                (TYPE_FLOAT32, 3.4e37, 5),
                 (TYPE_FLOAT64, 2.23e-308, 9),
                 (TYPE_FLOAT64, 12345.44e40, 9),
                 (TYPE_FLOAT64, 1.8e307, 9)):
