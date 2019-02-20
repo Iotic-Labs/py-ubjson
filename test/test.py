@@ -23,7 +23,7 @@ from struct import pack
 from collections import OrderedDict
 
 from ubjson import (dump as ubjdump, dumpb as ubjdumpb, load as ubjload, loadb as ubjloadb, EncoderException,
-                    DecoderException)
+                    DecoderException, load_all as ubjload_all)
 from ubjson.markers import (TYPE_NULL, TYPE_NOOP, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16,
                             TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
                             OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
@@ -492,6 +492,35 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
             return obj
 
         self.check_enc_dec({'a': 1, 'b': {2, 3, 4}}, object_hook=object_hook, default=default)
+
+    def test_load_all(self):
+        test_data = [
+            {
+                "an int": 1234,
+                "a float": 1.234,
+                "some text": "Hello World!"
+            },
+            {
+                "an array of text!": [
+                    "abc",
+                    "def"
+                ],
+                "A very large number": 123456789101112
+            }
+        ]
+
+        with open("ubj_multi_object_test.ubj", "wb") as f:
+            for item in test_data:
+                f.write(ubjdumpb(item))
+                curr_file_pos = f.tell()
+                f.seek(curr_file_pos + 200)
+                f.write(b'\x00')
+
+        with open("ubj_multi_object_test.ubj", "rb") as f:
+            output = ubjload_all(f)
+
+        self.assertEqual(test_data, output)
+
 
 
 class TestEncodeDecodeFp(TestEncodeDecodePlain):
