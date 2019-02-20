@@ -389,3 +389,88 @@ def loadb(chars, no_bytes=False, object_hook=None, object_pairs_hook=None, inter
     with BytesIO(chars) as fp:
         return load(fp, no_bytes=no_bytes, object_hook=object_hook, object_pairs_hook=object_pairs_hook,
                     intern_object_keys=intern_object_keys)
+
+
+def load_all(fp, *args):
+    """Decodes and returns UBJSON from the given file-like object, ignoring null chars and attempting
+    to load all data structures in a file
+
+    Args:
+        fp: read([size])-able object
+        no_bytes (bool): If set, typed UBJSON arrays (uint8) will not be
+                         converted to a bytes instance and instead treated like
+                         any other array (i.e. result in a list).
+        object_hook (callable): Called with the result of any object literal
+                                decoded (instead of dict).
+        object_pairs_hook (callable): Called with the result of any object
+                                      literal decoded with an ordered list of
+                                      pairs (instead of dict). Takes precedence
+                                      over object_hook.
+        intern_object_keys (bool): If set, object keys are interned which can
+                                   provide a memory saving when many repeated
+                                   keys are used. NOTE: This is not supported
+                                   in Python2 (since interning does not apply
+                                   to unicode) and wil be ignored.
+
+    Returns:
+        Array of Decoded objects
+
+    Raises:
+        DecoderException: If an encoding failure occured.
+
+    UBJSON types are mapped to Python types as follows.  Numbers in brackets
+    denote Python version.
+
+        +----------------------------------+---------------+
+        | UBJSON                           | Python        |
+        +==================================+===============+
+        | object                           | dict          |
+        +----------------------------------+---------------+
+        | array                            | list          |
+        +----------------------------------+---------------+
+        | string                           | (3) str       |
+        |                                  | (2) unicode   |
+        +----------------------------------+---------------+
+        | uint8, int8, int16, int32, int64 | (3) int       |
+        |                                  | (2) int, long |
+        +----------------------------------+---------------+
+        | float32, float64                 | float         |
+        +----------------------------------+---------------+
+        | high_precision                   | Decimal       |
+        +----------------------------------+---------------+
+        | array (typed, uint8)             | (3) bytes     |
+        |                                  | (2) str       |
+        +----------------------------------+---------------+
+        | true                             | True          |
+        +----------------------------------+---------------+
+        | false                            | False         |
+        +----------------------------------+---------------+
+        | null                             | None          |
+        +----------------------------------+---------------+
+    """
+
+    if not callable(fp.read):
+        raise TypeError('fp.read not callable')
+    fp_read = fp.read
+
+    found_structures = list()
+
+    try:
+        while True:
+            curr_file_pos = fp.tell()
+            marker = fp_read(1)
+
+            if marker == ARRAY_START or marker == OBJECT_START:
+                # Rewind
+                fp.seek(curr_file_pos)
+                found_structures.append(load(fp, *args))
+            elif marker == TYPE_NONE:
+                # Ignore Empty space
+                pass
+            elif marker == b'':
+                # Found EOF
+                return found_structures
+            else:
+                raise DecoderException('Invalid marker {}'.format(marker))
+    except DecoderException as ex:
+        raise_from(DecoderException(ex.args[0], fp), ex)

@@ -31,12 +31,12 @@ try:
     EXTENSION_ENABLED = True  # pragma: no cover
 except ImportError:
     from .encoder import dump, dumpb
-    from .decoder import load, loadb
+    from .decoder import load, loadb, load_all
     EXTENSION_ENABLED = False
 
 from .encoder import EncoderException  # noqa
-from .decoder import DecoderException  # noqa
+from .decoder import DecoderException, load_all  # noqa
 
 __version__ = '0.12.0'
 
-__all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
+__all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException', 'load_all')
