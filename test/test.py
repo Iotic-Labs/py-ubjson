@@ -499,12 +499,7 @@ class TestEncodeDecodeFp(TestEncodeDecodePlain):
 
     @staticmethod
     def ubjloadb(raw, *args, **kwargs):
-        try:
-            raw = BytesIO(raw)
-        except TypeError:  # pylint: disable=bare-except
-            # Invalid raw input testing
-            raise
-        return ubjload(raw, *args, **kwargs)
+        return ubjload(BytesIO(raw), *args, **kwargs)
 
     @staticmethod
     def ubjdumpb(obj, *args, **kwargs):

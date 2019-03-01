@@ -108,5 +108,5 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules'
-        ]
-    )
+    ]
+)

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pylint: disable=superfluous-parens,wrong-import-position
-
 from __future__ import print_function, unicode_literals
 
 from abc import ABCMeta, abstractmethod
