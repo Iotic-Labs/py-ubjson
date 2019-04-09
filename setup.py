@@ -89,7 +89,7 @@ setup(
     license='Apache License 2.0',
     packages=['ubjson'],
     zip_safe=False,
-    ext_modules=([Extension('_ubjson', glob('src/*.c'), extra_compile_args=COMPILE_ARGS)]
+    ext_modules=([Extension('_ubjson', sorted(glob('src/*.c')), extra_compile_args=COMPILE_ARGS)]
                  if BUILD_EXTENSIONS else []),
     cmdclass={"build_ext": BuildExtWarnOnFail},
     keywords=['ubjson', 'ubj'],
