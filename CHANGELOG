@@ -1,3 +1,6 @@
+UNRELEASED
+- Make extension build more reproducible with sorted sources (bmwiedemann)
+
 0.12.0
 - Relax floating point type test case (for 32-bit targets)
 - Added Python 3.7 to classifiers list
@@ -29,8 +32,8 @@
 
 0.8.4
 - License information update
-- Allow for lack of stdin/stdout/stdout buffer access (#1)
-- Allow for extenion building to be skipped via env. var (#2)
+- Allow for lack of stdin/stdout/stdout buffer access
+- Allow for extenion building to be skipped via env. var
 
 0.8.3
 - Initial public release
