@@ -874,7 +874,9 @@ bail:
     obj = (item);\
     if (NULL != obj) {\
         return obj;\
-    } else if (!(PyErr_Occurred() && PyErr_ExceptionMatches((PyObject*)PyDec_Type))) {\
+    } else if (PyErr_Occurred() && PyErr_ExceptionMatches((PyObject*)DecoderException)) {\
+        goto bail;\
+    } else {\
         RAISE_DECODER_EXCEPTION("Failed to decode " item_str);\
     }\
 }

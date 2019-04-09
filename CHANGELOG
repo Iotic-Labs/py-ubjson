@@ -1,5 +1,7 @@
 UNRELEASED
 - Make extension build more reproducible with sorted sources (bmwiedemann)
+- Fix _ubjson_decode_value case statement fallthrough and use correct check
+  to not re-raise existing decoder DecoderException
 
 0.12.0
 - Relax floating point type test case (for 32-bit targets)
