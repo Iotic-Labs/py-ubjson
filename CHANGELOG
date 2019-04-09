@@ -1,4 +1,4 @@
-UNRELEASED
+0.13.0
 - Make extension build more reproducible with sorted sources (bmwiedemann)
 - Fix _ubjson_decode_value case statement fallthrough and use correct check
   to not re-raise existing decoder DecoderException
