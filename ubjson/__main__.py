@@ -36,7 +36,7 @@ def from_json(in_stream, out_stream):
     try:
         ubjdump(obj, out_stream, sort_keys=True)
     except EncoderException as ex:
-        __error('Failed to encode to ubsjon: %s' % ex)
+        __error('Failed to encode to ubjson: %s' % ex)
         return 16
     return 0
 
@@ -50,7 +50,7 @@ def to_json(in_stream, out_stream):
     try:
         jdump(obj, out_stream, sort_keys=True, separators=(',', ':'))
     except TypeError as ex:
-        __error('Failed to encode to sjon: %s' % ex)
+        __error('Failed to encode to json: %s' % ex)
         return 16
     return 0
 
