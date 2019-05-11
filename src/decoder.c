@@ -61,19 +61,22 @@
     }\
 }
 
+#define READ_VIA_FUNC(buffer, readptr, dst) \
+    buffer->read_func(buffer, readptr, dst)
+
 #define READ_INTO_OR_BAIL(len, dst_buffer, item_str) {\
     Py_ssize_t read = len;\
-    ACTION_READ_ERROR(_decoder_buffer_read(buffer, &read, dst_buffer), len, item_str);\
+    ACTION_READ_ERROR(READ_VIA_FUNC(buffer, &read, dst_buffer), len, item_str);\
 }
 
 #define READ_OR_BAIL(len, dst_buffer, item_str) {\
     Py_ssize_t read = len;\
-    ACTION_READ_ERROR((dst_buffer = _decoder_buffer_read(buffer, &read, NULL)), len, item_str);\
+    ACTION_READ_ERROR((dst_buffer = READ_VIA_FUNC(buffer, &read, NULL)), len, item_str);\
 }
 
 #define READ_OR_BAIL_CAST(len, dst_buffer, cast, item_str) {\
     Py_ssize_t read = len;\
-    ACTION_READ_ERROR((dst_buffer = cast _decoder_buffer_read(buffer, &read, NULL)), len, item_str);\
+    ACTION_READ_ERROR((dst_buffer = cast READ_VIA_FUNC(buffer, &read, NULL)), len, item_str);\
 }
 
 #define READ_CHAR_OR_BAIL(dst_char, item_str) {\
@@ -96,6 +99,9 @@
 
 // decoder buffer size when using fp (i.e. minimum number of bytes to read in one go)
 #define BUFFER_FP_SIZE 256
+// io.SEEK_CUR constant (for seek() function)
+#define IO_SEEK_CUR 1
+
 
 static PyObject *DecoderException = NULL;
 static PyTypeObject *PyDec_Type = NULL;
@@ -116,8 +122,9 @@ typedef struct {
     int invalid;
 } _container_params_t;
 
-static const char* _decoder_buffer_read(_ubjson_decoder_buffer_t *buffer, Py_ssize_t *len, char *dst_buffer);
+static const char* _decoder_buffer_read_fixed(_ubjson_decoder_buffer_t *buffer, Py_ssize_t *len, char *dst_buffer);
 static const char* _decoder_buffer_read_callable(_ubjson_decoder_buffer_t *buffer, Py_ssize_t *len, char *dst_buffer);
+static const char* _decoder_buffer_read_buffered(_ubjson_decoder_buffer_t *buffer, Py_ssize_t *len, char *dst_buffer);
 
 //These functions return NULL on failure (an exception will have been set). Note that no type checking is performed!
 
@@ -142,7 +149,8 @@ static PyObject* _decode_object(_ubjson_decoder_buffer_t *buffer);
 /* Returns new decoder buffer or NULL on failure (an exception will be set). Input must either support buffer interface
  * or be callable. Currently only increases reference count for input parameter.
  */
-_ubjson_decoder_buffer_t* _ubjson_decoder_buffer_create(_ubjson_decoder_prefs_t* prefs, PyObject *input) {
+_ubjson_decoder_buffer_t* _ubjson_decoder_buffer_create(_ubjson_decoder_prefs_t* prefs, PyObject *input,
+                                                        PyObject *seek) {
     _ubjson_decoder_buffer_t *buffer;
 
     if (NULL == (buffer = calloc(1, sizeof(_ubjson_decoder_buffer_t)))) {
@@ -152,13 +160,20 @@ _ubjson_decoder_buffer_t* _ubjson_decoder_buffer_create(_ubjson_decoder_prefs_t*
 
     buffer->prefs = *prefs;
     buffer->input = input;
-    Py_INCREF(input);
+    Py_XINCREF(input);
 
     if (PyObject_CheckBuffer(input)) {
         BAIL_ON_NONZERO(PyObject_GetBuffer(input, &buffer->view, PyBUF_SIMPLE));
+        buffer->read_func = _decoder_buffer_read_fixed;
         buffer->view_set = 1;
     } else if (PyCallable_Check(input)) {
-        buffer->callable = 1;
+        if (NULL == seek) {
+            buffer->read_func = _decoder_buffer_read_callable;
+        } else {
+            buffer->read_func = _decoder_buffer_read_buffered;
+            buffer->seek = seek;
+            Py_INCREF(seek);
+        }
     } else {
         // Should have been checked a level above
         PyErr_SetString(PyExc_TypeError, "Input neither support buffer interface nor is callable");
@@ -175,19 +190,50 @@ _ubjson_decoder_buffer_t* _ubjson_decoder_buffer_create(_ubjson_decoder_prefs_t*
     return buffer;
 
 bail:
-    _ubjson_decoder_buffer_free(buffer);
+    _ubjson_decoder_buffer_free(&buffer);
     return NULL;
 }
 
-void _ubjson_decoder_buffer_free(_ubjson_decoder_buffer_t *buffer) {
-    if (NULL != buffer) {
-        if (buffer->view_set) {
-            PyBuffer_Release(&buffer->view);
+// Returns non-zero if buffer cleanup/finalisation failed and no other exception was set already
+int _ubjson_decoder_buffer_free(_ubjson_decoder_buffer_t **buffer) {
+    int failed = 0;
+
+    if (NULL != buffer && NULL != *buffer) {
+        if ((*buffer)->view_set) {
+            // In buffered mode, rewind to position in stream up to which actually read (rather than buffered)
+            if (NULL != (*buffer)->seek && (*buffer)->view.len > (*buffer)->pos) {
+                PyObject *type, *value, *traceback, *seek_result;
+
+                // preserve the previous exception, if set
+                PyErr_Fetch(&type, &value, &traceback);
+
+                seek_result = PyObject_CallFunction((*buffer)->seek, "nn", ((*buffer)->pos - (*buffer)->view.len),
+                                                    IO_SEEK_CUR);
+                Py_XDECREF(seek_result);
+
+                /* Blindly calling PyErr_Restore would clear any exception raised by seek call. If however already had
+                 * an error before freeing buffer (this function), propagate that instead. (I.e. this behaves like a
+                 * nested try-except block.
+                 */
+                if (NULL != type) {
+                    PyErr_Restore(type, value, traceback);
+                } else if (NULL == seek_result) {
+                    failed = 1;
+                }
+            }
+            PyBuffer_Release(&((*buffer)->view));
+            (*buffer)->view_set = 0;
         }
-        free(buffer->tmp_dst);
-        Py_XDECREF(buffer->input);
-        free(buffer);
+        if (NULL != (*buffer)->tmp_dst) {
+            free((*buffer)->tmp_dst);
+            (*buffer)->tmp_dst = NULL;
+        }
+        Py_CLEAR((*buffer)->input);
+        Py_CLEAR((*buffer)->seek);
+        free(*buffer);
+        *buffer = NULL;
     }
+    return failed;
 }
 
 /* Tries to read len bytes from input, returning read chunk. Len is updated to how many bytes were actually read.
@@ -195,47 +241,87 @@ void _ubjson_decoder_buffer_free(_ubjson_decoder_buffer_t *buffer) {
  * Returns NULL if either no input is left (len is set to zero) or an error occurs (len is non-zero). The caller must
  * NOT modify or free the returned chunk unless they specified out_buffer (in which case that is returned). When this
  * function is called again, the previously returned output is no longer valid (unless was created by caller).
+ *
+ * This function reads from a fixed buffer (single byte array)
  */
-static const char* _decoder_buffer_read(_ubjson_decoder_buffer_t *buffer, Py_ssize_t *len, char *dst_buffer) {
+static const char* _decoder_buffer_read_fixed(_ubjson_decoder_buffer_t *buffer, Py_ssize_t *len, char *dst_buffer) {
     Py_ssize_t old_pos;
 
-    // nothing to do
     if (0 == *len) {
         return NULL;
     }
 
-    // input provided via read method
-    if (buffer->callable) {
-        return _decoder_buffer_read_callable(buffer, len, dst_buffer);
-    // whole input as single byte array
-    } else {
-        if (buffer->pos < buffer->view.len) {
-            *len = MIN(*len, (buffer->view.len - buffer->pos));
-            old_pos = buffer->pos;
-            buffer->total_read = buffer->pos += *len;
-            // caller has provided own destination
-            if (NULL != dst_buffer) {
-                return memcpy(dst_buffer, &((char*)buffer->view.buf)[old_pos], *len);
-            } else {
-                return &((char*)buffer->view.buf)[old_pos];
-            }
-        // no input remaining
+    if (buffer->total_read < buffer->view.len) {
+        *len = MIN(*len, (buffer->view.len - buffer->total_read));
+        old_pos = buffer->total_read;
+        buffer->total_read += *len;
+        // caller has provided own destination
+        if (NULL != dst_buffer) {
+            return memcpy(dst_buffer, &((char*)buffer->view.buf)[old_pos], *len);
         } else {
-            *len = 0;
-            return NULL;
+            return &((char*)buffer->view.buf)[old_pos];
         }
+    // no input remaining
+    } else {
+        *len = 0;
+        return NULL;
     }
 }
 
-// Used by _decoder_buffer_read - deals with case where buffer has callable input
+// See _decoder_buffer_read_fixed for behaviour details. This function is used to read from a stream
 static const char* _decoder_buffer_read_callable(_ubjson_decoder_buffer_t *buffer, Py_ssize_t *len, char *dst_buffer) {
+    PyObject* read_result = NULL;
+
+    if (0 == *len) {
+        return NULL;
+    }
+
+    if (buffer->view_set) {
+        PyBuffer_Release(&buffer->view);
+        buffer->view_set = 0;
+    }
+
+    // read input and get buffer view
+    BAIL_ON_NULL(read_result = PyObject_CallFunction(buffer->input, "n", *len));
+    BAIL_ON_NONZERO(PyObject_GetBuffer(read_result, &buffer->view, PyBUF_SIMPLE));
+    buffer->view_set = 1;
+    // don't need reference since view reserves one already
+    Py_CLEAR(read_result);
+
+    // no input remaining
+    if (0 == buffer->view.len) {
+        *len = 0;
+        return NULL;
+    }
+
+    *len = buffer->view.len;
+    buffer->total_read += *len;
+    // caller has provided own destination
+    if (NULL != dst_buffer) {
+        return memcpy(dst_buffer, buffer->view.buf, *len);
+    } else {
+        return buffer->view.buf;
+    }
+
+bail:
+    *len = 1;
+    Py_XDECREF(read_result);
+    return NULL;
+}
+
+// See _decoder_buffer_read_fixed for behaviour details. This function reads (buffered) from a seekable stream
+static const char* _decoder_buffer_read_buffered(_ubjson_decoder_buffer_t *buffer, Py_ssize_t *len, char *dst_buffer) {
     Py_ssize_t old_pos;
     char *tmp_dst;
     Py_ssize_t remaining_old = 0; // how many bytes remaining to be read (from old view)
     PyObject* read_result = NULL;
 
+    if (0 == *len) {
+        return NULL;
+    }
+
     // previously used temporary output no longer needed
-    if (buffer->tmp_dst) {
+    if (NULL != buffer->tmp_dst) {
         free(buffer->tmp_dst);
         buffer->tmp_dst = NULL;
     }
@@ -303,6 +389,7 @@ bail:
     Py_XDECREF(read_result);
     return NULL;
 }
+
 
 /******************************************************************************/
 

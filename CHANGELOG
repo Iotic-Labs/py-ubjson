@@ -1,6 +1,9 @@
 UNRELEASED
 - Fix DecoderException not including offset when C-extension in use, expose
   property for it.
+- Fix decoding via C extension reading too much data from file-like objects
+- Test suite exercises both pure & extension modules when extension enabled
+- Fix spelling errors in cli util (hoenn)
 
 0.13.0
 - Make extension build more reproducible with sorted sources (bmwiedemann)

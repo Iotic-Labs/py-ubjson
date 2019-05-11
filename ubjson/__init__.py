@@ -28,8 +28,8 @@ To use a file-like object as input/output, use dump() & load() methods instead.
 
 try:
     from _ubjson import dump, dumpb, load, loadb
-    EXTENSION_ENABLED = True  # pragma: no cover
-except ImportError:
+    EXTENSION_ENABLED = True
+except ImportError:  # pragma: no cover
     from .encoder import dump, dumpb
     from .decoder import load, loadb
     EXTENSION_ENABLED = False

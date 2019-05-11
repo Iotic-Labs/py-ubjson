@@ -108,16 +108,17 @@ _ubjson_encoder_buffer_t* _ubjson_encoder_buffer_create(_ubjson_encoder_prefs_t*
     return buffer;
 
 bail:
-    _ubjson_encoder_buffer_free(buffer);
+    _ubjson_encoder_buffer_free(&buffer);
     return NULL;
 }
 
-void _ubjson_encoder_buffer_free(_ubjson_encoder_buffer_t *buffer) {
-    if (NULL != buffer) {
-        Py_XDECREF(buffer->obj);
-        Py_XDECREF(buffer->fp_write);
-        Py_XDECREF(buffer->markers);
-        free(buffer);
+void _ubjson_encoder_buffer_free(_ubjson_encoder_buffer_t **buffer) {
+    if (NULL != buffer && NULL != *buffer) {
+        Py_XDECREF((*buffer)->obj);
+        Py_XDECREF((*buffer)->fp_write);
+        Py_XDECREF((*buffer)->markers);
+        free(*buffer);
+        *buffer = NULL;
     }
 }
 

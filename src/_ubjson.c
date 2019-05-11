@@ -55,12 +55,12 @@ _ubjson_dump(PyObject *self, PyObject *args, PyObject *kwargs) {
 
     BAIL_ON_NONZERO(_ubjson_encode_value(obj, buffer));
     BAIL_ON_NULL(obj = _ubjson_encoder_buffer_finalise(buffer));
-    _ubjson_encoder_buffer_free(buffer);
+    _ubjson_encoder_buffer_free(&buffer);
     return obj;
 
 bail:
     Py_XDECREF(fp_write);
-    _ubjson_encoder_buffer_free(buffer);
+    _ubjson_encoder_buffer_free(&buffer);
     return NULL;
 }
 
@@ -84,11 +84,11 @@ _ubjson_dumpb(PyObject *self, PyObject *args, PyObject *kwargs) {
     BAIL_ON_NULL(buffer = _ubjson_encoder_buffer_create(&prefs, NULL));
     BAIL_ON_NONZERO(_ubjson_encode_value(obj, buffer));
     BAIL_ON_NULL(obj = _ubjson_encoder_buffer_finalise(buffer));
-    _ubjson_encoder_buffer_free(buffer);
+    _ubjson_encoder_buffer_free(&buffer);
     return obj;
 
 bail:
-    _ubjson_encoder_buffer_free(buffer);
+    _ubjson_encoder_buffer_free(&buffer);
     return NULL;
 }
 
@@ -105,6 +105,8 @@ _ubjson_load(PyObject *self, PyObject *args, PyObject *kwargs) {
     _ubjson_decoder_prefs_t prefs = _ubjson_decoder_prefs_defaults;
     PyObject *fp;
     PyObject *fp_read = NULL;
+    PyObject *fp_seek = NULL;
+    PyObject *seekable = NULL;
     PyObject *obj = NULL;
     UNUSED(self);
 
@@ -112,23 +114,38 @@ _ubjson_load(PyObject *self, PyObject *args, PyObject *kwargs) {
                                      &prefs.object_pairs_hook, &prefs.intern_object_keys)) {
         goto bail;
     }
+
     BAIL_ON_NULL(fp_read = PyObject_GetAttrString(fp, "read"));
     if (!PyCallable_Check(fp_read)) {
         PyErr_SetString(PyExc_TypeError, "fp.read not callable");
         goto bail;
     }
 
-    BAIL_ON_NULL(buffer = _ubjson_decoder_buffer_create(&prefs, fp_read));
-    // buffer creation has added reference
+    // determine whether can seek input
+    if (NULL != (seekable = PyObject_CallMethod(fp, "seekable", NULL))) {
+        if (Py_True == seekable) {
+            // Could also PyCallable_Check but have already checked seekable() so will just fail later
+            fp_seek = PyObject_GetAttrString(fp, "seek");
+        }
+        Py_XDECREF(seekable);
+    }
+    // ignore seekable() / seek get errors
+    PyErr_Clear();
+
+    BAIL_ON_NULL(buffer = _ubjson_decoder_buffer_create(&prefs, fp_read, fp_seek));
+    // buffer creation has added references
     Py_CLEAR(fp_read);
+    Py_CLEAR(fp_seek);
 
     BAIL_ON_NULL(obj = _ubjson_decode_value(buffer, NULL));
-    _ubjson_decoder_buffer_free(buffer);
+    BAIL_ON_NONZERO(_ubjson_decoder_buffer_free(&buffer));
     return obj;
 
 bail:
     Py_XDECREF(fp_read);
-    _ubjson_decoder_buffer_free(buffer);
+    Py_XDECREF(fp_seek);
+    Py_XDECREF(obj);
+    _ubjson_decoder_buffer_free(&buffer);
     return NULL;
 }
 
@@ -158,14 +175,15 @@ _ubjson_loadb(PyObject *self, PyObject *args, PyObject *kwargs) {
         goto bail;
     }
 
-    BAIL_ON_NULL(buffer = _ubjson_decoder_buffer_create(&prefs, chars));
+    BAIL_ON_NULL(buffer = _ubjson_decoder_buffer_create(&prefs, chars, NULL));
 
     BAIL_ON_NULL(obj = _ubjson_decode_value(buffer, NULL));
-    _ubjson_decoder_buffer_free(buffer);
+    BAIL_ON_NONZERO(_ubjson_decoder_buffer_free(&buffer));
     return obj;
 
 bail:
-    _ubjson_decoder_buffer_free(buffer);
+    Py_XDECREF(obj);
+    _ubjson_decoder_buffer_free(&buffer);
     return NULL;
 }
 
