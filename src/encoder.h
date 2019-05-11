@@ -48,7 +48,7 @@ typedef struct {
 /******************************************************************************/
 
 extern _ubjson_encoder_buffer_t* _ubjson_encoder_buffer_create(_ubjson_encoder_prefs_t* prefs, PyObject *fp_write);
-extern void _ubjson_encoder_buffer_free(_ubjson_encoder_buffer_t *buffer);
+extern void _ubjson_encoder_buffer_free(_ubjson_encoder_buffer_t **buffer);
 extern PyObject* _ubjson_encoder_buffer_finalise(_ubjson_encoder_buffer_t *buffer);
 extern int _ubjson_encode_value(PyObject *obj, _ubjson_encoder_buffer_t *buffer);
 extern int _ubjson_encoder_init(void);

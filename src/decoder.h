@@ -32,11 +32,13 @@ typedef struct {
     int intern_object_keys;
 } _ubjson_decoder_prefs_t;
 
-typedef struct {
+typedef struct _ubjson_decoder_buffer_t {
     // either supports buffer interface or is callable returning bytes
     PyObject *input;
-    // whether input is buffer or callable
-    int callable;
+    // NULL unless input supports seeking in which case expecting callable with signature of io.IOBase.seek()
+    PyObject *seek;
+    // function used to read data from this buffer with (depending on whether fixed, callable or seekable)
+    const char* (*read_func)(struct _ubjson_decoder_buffer_t *buffer, Py_ssize_t *len, char *dst_buffer);
     // buffer protocol access to raw bytes of input
     Py_buffer view;
     // whether view will need to be released
@@ -52,8 +54,9 @@ typedef struct {
 
 /******************************************************************************/
 
-extern _ubjson_decoder_buffer_t* _ubjson_decoder_buffer_create(_ubjson_decoder_prefs_t* prefs, PyObject *input);
-extern void _ubjson_decoder_buffer_free(_ubjson_decoder_buffer_t *buffer);
+extern _ubjson_decoder_buffer_t* _ubjson_decoder_buffer_create(_ubjson_decoder_prefs_t* prefs,
+                                                               PyObject *input, PyObject *seek);
+extern int _ubjson_decoder_buffer_free(_ubjson_decoder_buffer_t **buffer);
 extern int _ubjson_decoder_init(void);
 // note: marker argument only used internally - supply NULL
 extern PyObject* _ubjson_decode_value(_ubjson_decoder_buffer_t *buffer, char *given_marker);
