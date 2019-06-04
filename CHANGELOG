@@ -1,3 +1,7 @@
+UNRELEASED
+- Fix DecoderException not including offset when C-extension in use, expose
+  property for it.
+
 0.13.0
 - Make extension build more reproducible with sorted sources (bmwiedemann)
 - Fix _ubjson_decode_value case statement fallthrough and use correct check

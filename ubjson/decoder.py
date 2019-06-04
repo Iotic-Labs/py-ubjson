@@ -42,11 +42,18 @@ __UNPACK_FLOAT64 = Struct('>d').unpack
 class DecoderException(ValueError):
     """Raised when decoding of a UBJSON stream fails."""
 
-    def __init__(self, message, fp=None):
-        if hasattr(fp, 'tell'):
-            super(DecoderException, self).__init__('%s (at byte %d)' % (message, fp.tell()))
+    def __init__(self, message, position=None):
+        if position is not None:
+            super(DecoderException, self).__init__('%s (at byte %d)' % (message, position), position)
         else:
-            super(DecoderException, self).__init__(str(message))
+            super(DecoderException, self).__init__(str(message), None)
+
+    @property
+    def position(self):
+        """Position in stream where decoding failed. Can be None in case where decoding from string of when file-like
+        object does not support tell().
+        """
+        return self.args[1]  # pylint: disable=unsubscriptable-object
 
 
 # pylint: disable=unused-argument
@@ -380,7 +387,7 @@ def load(fp, no_bytes=False, object_hook=None, object_pairs_hook=None, intern_ob
         else:
             raise DecoderException('Invalid marker')
     except DecoderException as ex:
-        raise_from(DecoderException(ex.args[0], fp), ex)
+        raise_from(DecoderException(ex.args[0], position=(fp.tell() if hasattr(fp, 'tell') else None)), ex)
 
 
 def loadb(chars, no_bytes=False, object_hook=None, object_pairs_hook=None, intern_object_keys=False):

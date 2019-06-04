@@ -27,6 +27,7 @@ from ubjson import (dump as ubjdump, dumpb as ubjdumpb, load as ubjload, loadb a
 from ubjson.markers import (TYPE_NULL, TYPE_NOOP, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16,
                             TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING,
                             OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
+from ubjson.compat import INTEGER_TYPES
 
 PY2 = version_info[0] < 3
 
@@ -109,8 +110,9 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(self.ubjloadb(TYPE_BOOL_TRUE * 10), True)
 
     def test_invalid_marker(self):
-        with self.assertRaises(DecoderException):
+        with self.assertRaises(DecoderException) as ctx:
             self.ubjloadb(b'A')
+        self.assertTrue(isinstance(ctx.exception.position, INTEGER_TYPES + (type(None),)))
 
     def test_bool(self):
         self.assertEqual(self.ubjdumpb(True), TYPE_BOOL_TRUE)
@@ -506,6 +508,11 @@ class TestEncodeDecodeFp(TestEncodeDecodePlain):
         out = BytesIO()
         ubjdump(obj, out, *args, **kwargs)
         return out.getvalue()
+
+    def test_decode_exception_position(self):
+        with self.assertRaises(DecoderException) as ctx:
+            self.ubjloadb(TYPE_STRING + TYPE_INT8 + b'\x01' + b'\xfe' + b'c0fefe' * 4)
+        self.assertEqual(ctx.exception.position, 4)
 
     def test_invalid_fp_dump(self):
         with self.assertRaises(AttributeError):
