@@ -1,7 +1,7 @@
-##How to Contribute
+## How to Contribute
 We welcome contributions from the wider community.  Thanks in advance for your help.  We have a few guidelines
 
-####Guidelines
+### Guidelines
 
 - Use the branch `dev-contrib` to make your change.
 - Add test(s) to the unit tests, if applicable.

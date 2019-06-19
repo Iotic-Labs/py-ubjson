@@ -134,8 +134,7 @@ def __encode_bytes(fp_write, item):
     # no ARRAY_END since length was specified
 
 
-def __encode_value(fp_write, item, seen_containers, container_count, sort_keys, # noqa pylint: disable=too-many-branches
-                   no_float32, default):
+def __encode_value(fp_write, item, seen_containers, container_count, sort_keys, no_float32, default):
     if isinstance(item, UNICODE_TYPE):
         __encode_string(fp_write, item)
 

@@ -196,16 +196,23 @@ static PyMethodDef UbjsonMethods[] = {
 };
 
 #if PY_MAJOR_VERSION >= 3
+static void module_free(PyObject *m)
+{
+    UNUSED(m);
+    _ubjson_encoder_cleanup();
+    _ubjson_decoder_cleanup();
+}
+
 static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_ubjson",
-        NULL,
-        -1,
-        UbjsonMethods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
+        PyModuleDef_HEAD_INIT,  // m_base
+        "_ubjson",              // m_name
+        NULL,                   // m_doc
+        -1,                     // m_size
+        UbjsonMethods,          // m_methods
+        NULL,                   // m_slots
+        NULL,                   // m_traverse
+        NULL,                   // m_clear
+        (freefunc)module_free   // m_free
 };
 
 #define INITERROR return NULL
@@ -215,7 +222,7 @@ PyInit__ubjson(void)
 #else
 #define INITERROR return
 
-void
+PyMODINIT_FUNC
 init_ubjson(void)
 #endif
 {

@@ -34,8 +34,8 @@ except ImportError:  # pragma: no cover
     from .decoder import load, loadb
     EXTENSION_ENABLED = False
 
-from .encoder import EncoderException  # noqa
-from .decoder import DecoderException  # noqa
+from .encoder import EncoderException
+from .decoder import DecoderException
 
 __version__ = '0.14.0'
 

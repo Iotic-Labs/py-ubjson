@@ -113,10 +113,8 @@ else:
             if isinstance(val, GeneratorType):
                 if val.__name__ == 'array_stream':
                     return list(val)
-                else:
-                    return dict(val)
-            else:
-                return val
+                return dict(val)
+            return val
     TEST_LIBS.append(SimpleUbjson)
 
 # ------------------------------------------------------------------------------

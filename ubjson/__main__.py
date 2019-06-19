@@ -58,7 +58,7 @@ def to_json(in_stream, out_stream):
 __ACTION = frozenset(('fromjson', 'tojson'))
 
 
-def main():  # noqa (complexity)
+def main():
     if not (3 <= len(argv) <= 4 and argv[1] in __ACTION):
         print("""USAGE: ubjson (fromjson|tojson) (INFILE|-) [OUTFILE]
 

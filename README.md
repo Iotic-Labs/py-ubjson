@@ -60,9 +60,14 @@ This library has been checked using [flake8](https://pypi.python.org/pypi/flake8
 
 ## Unit
 ```shell
+python3 -mvenv py
+. py/bin/activate
+pip install -U pip setuptools
+pip install -e .[dev]
+
 ./coverage_test.sh
 ```
-**Note**: This requires [coverage](https://pypi.python.org/pypi/coverage).
+**Note**: See `coverage_test.sh` for additional requirements.
 
 
 # Limitations

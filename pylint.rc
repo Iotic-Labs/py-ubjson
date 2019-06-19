@@ -62,7 +62,7 @@ confidence=
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 #disable=execfile-builtin,import-star-module-level,no-absolute-import,unicode-builtin,xrange-builtin,raising-string,coerce-builtin,long-builtin,old-octal-literal,dict-iter-method,delslice-method,intern-builtin,oct-method,using-cmp-argument,next-method-called,range-builtin-not-iterating,standarderror-builtin,input-builtin,old-raise-syntax,zip-builtin-not-iterating,backtick,file-builtin,suppressed-message,buffer-builtin,print-statement,dict-view-method,hex-method,coerce-method,raw_input-builtin,old-ne-operator,useless-suppression,apply-builtin,cmp-builtin,setslice-method,parameter-unpacking,filter-builtin-not-iterating,reduce-builtin,old-division,reload-builtin,unichr-builtin,long-suffix,nonzero-method,unpacking-in-except,basestring-builtin,indexing-exception,map-builtin-not-iterating,round-builtin,metaclass-assignment,getslice-method,cmp-method
-disable=too-few-public-methods,fixme,missing-docstring,no-else-return,useless-object-inheritance
+disable=too-few-public-methods,fixme,missing-docstring,useless-object-inheritance
 
 
 [REPORTS]
@@ -319,7 +319,7 @@ max-locals=15
 max-returns=6
 
 # Maximum number of branch for function / method body
-max-branches=13
+max-branches=15
 
 # Maximum number of statements in function / method body
 max-statements=50

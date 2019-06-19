@@ -510,6 +510,7 @@ static long long _decode_int_non_negative(_ubjson_decoder_buffer_t *buffer, char
     } else
 #endif
     {
+        // not expecting this to occur unless LONG_MAX (sys.maxint in Python 2) < 2^63-1
         value = PyLong_AsLongLong(int_obj);
     }
     if (PyErr_Occurred()) {

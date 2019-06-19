@@ -206,7 +206,7 @@ def __get_container_params(fp_read, in_mapping, no_bytes):
     return marker, counting, count, type_
 
 
-def __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook, # noqa pylint: disable=too-many-branches
+def __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook,  # pylint: disable=too-many-branches
                     intern_object_keys):
     marker, counting, count, type_ = __get_container_params(fp_read, True, no_bytes)
     has_pairs_hook = object_pairs_hook is not None
@@ -219,10 +219,10 @@ def __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook, # noqa py
             for _ in range(count):
                 obj.append((__decode_object_key(fp_read, fp_read(1), intern_object_keys), value))
             return object_pairs_hook(obj)
-        else:
-            for _ in range(count):
-                obj[__decode_object_key(fp_read, fp_read(1), intern_object_keys)] = value
-            return object_hook(obj)
+
+        for _ in range(count):
+            obj[__decode_object_key(fp_read, fp_read(1), intern_object_keys)] = value
+        return object_hook(obj)
 
     while count > 0 and (counting or marker != OBJECT_END):
         if marker == TYPE_NOOP:
@@ -262,14 +262,15 @@ def __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook, # noqa py
     return object_pairs_hook(obj) if has_pairs_hook else object_hook(obj)
 
 
-def __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys):  # noqa (complexity)
+def __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys):
     marker, counting, count, type_ = __get_container_params(fp_read, False, no_bytes)
 
     # special case - no data (None or bool)
     if type_ in __TYPES_NO_DATA:
         return [__METHOD_MAP[type_](fp_read, type_)] * count
+
     # special case - bytes array
-    elif type_ == TYPE_UINT8 and not no_bytes:
+    if type_ == TYPE_UINT8 and not no_bytes:
         container = fp_read(count)
         if len(container) < count:
             raise DecoderException('Container bytes array too short')
@@ -382,10 +383,9 @@ def load(fp, no_bytes=False, object_hook=None, object_pairs_hook=None, intern_ob
             pass
         if marker == ARRAY_START:
             return __decode_array(fp_read, bool(no_bytes), object_hook, object_pairs_hook, intern_object_keys)
-        elif marker == OBJECT_START:
+        if marker == OBJECT_START:
             return __decode_object(fp_read, bool(no_bytes), object_hook, object_pairs_hook, intern_object_keys)
-        else:
-            raise DecoderException('Invalid marker')
+        raise DecoderException('Invalid marker')
     except DecoderException as ex:
         raise_from(DecoderException(ex.args[0], position=(fp.tell() if hasattr(fp, 'tell') else None)), ex)
 

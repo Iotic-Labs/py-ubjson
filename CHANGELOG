@@ -3,6 +3,8 @@ UNRELEASED
   property for it.
 - Fix decoding via C extension reading too much data from file-like objects
 - Test suite exercises both pure & extension modules when extension enabled
+- Expand test suite to increase C extension (line) coverage
+- Remove need for pypandoc/rst (use original README.md)
 - Fix spelling errors in cli util (hoenn)
 
 0.13.0

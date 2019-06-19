@@ -46,10 +46,10 @@ PY2 = (version_info[0] == 2)
 
 if PY2:
     # pylint: disable=undefined-variable
-    INTEGER_TYPES = (int, long)  # noqa
-    UNICODE_TYPE = unicode  # noqa
-    TEXT_TYPES = (str, unicode)  # noqa
-    BYTES_TYPES = (str,)
+    INTEGER_TYPES = (int, long)  # noqa: F821
+    UNICODE_TYPE = unicode  # noqa: F821
+    TEXT_TYPES = (str, unicode)  # noqa: F821
+    BYTES_TYPES = (str, bytearray)
 
     STDIN_RAW = stdin
     STDOUT_RAW = stdout
@@ -68,13 +68,13 @@ else:
     STDIN_RAW = getattr(stdin, 'buffer', stdin)
     STDOUT_RAW = getattr(stdout, 'buffer', stdout)
     STDERR_RAW = getattr(stderr, 'buffer', stderr)
-    from sys import intern as intern_unicode  # noqa
+    from sys import intern as intern_unicode  # noqa: F401
 
 try:
     # introduced in v3.3
-    from collections.abc import Mapping, Sequence  # noqa
+    from collections.abc import Mapping, Sequence  # noqa: F401
 except ImportError:
-    from collections import Mapping, Sequence  # noqa  pylint: disable=wrong-import-order
+    from collections import Mapping, Sequence  # noqa: F401
 
 
 if version_info[:2] == (3, 2):
