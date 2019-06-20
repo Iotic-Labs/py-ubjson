@@ -1,4 +1,4 @@
-UNRELEASED
+0.14.0
 - Fix DecoderException not including offset when C-extension in use, expose
   property for it.
 - Fix decoding via C extension reading too much data from file-like objects
