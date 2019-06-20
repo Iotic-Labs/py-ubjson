@@ -37,7 +37,7 @@ from ubjson import __version__ as version
 
 def load_description(filename):
     script_dir = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(script_dir, filename), 'r', encoding='utf-8') as infile:
+    with open(os.path.join(script_dir, filename), 'r') as infile:
         return infile.read()
 
 
