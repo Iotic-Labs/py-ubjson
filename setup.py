@@ -90,8 +90,12 @@ setup(
         ]
     },
     zip_safe=False,
-    ext_modules=([Extension('_ubjson', sorted(glob('src/*.c')), extra_compile_args=COMPILE_ARGS)]
-                 if BUILD_EXTENSIONS else []),
+    ext_modules=([Extension(
+        '_ubjson',
+        sorted(glob('src/*.c')),
+        extra_compile_args=COMPILE_ARGS,
+        # undef_macros=['NDEBUG']
+    )] if BUILD_EXTENSIONS else []),
     cmdclass={"build_ext": BuildExtWarnOnFail},
     keywords=['ubjson', 'ubj'],
     classifiers=[
@@ -107,6 +111,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ]
