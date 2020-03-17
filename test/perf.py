@@ -15,7 +15,7 @@
 from __future__ import print_function, unicode_literals
 
 from abc import ABCMeta, abstractmethod
-from sys import argv
+from sys import argv, exit  # pylint: disable=redefined-builtin
 from traceback import print_exc
 from types import GeneratorType
 from contextlib import contextmanager

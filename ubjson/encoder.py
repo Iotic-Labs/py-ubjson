@@ -40,7 +40,6 @@ __BYTES_ARRAY_PREFIX = ARRAY_START + CONTAINER_TYPE + TYPE_UINT8 + CONTAINER_COU
 
 class EncoderException(TypeError):
     """Raised when encoding of an object fails."""
-    pass
 
 
 def __encode_decimal(fp_write, item):
