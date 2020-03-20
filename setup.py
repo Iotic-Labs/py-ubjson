@@ -18,6 +18,7 @@ import sys
 import os
 import warnings
 from glob import glob
+from platform import python_implementation
 
 # Allow for environments without setuptools
 try:
@@ -63,7 +64,7 @@ class BuildExtWarnOnFail(build_ext):
                           % ext.name)
 
 
-BUILD_EXTENSIONS = 'PYUBJSON_NO_EXTENSION' not in os.environ
+BUILD_EXTENSIONS = 'PYUBJSON_NO_EXTENSION' not in os.environ and python_implementation() != 'PyPy'
 
 COMPILE_ARGS = ['-std=c99']
 # For testing/debug only - some of these are GCC-specific
