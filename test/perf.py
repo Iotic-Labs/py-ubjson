@@ -141,7 +141,7 @@ def test_all_with(name, repeats=1000):
 
     with open(name, 'r') as in_file:
         obj = j_load(in_file)
-        print('%s (%d)' % (name, in_file.tell()))
+        row_start = '"%s",%d' % (name, in_file.tell())
 
     gc.disable()
     for lib in TEST_LIBS:
@@ -160,7 +160,7 @@ def test_all_with(name, repeats=1000):
         dec_time = time() - start
         gc.collect()
 
-        print('%20s (enc/dec): %.3f / %.3f' % (lib.name(), enc_time, dec_time))
+        print('%s,"%s",%.3f,%.3f' % (row_start, lib.name(), enc_time, dec_time))
     gc.enable()
 
 
@@ -175,7 +175,6 @@ def main():
         print('USAGE: perf.py REPEATS INPUT1 [INPUT2] ..')
         return 1
 
-    print('Testing with %d repeats' % repeats)
     for name in argv[2:]:
         try:
             test_all_with(name, repeats=repeats)
