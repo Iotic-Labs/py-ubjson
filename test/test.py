@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from sys import version_info, getrecursionlimit
+from sys import version_info, getrecursionlimit, setrecursionlimit
 from functools import partial
 from io import BytesIO, SEEK_END
 from unittest import TestCase, skipUnless
@@ -464,18 +464,23 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
         return (self.assertRaisesRegexp if PY2 else self.assertRaisesRegex)(*args, **kwargs)
 
     def test_recursion(self):
-        obj = current = []
-        for _ in range(getrecursionlimit()):
-            new_list = []
-            current.append(new_list)
-            current = new_list
+        old_limit = getrecursionlimit()
+        setrecursionlimit(200)
+        try:
+            obj = current = []
+            for _ in range(getrecursionlimit() * 2):
+                new_list = []
+                current.append(new_list)
+                current = new_list
 
-        with self.assert_raises_regex(RuntimeError, 'recursion'):
-            self.ubjdumpb(obj)
+            with self.assert_raises_regex(RuntimeError, 'recursion'):
+                self.ubjdumpb(obj)
 
-        raw = ARRAY_START * getrecursionlimit()
-        with self.assert_raises_regex(RuntimeError, 'recursion'):
-            self.ubjloadb(raw)
+            raw = ARRAY_START * (getrecursionlimit() * 2)
+            with self.assert_raises_regex(RuntimeError, 'recursion'):
+                self.ubjloadb(raw)
+        finally:
+            setrecursionlimit(old_limit)
 
     def test_encode_default(self):
         def default(obj):

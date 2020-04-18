@@ -1,3 +1,6 @@
+0.16.1
+- Make recursion unit test work in PyPy also
+
 0.16.0
 - Don't use C extension under PyPy. (JIT-optimized pure-Python version is
   considerably faster.)
