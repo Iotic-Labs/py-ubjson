@@ -16,7 +16,7 @@
 """Converts between json & ubjson"""
 
 from __future__ import print_function
-from sys import argv, stderr, stdout, stdin
+from sys import argv, stderr, stdout, stdin, exit  # pylint: disable=redefined-builtin
 from json import load as jload, dump as jdump
 
 from .compat import STDIN_RAW, STDOUT_RAW
