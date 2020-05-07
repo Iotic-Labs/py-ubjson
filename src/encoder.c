@@ -326,6 +326,8 @@ static int _encode_PyFloat(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
         goto bail;
     }
 
+#ifndef USE__BJDATA
+
 #ifdef USE__FPCLASS
     switch (_fpclass(num)) {
         case _FPCLASS_SNAN:
@@ -358,6 +360,8 @@ static int _encode_PyFloat(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
             BAIL_ON_NONZERO(_encode_PyObject_as_PyDecimal(obj, buffer));
             return 0;
     }
+
+#endif
 
     abs = fabs(num);
     if (!buffer->prefs.no_float32 && 1.18e-38 <= abs && 3.4e38 >= abs) {
@@ -406,9 +410,42 @@ bail:
     WRITE_OR_BAIL(numtmp, 9);\
 }
 
+#ifdef USE__BJDATA
+
+#define WRITE_UINT16_OR_BAIL(num) {\
+    WRITE_INT_INTO_NUMTMP(num, 2);\
+    numtmp[0] = TYPE_UINT16;\
+    WRITE_OR_BAIL(numtmp, 3);\
+}
+#define WRITE_UINT32_OR_BAIL(num) {\
+    WRITE_INT_INTO_NUMTMP(num, 4);\
+    numtmp[0] = TYPE_UINT32;\
+    WRITE_OR_BAIL(numtmp, 5);\
+}
+#define WRITE_UINT64_OR_BAIL(num) {\
+    WRITE_INT_INTO_NUMTMP(num, 8);\
+    numtmp[0] = TYPE_UINT64;\
+    WRITE_OR_BAIL(numtmp, 9);\
+}
+
+#endif
+
+
 static int _encode_longlong(long long num, _ubjson_encoder_buffer_t *buffer) {
     char numtmp[9]; // large enough to hold type + maximum integer (INT64)
 
+#ifdef USE__BJDATA
+    if (num >= 0) {
+        if (num < POWER_TWO(8)) {
+            WRITE_TYPE_AND_INT8_OR_BAIL(TYPE_UINT8, num);
+        } else if (num < POWER_TWO(16)) {
+            WRITE_UINT16_OR_BAIL(num);
+        } else if (num < POWER_TWO(32)) {
+            WRITE_UINT32_OR_BAIL(num);
+        } else {
+            WRITE_UINT64_OR_BAIL(num);
+        }
+#else
     if (num >= 0) {
         if (num < POWER_TWO(8)) {
             WRITE_TYPE_AND_INT8_OR_BAIL(TYPE_UINT8, num);
@@ -419,6 +456,7 @@ static int _encode_longlong(long long num, _ubjson_encoder_buffer_t *buffer) {
         } else {
             WRITE_INT64_OR_BAIL(num);
         }
+#endif
     } else if (num >= -(POWER_TWO(7))) {
         WRITE_TYPE_AND_INT8_OR_BAIL(TYPE_INT8, num);
     } else if (num >= -(POWER_TWO(15))) {

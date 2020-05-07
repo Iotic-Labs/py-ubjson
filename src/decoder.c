@@ -492,12 +492,15 @@ static long long _decode_int_non_negative(_ubjson_decoder_buffer_t *buffer, char
         case TYPE_UINT8:
             BAIL_ON_NULL(int_obj = _decode_uint8(buffer));
             break;
+        case TYPE_UINT16:
         case TYPE_INT16:
             BAIL_ON_NULL(int_obj = _decode_int16_32(buffer, 2));
             break;
+        case TYPE_UINT32:
         case TYPE_INT32:
             BAIL_ON_NULL(int_obj = _decode_int16_32(buffer, 4));
             break;
+        case TYPE_UINT64:
         case TYPE_INT64:
             BAIL_ON_NULL(int_obj = _decode_int64(buffer));
             break;
@@ -527,6 +530,7 @@ bail:
     Py_XDECREF(int_obj);
     return -1;
 }
+
 
 static PyObject* _decode_float32(_ubjson_decoder_buffer_t *buffer) {
     const char *raw;
@@ -612,7 +616,7 @@ bail:
 }
 
 static _container_params_t _get_container_params(_ubjson_decoder_buffer_t *buffer, int in_mapping) {
-    _container_params_t params;
+    _container_params_t params={0};
     char marker;
 
     // fixed type for all values
@@ -622,6 +626,9 @@ static _container_params_t _get_container_params(_ubjson_decoder_buffer_t *buffe
         switch (marker) {
             case TYPE_NULL: case TYPE_BOOL_TRUE: case TYPE_BOOL_FALSE: case TYPE_CHAR: case TYPE_STRING: case TYPE_INT8:
             case TYPE_UINT8: case TYPE_INT16: case TYPE_INT32: case TYPE_INT64: case TYPE_FLOAT32: case TYPE_FLOAT64:
+#ifdef USE__BJDATA
+            case TYPE_UINT16: case TYPE_UINT32: case TYPE_UINT64: case TYPE_FLOAT16:
+#endif
             case TYPE_HIGH_PREC: case ARRAY_START: case OBJECT_START:
                 params.type = marker;
                 break;
@@ -637,7 +644,27 @@ static _container_params_t _get_container_params(_ubjson_decoder_buffer_t *buffe
     // container value count
     if (CONTAINER_COUNT == marker) {
         params.counting = 1;
-        DECODE_LENGTH_OR_BAIL(params.count);
+#ifdef USE_BJDATA
+	READ_CHAR_OR_BAIL(marker, "container count marker or optimized ND-array dimension array marker");
+	// obtain the total number of elements of an optimized ND array header
+	if(ARRAY_START == marker){
+	    long long length=0, i;
+	    _container_params_t dims=_get_container_params(buffer,0);
+	    params.count=1;
+	    if(dims.counting){
+                for(i=0;i<dims.count;i++){
+    	            DECODE_LENGTH_OR_BAIL_MARKER(length,dims.type);
+    		    params.count*=length;
+    	        }
+	    }else{
+    	        while (ARRAY_END != marker) {
+    		    DECODE_LENGTH_OR_BAIL(length,dims.type);
+    		    params.count*=length;
+    	        }
+	    }
+	}else
+#endif
+            DECODE_LENGTH_OR_BAIL_MARKER(params.count, marker);
         // reading ahead just to capture type, which will not exist if type is fixed
         if ((params.count > 0) && (in_mapping || (TYPE_NONE == params.type))) {
             READ_CHAR_OR_BAIL(marker, "1st key/value type");
@@ -992,14 +1019,22 @@ PyObject* _ubjson_decode_value(_ubjson_decoder_buffer_t *buffer, char *given_mar
             RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_string(buffer), "string");
         case TYPE_INT8:
             RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_int8(buffer), "int8");
-        case TYPE_UINT8:
-            RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_uint8(buffer), "uint8");
         case TYPE_INT16:
             RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_int16_32(buffer, 2), "int16");
         case TYPE_INT32:
             RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_int16_32(buffer, 4), "int32");
         case TYPE_INT64:
             RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_int64(buffer), "int64");
+#ifdef USE__BJDATA
+        case TYPE_UINT8:
+            RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_uint8(buffer), "uint8");
+        case TYPE_UINT16:
+            RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_int16_32(buffer, 2), "uint16");
+        case TYPE_UINT32:
+            RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_int16_32(buffer, 4), "uint32");
+        case TYPE_UINT64:
+            RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_int64(buffer), "uint64");
+#endif
         case TYPE_FLOAT32:
             RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_float32(buffer), "float32");
         case TYPE_FLOAT64:

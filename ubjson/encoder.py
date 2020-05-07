@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-"""UBJSON draft v12 encoder"""
+"""UBJSON (Draft 12) and BJData (Draft 1) encoder"""
 
 from struct import pack, Struct
 from decimal import Decimal
@@ -22,7 +22,8 @@ from math import isinf, isnan
 
 from .compat import Mapping, Sequence, INTEGER_TYPES, UNICODE_TYPE, TEXT_TYPES, BYTES_TYPES
 from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
-                      TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
+                      TYPE_INT64, TYPE_UINT16, TYPE_UINT32, TYPE_UINT64, TYPE_FLOAT16, TYPE_FLOAT32, 
+		      TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
                       OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
 
 # Lookup tables for encoding small intergers, pre-initialised larger integer & float packers
@@ -31,6 +32,10 @@ __SMALL_UINTS_ENCODED = {i: TYPE_UINT8 + pack('>B', i) for i in range(256)}
 __PACK_INT16 = Struct('>h').pack
 __PACK_INT32 = Struct('>i').pack
 __PACK_INT64 = Struct('>q').pack
+__PACK_UINT16 = Struct('>H').pack
+__PACK_UINT32 = Struct('>I').pack
+__PACK_UINT64 = Struct('>Q').pack
+__PACK_FLOAT16 = Struct('>h').pack
 __PACK_FLOAT32 = Struct('>f').pack
 __PACK_FLOAT64 = Struct('>d').pack
 
@@ -57,15 +62,15 @@ def __encode_int(fp_write, item):
     if item >= 0:
         if item < 2 ** 8:
             fp_write(__SMALL_UINTS_ENCODED[item])
-        elif item < 2 ** 15:
-            fp_write(TYPE_INT16)
-            fp_write(__PACK_INT16(item))
-        elif item < 2 ** 31:
-            fp_write(TYPE_INT32)
-            fp_write(__PACK_INT32(item))
-        elif item < 2 ** 63:
-            fp_write(TYPE_INT64)
-            fp_write(__PACK_INT64(item))
+        elif item < 2 ** 16:
+            fp_write(TYPE_UINT16)
+            fp_write(__PACK_UINT16(item))
+        elif item < 2 ** 32:
+            fp_write(TYPE_UINT32)
+            fp_write(__PACK_UINT32(item))
+        elif item < 2 ** 64:
+            fp_write(TYPE_UINT64)
+            fp_write(__PACK_UINT64(item))
         else:
             __encode_decimal(fp_write, Decimal(item))
     elif item >= -(2 ** 7):

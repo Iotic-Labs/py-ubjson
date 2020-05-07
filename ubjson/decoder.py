@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-"""UBJSON draft v12 decoder"""
+"""UBJSON (Draft 12) and BJData (Draft 1) decoder"""
 
 from io import BytesIO
 from struct import Struct, pack, error as StructError
@@ -22,19 +22,24 @@ from decimal import Decimal, DecimalException
 from .compat import raise_from, intern_unicode
 from .markers import (TYPE_NONE, TYPE_NULL, TYPE_NOOP, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8,
                       TYPE_INT16, TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR,
+		      TYPE_UINT16, TYPE_UINT32, TYPE_UINT64, TYPE_FLOAT16,
                       TYPE_STRING, OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
 
 __TYPES = frozenset((TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
-                     TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, ARRAY_START,
-                     OBJECT_START))
+                     TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_UINT16, TYPE_UINT32, TYPE_UINT64, TYPE_FLOAT16, 
+		     TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, ARRAY_START, OBJECT_START))
 __TYPES_NO_DATA = frozenset((TYPE_NULL, TYPE_BOOL_FALSE, TYPE_BOOL_TRUE))
-__TYPES_INT = frozenset((TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32, TYPE_INT64))
+__TYPES_INT = frozenset((TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32, TYPE_INT64, TYPE_UINT16, TYPE_UINT32, TYPE_UINT64))
 
 __SMALL_INTS_DECODED = {pack('>b', i): i for i in range(-128, 128)}
 __SMALL_UINTS_DECODED = {pack('>B', i): i for i in range(256)}
 __UNPACK_INT16 = Struct('>h').unpack
 __UNPACK_INT32 = Struct('>i').unpack
 __UNPACK_INT64 = Struct('>q').unpack
+__UNPACK_UINT16 = Struct('>H').unpack
+__UNPACK_UINT32 = Struct('>I').unpack
+__UNPACK_UINT64 = Struct('>Q').unpack
+__UNPACK_FLOAT16 = Struct('>q').unpack
 __UNPACK_FLOAT32 = Struct('>f').unpack
 __UNPACK_FLOAT64 = Struct('>d').unpack
 
@@ -113,6 +118,26 @@ def __decode_int64(fp_read, marker):
     except StructError as ex:
         raise_from(DecoderException('Failed to unpack int64'), ex)
 
+def __decode_uint16(fp_read, marker):
+    try:
+        return __UNPACK_UINT16(fp_read(2))[0]
+    except StructError as ex:
+        raise_from(DecoderException('Failed to unpack uint16'), ex)
+
+
+def __decode_uint32(fp_read, marker):
+    try:
+        return __UNPACK_UINT32(fp_read(4))[0]
+    except StructError as ex:
+        raise_from(DecoderException('Failed to unpack uint32'), ex)
+
+
+def __decode_uint64(fp_read, marker):
+    try:
+        return __UNPACK_UINT64(fp_read(8))[0]
+    except StructError as ex:
+        raise_from(DecoderException('Failed to unpack uint64'), ex)
+
 
 def __decode_float32(fp_read, marker):
     try:
@@ -168,8 +193,11 @@ __METHOD_MAP = {TYPE_NULL: (lambda _, __: None),
                 TYPE_INT8: __decode_int8,
                 TYPE_UINT8: __decode_uint8,
                 TYPE_INT16: __decode_int16,
+		TYPE_UINT16: __decode_uint16,
                 TYPE_INT32: __decode_int32,
+		TYPE_UINT32: __decode_uint32,
                 TYPE_INT64: __decode_int64,
+		TYPE_UINT64: __decode_uint64,
                 TYPE_FLOAT32: __decode_float32,
                 TYPE_FLOAT64: __decode_float64,
                 TYPE_HIGH_PREC: __decode_high_prec,

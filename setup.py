@@ -65,7 +65,7 @@ class BuildExtWarnOnFail(build_ext):
 
 BUILD_EXTENSIONS = 'PYUBJSON_NO_EXTENSION' not in os.environ
 
-COMPILE_ARGS = ['-std=c99']
+COMPILE_ARGS = ['-std=c99'] #, '-DUSE__BJDATA']
 # For testing/debug only - some of these are GCC-specific
 # COMPILE_ARGS += ['-Wall', '-Wextra', '-Wundef', '-Wshadow', '-Wcast-align', '-Wcast-qual', '-Wstrict-prototypes',
 #                  '-pedantic']
@@ -93,7 +93,7 @@ setup(
     ext_modules=([Extension('_ubjson', sorted(glob('src/*.c')), extra_compile_args=COMPILE_ARGS)]
                  if BUILD_EXTENSIONS else []),
     cmdclass={"build_ext": BuildExtWarnOnFail},
-    keywords=['ubjson', 'ubj'],
+    keywords=['ubjson', 'ubj', 'jdata', 'bjd', 'jbat'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: Apache Software License',

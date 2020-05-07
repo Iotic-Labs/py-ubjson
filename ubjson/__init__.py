@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-"""UBJSON (draft 12) implementation without No-Op support
+"""UBJSON (Draft 12) and BJData (draft 1) implementation without No-Op support
 
 Example usage:
 
@@ -37,6 +37,6 @@ except ImportError:  # pragma: no cover
 from .encoder import EncoderException
 from .decoder import DecoderException
 
-__version__ = '0.14.0'
+__version__ = '0.15.0'
 
 __all__ = ('EXTENSION_ENABLED', 'dump', 'dumpb', 'EncoderException', 'load', 'loadb', 'DecoderException')
