@@ -1,3 +1,13 @@
+0.16.1
+- Make recursion unit test work in PyPy also
+
+0.16.0
+- Don't use C extension under PyPy. (JIT-optimized pure-Python version is
+  considerably faster.)
+
+0.15.0
+- Fix decimal encoding bug/assert (reported by mgorny)
+
 0.14.0
 - Fix DecoderException not including offset when C-extension in use, expose
   property for it.

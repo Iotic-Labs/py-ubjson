@@ -18,6 +18,7 @@ import sys
 import os
 import warnings
 from glob import glob
+from platform import python_implementation
 
 # Allow for environments without setuptools
 try:
@@ -63,7 +64,7 @@ class BuildExtWarnOnFail(build_ext):
                           % ext.name)
 
 
-BUILD_EXTENSIONS = 'PYUBJSON_NO_EXTENSION' not in os.environ
+BUILD_EXTENSIONS = 'PYUBJSON_NO_EXTENSION' not in os.environ and python_implementation() != 'PyPy'
 
 COMPILE_ARGS = ['-std=c99']
 # For testing/debug only - some of these are GCC-specific
@@ -90,8 +91,12 @@ setup(
         ]
     },
     zip_safe=False,
-    ext_modules=([Extension('_ubjson', sorted(glob('src/*.c')), extra_compile_args=COMPILE_ARGS)]
-                 if BUILD_EXTENSIONS else []),
+    ext_modules=([Extension(
+        '_ubjson',
+        sorted(glob('src/*.c')),
+        extra_compile_args=COMPILE_ARGS,
+        # undef_macros=['NDEBUG']
+    )] if BUILD_EXTENSIONS else []),
     cmdclass={"build_ext": BuildExtWarnOnFail},
     keywords=['ubjson', 'ubj'],
     classifiers=[
@@ -107,6 +112,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ]

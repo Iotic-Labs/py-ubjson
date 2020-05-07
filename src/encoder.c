@@ -268,7 +268,7 @@ static int _encode_PyDecimal(PyObject *obj, _ubjson_encoder_buffer_t *buffer) {
 #endif
         BAIL_ON_NULL(encoded = PyUnicode_AsEncodedString(str, "utf-8", NULL));
         raw = PyBytes_AS_STRING(encoded);
-        len = PyBytes_GET_SIZE(str);
+        len = PyBytes_GET_SIZE(encoded);
 
         WRITE_CHAR_OR_BAIL(TYPE_HIGH_PREC);
         BAIL_ON_NONZERO(_encode_longlong(len, buffer));
