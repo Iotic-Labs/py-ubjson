@@ -204,9 +204,15 @@ __METHOD_MAP = {TYPE_NULL: (lambda _, __: None),
                 TYPE_CHAR: __decode_char,
                 TYPE_STRING: __decode_string}
 
+def prodlist(mylist):
+    result = 1
+    for x in mylist: 
+         result = result * x  
+    return result
 
-def __get_container_params(fp_read, in_mapping, no_bytes):
+def __get_container_params(fp_read, in_mapping, no_bytes, object_hook, object_pairs_hook, intern_object_keys):
     marker = fp_read(1)
+    dims = []
     if marker == CONTAINER_TYPE:
         marker = fp_read(1)
         if marker not in __TYPES:
@@ -216,7 +222,12 @@ def __get_container_params(fp_read, in_mapping, no_bytes):
     else:
         type_ = TYPE_NONE
     if marker == CONTAINER_COUNT:
-        count = __decode_int_non_negative(fp_read, fp_read(1))
+        marker = fp_read(1)
+        if marker == ARRAY_START:
+            dims = __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys)
+            count = prodlist(dims)
+        else:
+            count = __decode_int_non_negative(fp_read, marker)
         counting = True
 
         # special cases (no data (None or bool) / bytes array) will be handled in calling functions
@@ -231,12 +242,12 @@ def __get_container_params(fp_read, in_mapping, no_bytes):
         counting = False
     else:
         raise DecoderException('Container type without count')
-    return marker, counting, count, type_
+    return marker, counting, count, type_, dims
 
 
 def __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook,  # pylint: disable=too-many-branches
                     intern_object_keys):
-    marker, counting, count, type_ = __get_container_params(fp_read, True, no_bytes)
+    marker, counting, count, type_, dims = __get_container_params(fp_read, True, no_bytes,object_hook, object_pairs_hook,intern_object_keys)
     has_pairs_hook = object_pairs_hook is not None
     obj = [] if has_pairs_hook else {}
 
@@ -291,7 +302,7 @@ def __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook,  # pylint
 
 
 def __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys):
-    marker, counting, count, type_ = __get_container_params(fp_read, False, no_bytes)
+    marker, counting, count, type_, dims = __get_container_params(fp_read, False, no_bytes, object_hook, object_pairs_hook, intern_object_keys)
 
     # special case - no data (None or bool)
     if type_ in __TYPES_NO_DATA:
