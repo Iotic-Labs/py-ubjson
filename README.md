@@ -40,7 +40,7 @@ decoded = ubjson.loadb(encoded)
 
 # Documentation
 ```python
-import ubsjon
+import ubjson
 help(ubjson.dump)
 help(ubjson.load)
 ```
