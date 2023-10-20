@@ -67,7 +67,7 @@ unless set to '-', in which case stdin is used. If OUTFILE is not
 specified, output goes to stdout.""", file=stderr)
         return 1
 
-    do_from_json = (argv[1] == 'fromjson')
+    do_from_json = argv[1] == 'fromjson'
     in_file = out_file = None
     try:
         # input
@@ -75,6 +75,7 @@ specified, output goes to stdout.""", file=stderr)
             in_stream = stdin if do_from_json else STDIN_RAW
         else:
             try:
+                # pylint: disable=consider-using-with
                 in_stream = in_file = open(argv[2], 'r' if do_from_json else 'rb')
             except IOError as ex:
                 __error('Failed to open input file for reading: %s' % ex)
@@ -84,6 +85,7 @@ specified, output goes to stdout.""", file=stderr)
             out_stream = STDOUT_RAW if do_from_json else stdout
         else:
             try:
+                # pylint: disable=unspecified-encoding,consider-using-with
                 out_stream = out_file = open(argv[3], 'wb' if do_from_json else 'w')
             except IOError as ex:
                 __error('Failed to open output file for writing: %s' % ex)
@@ -97,6 +99,8 @@ specified, output goes to stdout.""", file=stderr)
             in_file.close()
         if out_file:
             out_file.close()
+
+    return 0
 
 
 if __name__ == "__main__":
