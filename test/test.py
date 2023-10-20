@@ -465,10 +465,10 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
 
     def test_recursion(self):
         old_limit = getrecursionlimit()
-        setrecursionlimit(200)
+        setrecursionlimit(100)
         try:
             obj = current = []
-            for _ in range(getrecursionlimit() * 2):
+            for _ in range(getrecursionlimit() * 30):
                 new_list = []
                 current.append(new_list)
                 current = new_list
@@ -476,7 +476,7 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
             with self.assert_raises_regex(RuntimeError, 'recursion'):
                 self.ubjdumpb(obj)
 
-            raw = ARRAY_START * (getrecursionlimit() * 2)
+            raw = ARRAY_START * (getrecursionlimit() * 30)
             with self.assert_raises_regex(RuntimeError, 'recursion'):
                 self.ubjloadb(raw)
         finally:
