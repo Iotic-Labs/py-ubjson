@@ -28,17 +28,17 @@ except ImportError:
     use_setuptools()
     from setuptools import setup  # pylint: disable=ungrouped-imports
 
-from distutils.core import Extension
-from distutils.command.build_ext import build_ext
-from distutils.errors import CCompilerError
-from distutils.errors import DistutilsPlatformError, DistutilsExecError
+from distutils.core import Extension  # pylint: disable=import-error
+from distutils.command.build_ext import build_ext  # pylint: disable=import-error
+from distutils.errors import CCompilerError  # pylint: disable=import-error
+from distutils.errors import DistutilsPlatformError, DistutilsExecError  # pylint: disable=import-error
 
 from ubjson import __version__ as version
 
 
 def load_description(filename):
     script_dir = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(script_dir, filename), 'r') as infile:
+    with open(os.path.join(script_dir, filename), 'r') as infile:  # pylint: disable=unspecified-encoding
         return infile.read()
 
 

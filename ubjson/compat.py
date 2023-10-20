@@ -42,7 +42,7 @@
 
 from sys import stderr, stdout, stdin, version_info
 
-PY2 = (version_info[0] == 2)
+PY2 = version_info[0] == 2
 
 if PY2:
     # pylint: disable=undefined-variable
