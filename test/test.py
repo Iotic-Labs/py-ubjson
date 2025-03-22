@@ -134,6 +134,10 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
         for suffix in (b'', b'\xfe'):
             with self.assertRaises(DecoderException):
                 self.ubjloadb(TYPE_CHAR + suffix)
+        # char invalid utf-8
+        for suffix in (b'\xfe',):
+            encoded = self.ubjloadb(TYPE_CHAR + suffix, errors='replace')
+            self.assertEqual(encoded, suffix.decode('utf-8', errors='replace'))
         for char in (u('a'), u('\0'), u('~')):
             self.check_enc_dec(char, 2)
 
@@ -144,6 +148,11 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
         for suffix in (b'\x81', b'\x01', b'\x01' + b'\xfe'):
             with self.assertRaises(DecoderException):
                 self.ubjloadb(TYPE_STRING + TYPE_INT8 + suffix)
+        # string invalid utf-8
+        for length, suffix in ((b'\x01', b'\xfe'),):
+            suffix_d = suffix.decode('utf-8', errors='replace')
+            encoded = self.ubjloadb(TYPE_STRING + TYPE_INT8 + length + suffix, errors='replace')
+            self.assertEqual(encoded, suffix_d)
         # Note: In Python 2 plain str type is encoded as byte array
         for string in ('some ascii', u(r'\u00a9 with extended\u2122'), u('long string') * 100):
             self.check_enc_dec(string, 4, length_greater_or_equal=True)

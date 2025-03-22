@@ -85,8 +85,8 @@
     dst_char = tmp[0];\
 }
 
-#define DECODE_UNICODE_OR_BAIL(dst_obj, raw, length, item_str) {\
-    if (NULL == ((dst_obj) = PyUnicode_FromStringAndSize(raw, length))) {\
+#define DECODE_UNICODE_OR_BAIL(dst_obj, raw, length, item_str, errors) {\
+    if (NULL == ((dst_obj) = PyUnicode_DecodeUTF8(raw, length, errors))) {\
         RAISE_DECODER_EXCEPTION(("Failed to decode utf8: " item_str));\
     }\
 }\
@@ -567,7 +567,7 @@ static PyObject* _decode_high_prec(_ubjson_decoder_buffer_t *buffer) {
     DECODE_LENGTH_OR_BAIL(length);
     READ_OR_BAIL((Py_ssize_t)length, raw, "highprec");
 
-    DECODE_UNICODE_OR_BAIL(num_str, raw, (Py_ssize_t)length, "highprec");
+    DECODE_UNICODE_OR_BAIL(num_str, raw, (Py_ssize_t)length, "highprec", buffer->prefs.errors);
 
     BAIL_ON_NULL(decimal = PyObject_CallFunctionObjArgs((PyObject*)PyDec_Type, num_str, NULL));
     Py_XDECREF(num_str);
@@ -583,7 +583,7 @@ static PyObject* _decode_char(_ubjson_decoder_buffer_t *buffer) {
     PyObject *obj = NULL;
 
     READ_CHAR_OR_BAIL(value, "char");
-    DECODE_UNICODE_OR_BAIL(obj, &value, 1, "char");
+    DECODE_UNICODE_OR_BAIL(obj, &value, 1, "char", buffer->prefs.errors);
     return obj;
 
 bail:
@@ -600,7 +600,7 @@ static PyObject* _decode_string(_ubjson_decoder_buffer_t *buffer) {
 
     if (length > 0) {
         READ_OR_BAIL((Py_ssize_t)length, raw, "string");
-        DECODE_UNICODE_OR_BAIL(obj, raw, (Py_ssize_t)length, "string");
+        DECODE_UNICODE_OR_BAIL(obj, raw, (Py_ssize_t)length, "string", buffer->prefs.errors);
     } else {
         BAIL_ON_NULL(obj = PyUnicode_FromStringAndSize(NULL, 0));
     }

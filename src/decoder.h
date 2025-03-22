@@ -30,6 +30,7 @@ typedef struct {
     // don't convert UINT8 arrays to bytes instances (and keep as an array of individual integers)
     int no_bytes;
     int intern_object_keys;
+    char *errors;
 } _ubjson_decoder_prefs_t;
 
 typedef struct _ubjson_decoder_buffer_t {
